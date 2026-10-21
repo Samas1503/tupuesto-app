@@ -77,3 +77,16 @@ al día 30, ≥15% conversión a pago.
 
 ---
 <sub>Si una palabra no está acá, probablemente todavía no existe en el dominio.</sub>
+
+### Turno (nuevo)
+
+**turno** — la activación de un despacho: despacho (productos→puesto) +
+vendedor + fondo de caja. Antes el despacho *era* la jornada completa;
+ahora la `Jornada` puede existir "sin asignar" hasta que el turno la ocupa.
+
+**reposición** — mercadería extra a mitad de turno (`reposiciones[]`,
+separada del despacho inicial). En ventas es indistinta; en "Mi turno"
+se muestra aparte.
+
+**solicitud** — pedido vendedor→admin (hoy: baja de usuario). Solo el
+admin ejecuta bajas; el vendedor solicita.

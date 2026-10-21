@@ -79,3 +79,20 @@ partnership/fee).
 
 ---
 <sub>ADR-001 · las decisiones locked solo se reabren con evidencia, no con opinión.</sub>
+
+## ADR-002 — turno vs. despacho separados (2025-10)
+
+El despacho quedó como *productos→puesto* puro; el **turno** (vendedor +
+fondo + confirmación) se crea aparte — en Hoy o cuando el vendedor toma
+un despacho libre. Razón: el dueño planifica mercadería por puesto sin
+saber aún quién cubre; el fondo es contractual al inicio del turno.
+Permite multi-turno por puesto/día (cambia la restricción anterior de
+una jornada por puesto+fecha — ahora solo bloquea turnos *abiertos*).
+
+## ADR-003 — cierre automático (2025-10)
+
+El vendedor ya no cuenta físico al cierre: el remanente se calcula
+despachado+repos − vendido registrado y la plata sale del registro por
+método. **Trade-off asumido:** si el vendedor no registra una venta, el
+sistema no la ve — el wedge de doble fuente quedó en `cruceCierre` como
+flag disponible, no como flujo. Revisar si los pilotos piden el conteo.

@@ -62,3 +62,13 @@ no adelantarse.
 
 ---
 <sub>El debate ya se hizo. Acá se ejecuta — y cuando toca decidir, se avisa.</sub>
+
+## Estado actual (oct 2025 — post-iteración)
+
+**Flujo real nuevo:** despacho va al *puesto* solo (productos); el **turno** = vendedor + fondo + confirmación del despacho — se arma en Hoy (FAB `+`) o el vendedor lo toma en MiDia. Multi-turno por puesto/día permitido cuando el anterior cerró. **Cierre automático**: remanente = cargado − vendido registrado; sin conteo manual. El vendedor registra cada venta con método de pago (efectivo/QR/transf.) — conteo físico quedó como cruce opcional (`cruceCierre`).
+
+**Modelo nuevo:** `Venta` (Dexie v3), `Solicitud` baja vendedor→admin (v4), `Jornada.reposiciones[]`, `Producto.precioCosto/imagen/ingredientes`, `Vendedor.pin/email/debeCambiarPin` (puestoId ahora preferencia, no vínculo). Índice `[fecha+vendedorId]` en v2.
+
+**Vistas:** MiDia = login PIN + "Turnos sin asignar" + Vender (modal por producto) + cierre con nota. Hoy = tabs Turnos/Productos + barra "Cobrado hoy" vs. meta + FAB nuevo turno. Despacho = FAB + calendario colapsable + comprobante. Equipo = ABM + stats (horas, unidades, $/h). Estadísticas (ex Historial) = matriz puesto×día + timeline horario + productividad + gastos vs. pérdidas.
+
+**Demo/deploy:** `scripts/gen-sqlite.mjs` genera `public/tupuesto.sqlite`; `cargarDesdeSqlite()` hidrata IndexedDB desde el archivo estático vía `sql.js` WASM → demo sin backend en Vercel. Dos proyectos: landing `tupuesto-app.vercel.app` (root, `vercel.json` → `landing/`, detecta `api/`) y app `app-ten-tan-35.vercel.app` (root dir `app/`). `DEMO_URL` en landing apunta a la app. Git connect pendiente en dashboard.
