@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <!--
+    ══════════════════════════════════════════════════════════════
+    LANDING DE PREVENTA — TuPuesto (Gate 0) · estilo Stripe
+    ══════════════════════════════════════════════════════════════
+    ANTES DE PUBLICAR, editá los 3 valores del bloque CONFIG
+    (al final del <body>, en el <script>):
+      1. WA_NUMBER  → tu WhatsApp con código de país, sin "+" ni espacios
+      2. MP_LINK    → link de pago de Mercado Pago para la seña $13.000
+      3. CUPOS      → cupos de fundador restantes
+    Todo lo demás se actualiza solo. No hace falta backend.
+    ══════════════════════════════════════════════════════════════
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TuPuesto — Sabé cuánto vendieron hoy tus puestos</title>
+  <meta name="description" content="Rendición diaria de cada vendedor al cierre del día. Efectivo y QR separados. Para dueños con 2 o más puestos que no pueden estar en todos lados.">
+  <meta property="og:title" content="TuPuesto — Rendición diaria de tus puestos">
+  <meta property="og:description" content="El vendedor cuenta al cerrar. Vos ves al instante si falta o sobra. Para dueños con más de un puesto.">
+  <style>
+    /* ── Paleta estilo Stripe ─────────────────────────────── */
+    :root {
+      --navy:    #0a2540;   /* tinta principal */
+      --muted:   #425466;   /* texto secundario */
+      --faint:   #adbdcc;   /* texto terciario */
+      --blurple: #635bff;   /* acento */
+      --cyan:    #00d4ff;
+      --green:   #0f6b3a;
+      --wa:      #25d366;
+      --paper:   #f6f9fc;   /* fondo claro */
+      --white:   #ffffff;
+      --line:    #e6ebf1;
+      --warn:    #b84900;
+      --radius:  14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--paper);
+      color: var(--navy);
+      line-height: 1.6;
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Nav ──────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .logo { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; color: var(--navy); text-decoration: none; }
+    .logo b { color: var(--blurple); }
+    .nav-links { display: flex; gap: 26px; align-items: center; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.92rem; font-weight: 600; }
+    .nav-links a:hover { color: var(--navy); }
+    .nav-cta {
+      background: var(--navy); color: #fff !important; border-radius: 999px;
+      padding: 7px 16px; font-size: 0.88rem !important;
+    }
+    @media (max-width: 760px) { .nav-links a:not(.nav-cta) { display: none; } }
+
+    /* ── Etiquetas de sección (Stripe kicker) ─────────────── */
+    .kicker {
+      text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.78rem;
+      font-weight: 700; color: var(--blurple); margin-bottom: 14px;
+    }
+    .kicker::before { content: ""; display: inline-block; width: 26px; height: 2px; background: var(--blurple); vertical-align: middle; margin-right: 10px; }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero {
+      position: relative; overflow: hidden; background: var(--white);
+      padding: 96px 0 140px;
+    }
+    /* banda diagonal con gradiente — firma Stripe */
+    .hero::before {
+      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 130%;
+      background: linear-gradient(115deg, #a960ee 0%, #635bff 30%, #00d4ff 55%, #25d366 80%, #ffcb57 100%);
+      transform: skewY(-10deg);
+      transform-origin: top left;
+      opacity: 0.13;
+      pointer-events: none;
+    }
+    .hero .wrap { position: relative; display: grid; gap: 56px; align-items: center; }
+    @media (min-width: 900px) { .hero .wrap { grid-template-columns: 1.05fr 0.95fr; } }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5.2vw, 3.9rem); line-height: 1.08;
+      letter-spacing: -0.035em; font-weight: 800; color: var(--navy);
+    }
+    .hero h1 em { font-style: normal; color: var(--blurple); }
+    .hero .sub { margin-top: 22px; font-size: 1.15rem; color: var(--muted); max-width: 46ch; }
+    .cta-row { display: flex; gap: 14px; margin-top: 30px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+      text-decoration: none; font-weight: 700; border-radius: 999px;
+      padding: 13px 24px; font-size: 0.98rem; transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(10,37,64,0.18); }
+    .btn-dark { background: var(--navy); color: #fff; }
+    .btn-wa { background: var(--wa); color: #052e16; }
+    .btn .arr { font-weight: 400; }
+    .hero-note { margin-top: 16px; font-size: 0.9rem; color: var(--faint); font-weight: 500; }
+
+    /* ── Mockup: pantalla de rendición (HTML puro) ────────── */
+    .hero-visual { position: relative; justify-self: center; width: 100%; max-width: 400px; }
+    .phone {
+      background: var(--navy); border-radius: 30px; padding: 10px;
+      box-shadow: 0 30px 60px rgba(10,37,64,0.35), 0 4px 12px rgba(10,37,64,0.2);
+      transform: rotate(-2deg);
+    }
+    .screen { background: var(--paper); border-radius: 22px; overflow: hidden; font-size: 0.82rem; }
+    .scr-head {
+      background: var(--navy); color: #fff; padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .scr-head span { font-size: 0.72rem; color: #9fb3c8; }
+    .scr-head b { font-size: 0.95rem; }
+    .puesto { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .puesto .top { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; }
+    .puesto .top small { color: var(--faint); font-weight: 600; }
+    .puesto .row { display: flex; justify-content: space-between; color: var(--muted); padding: 1px 0; }
+    .pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 0.72rem; font-weight: 700; margin-top: 6px; }
+    .pill-ok   { background: #d8f5e3; color: var(--green); }
+    .pill-warn { background: #ffe8d6; color: var(--warn); }
+    .float-card {
+      position: absolute; right: -8px; bottom: 42px;
+      background: #fff; border-radius: 12px; padding: 10px 14px;
+      box-shadow: 0 14px 34px rgba(10,37,64,0.22);
+      font-size: 0.78rem; font-weight: 600; color: var(--navy);
+      border-left: 4px solid var(--warn); max-width: 210px;
+      animation: floaty 5s ease-in-out infinite;
+    }
+    .float-card small { display: block; color: var(--warn); font-weight: 700; }
+    @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @media (max-width: 899px) { .hero-visual { margin-top: 10px; } .float-card { right: 0; } }
+
+    /* ── Banda diagonal separadora ────────────────────────── */
+    .stripe-band {
+      height: 90px; position: relative; overflow: hidden;
+      background: var(--white);
+    }
+    .stripe-band::before {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(115deg, #a960ee, #635bff 35%, #00d4ff 60%, #25d366 85%, #ffcb57);
+      transform: skewY(-4deg) scale(1.2); transform-origin: bottom left; opacity: 0.9;
+    }
+
+    /* ── Secciones genéricas ──────────────────────────────── */
+    section { padding: 80px 0; }
+    h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); line-height: 1.15; letter-spacing: -0.03em; font-weight: 800; margin-bottom: 14px; }
+    .lead { color: var(--muted); max-width: 52ch; font-size: 1.05rem; }
+
+    /* grid de tarjetas tipo Stripe */
+    .grid { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: 36px; }
+    @media (min-width: 700px) { .grid.g3 { grid-template-columns: repeat(3,1fr); } .grid.g2 { grid-template-columns: repeat(2,1fr); } }
+    .cell { background: var(--white); padding: 28px 26px; }
+    .cell h3 { font-size: 1.02rem; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .cell p { color: var(--muted); font-size: 0.95rem; }
+    .cell .ico { font-size: 1.3rem; margin-bottom: 12px; display: inline-block; }
+
+    /* pasos numerados */
+    .steps { margin-top: 40px; display: grid; gap: 0; }
+    .step { display: flex; gap: 20px; padding: 26px 0; border-top: 1px solid var(--line); align-items: flex-start; }
+    .step .n {
+      flex: 0 0 36px; height: 36px; border-radius: 50%; background: var(--blurple);
+      color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+    }
+    .step h3 { font-size: 1.05rem; margin-bottom: 4px; }
+    .step p { color: var(--muted); font-size: 0.97rem; }
+    .callout {
+      margin-top: 34px; border: 1px solid var(--line); border-left: 4px solid var(--cyan);
+      border-radius: 10px; background: var(--white); padding: 18px 22px; color: var(--muted); font-size: 0.97rem;
+    }
+    .callout b { color: var(--navy); }
+
+    /* ── Sección dark (oferta) ────────────────────────────── */
+    .dark {
+      background: var(--navy); color: #e6ebf1; position: relative; overflow: hidden;
+    }
+    .dark::before {
+      content: ""; position: absolute; top: -60%; right: -20%; width: 70%; height: 200%;
+      background: linear-gradient(160deg, #635bff, #00d4ff 55%, transparent);
+      transform: skewY(-14deg); opacity: 0.16; pointer-events: none;
+    }
+    .dark .kicker { color: var(--cyan); }
+    .dark .kicker::before { background: var(--cyan); }
+    .dark h2 { color: #fff; }
+    .dark .lead { color: #9fb3c8; }
+    .dark .wrap { position: relative; display: grid; gap: 44px; }
+    @media (min-width: 880px) { .dark .wrap { grid-template-columns: 1fr 420px; align-items: center; } }
+    .price-card {
+      background: #fff; color: var(--navy); border-radius: 18px; padding: 30px;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.35);
+    }
+    .price-card .tag { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blurple); }
+    .price { font-size: 2.6rem; font-weight: 800; letter-spacing: -0.03em; margin: 8px 0 0; }
+    .price small { font-size: 1rem; font-weight: 500; color: var(--muted); }
+    .price-card .sub { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
+    .price-card hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
+    .ticks { list-style: none; }
+    .ticks li { padding: 7px 0 7px 28px; position: relative; font-size: 0.95rem; color: var(--muted); }
+    .ticks li::before { content: "✓"; position: absolute; left: 2px; color: var(--green); font-weight: 800; }
+    .cupo { font-weight: 700; color: var(--warn); font-size: 0.92rem; margin: 14px 0 10px; }
+    .price-card .btn { width: 100%; margin-top: 8px; }
+    .price-card .btn-wa { margin-top: 10px; }
+    .garantias { display: grid; gap: 18px; margin-top: 26px; }
+    .gar { display: flex; gap: 12px; align-items: flex-start; }
+    .gar .ico { font-size: 1.2rem; }
+    .gar p { font-size: 0.95rem; color: #9fb3c8; }
+    .gar b { color: #fff; }
+
+    /* ── Bento "Qué ves": superficies de producto ─────────── */
+    .bento { display: grid; gap: 16px; margin-top: 40px; }
+    @media (min-width: 860px) {
+      .bento { grid-template-columns: repeat(6, 1fr); }
+      .b-span4 { grid-column: span 4; }
+      .b-span3 { grid-column: span 3; }
+      .b-span2 { grid-column: span 2; }
+      .b-span6 { grid-column: span 6; }
+    }
+    .bcell {
+      background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 20px 22px; position: relative; overflow: hidden;
+    }
+    .bcell .tag {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--faint); margin-bottom: 14px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .bcell .live { color: var(--green); }
+    .bcell .live::before { content: "●"; margin-right: 6px; font-size: 0.6rem; animation: blink 2.4s infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .bcell h3 { font-size: 0.98rem; margin-bottom: 2px; letter-spacing: -0.01em; }
+    .bcell > p { color: var(--muted); font-size: 0.88rem; }
+
+    /* panel de rendición */
+    .rend-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 4px; }
+    .rend-head b { font-size: 0.95rem; }
+    .rend-head small { color: var(--faint); font-size: 0.75rem; font-weight: 600; }
+    .rend-row {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+      padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 0.85rem;
+    }
+    .rend-row:last-child { border-bottom: none; }
+    .rend-row .who b { display: block; font-size: 0.88rem; }
+    .rend-row .who small { color: var(--faint); font-size: 0.72rem; font-weight: 600; }
+    .rend-row .amt { font-variant-numeric: tabular-nums; text-align: right; color: var(--muted); font-size: 0.82rem; }
+    .rend-row .amt b { color: var(--navy); }
+    .rend-row.hot { background: #fff8f2; margin: 0 -22px; padding-left: 22px; padding-right: 22px; }
+    .mono { font-variant-numeric: tabular-nums; }
+
+    /* barra dividida efectivo/QR */
+    .bignum { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; }
+    .bignum small { font-size: 0.8rem; font-weight: 600; color: var(--faint); }
+    .splitbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin: 12px 0 8px; }
+    .splitbar i { display: block; height: 100%; }
+    .sb-cash { background: var(--green); }
+    .sb-qrok { background: var(--cyan); }
+    .sb-qrwarn { background: repeating-linear-gradient(45deg, #f59e42, #f59e42 4px, #d97c1e 4px, #d97c1e 8px); }
+    .legend { font-size: 0.76rem; color: var(--muted); }
+    .legend li { display: flex; justify-content: space-between; padding: 3px 0; list-style: none; }
+    .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; }
+
+    /* barras horizontales por puesto */
+    .hbar-row { display: grid; grid-template-columns: 88px 1fr auto; gap: 10px; align-items: center; font-size: 0.8rem; padding: 5px 0; }
+    .hbar-row .name { color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hbar-row .val { font-weight: 700; font-size: 0.8rem; }
+    .hbar { height: 9px; border-radius: 5px; background: #e8eef5; position: relative; overflow: hidden; }
+    .hbar i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--blurple); }
+    .hbar .merma { background: repeating-linear-gradient(45deg,#f59e42,#f59e42 3px,#e07f1a 3px,#e07f1a 6px); }
+    .hbar-note { font-size: 0.74rem; color: var(--warn); font-weight: 600; margin-top: 8px; }
+
+    /* barras verticales 4 semanas */
+    .vbars { display: flex; gap: 10px; align-items: flex-end; height: 74px; margin-top: 14px; }
+    .vbar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+    .vbar i { width: 100%; border-radius: 5px 5px 0 0; background: #dfe7f0; }
+    .vbar.cur i { background: linear-gradient(180deg, var(--blurple), #8f8aff); }
+    .vbar small { font-size: 0.68rem; color: var(--faint); font-weight: 700; }
+    .vbar.cur small { color: var(--blurple); }
+
+    /* lista de precios */
+    .plist { font-size: 0.85rem; }
+    .plist .pr { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+    .plist .pr:last-child { border: none; }
+    .plist .pr b { font-variant-numeric: tabular-nums; }
+    .plist .pr .up { color: var(--warn); font-size: 0.72rem; font-weight: 700; }
+    .plist .pr .up::before { content: "↑"; margin-right: 2px; }
+
+    /* celda dark privacidad */
+    .bcell.dark-cell { background: var(--navy); border-color: var(--navy); color: #cfdce8; display: flex; gap: 16px; align-items: center; }
+    .bcell.dark-cell .ico { font-size: 1.5rem; }
+    .bcell.dark-cell h3 { color: #fff; }
+    .bcell.dark-cell p { color: #9fb3c8; font-size: 0.86rem; margin-top: 3px; }
+
+    /* ── Para quién es ────────────────────────────────────── */
+    .fitcols { display: grid; gap: 18px; margin-top: 36px; }
+    @media (min-width: 700px) { .fitcols { grid-template-columns: 1fr 1fr; } }
+    .fit { border-radius: var(--radius); padding: 26px; border: 1px solid var(--line); }
+    .fit.yes { background: #eafaf0; border-color: #b8e6c8; }
+    .fit.no  { background: #fdf0ec; border-color: #f0cfc0; }
+    .fit h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+    .fit ul { list-style: none; font-size: 0.97rem; }
+    .fit li { padding: 5px 0; color: var(--muted); }
+    .fit.yes li::before { content: "✓  "; color: var(--green); font-weight: 800; }
+    .fit.no  li::before { content: "✕  "; color: #b33030; font-weight: 800; }
+
+    /* ── FAQ ──────────────────────────────────────────────── */
+    details { border-bottom: 1px solid var(--line); padding: 20px 0; }
+    summary { font-weight: 700; cursor: pointer; font-size: 1.02rem; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    summary::after { content: "+"; color: var(--blurple); font-size: 1.4rem; font-weight: 400; transition: transform .2s; }
+    details[open] summary::after { transform: rotate(45deg); }
+    details p { margin-top: 12px; color: var(--muted); font-size: 0.97rem; max-width: 60ch; }
+
+    /* ── Footer + CTA fijo ────────────────────────────────── */
+    footer { background: var(--navy); color: #9fb3c8; padding: 44px 0 120px; font-size: 0.88rem; }
+    footer .logo { color: #fff; font-size: 1.2rem; }
+    footer p { margin-top: 10px; }
+    .sticky {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+      background: rgba(255,255,255,0.94); backdrop-filter: blur(8px);
+      border-top: 1px solid var(--line);
+      padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+    }
+    .sticky .wrap { display: flex; gap: 10px; padding: 0; max-width: 640px; }
+    .sticky .btn { padding: 12px 10px; font-size: 0.95rem; flex: 1; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="wrap">
+      <a class="logo" href="#">Tu<b>Puesto</b></a>
+      <div class="nav-links">
+        <a href="#como">Cómo funciona</a>
+        <a href="#queves">Qué ves</a>
+        <a href="#precio">Precio</a>
+        <a href="#faq">Preguntas</a>
+        <a class="nav-cta" data-mp href="#">Reservar lugar</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <header class="hero">
+    <div class="wrap">
+      <div>
+        <p class="kicker">Para dueños con 2 o más puestos</p>
+        <h1>Sabé cuánto vendieron hoy <em>tus puestos.</em></h1>
+        <p class="sub">La rendición de cada vendedor al cierre del día: cuánta mercadería salió, cuánto volvió, cuánta plata entró — y a qué cuenta cayó cada QR. Sin planillas. Sin perseguir a nadie por WhatsApp.</p>
+        <div class="cta-row">
+          <a class="btn btn-dark" data-mp href="#">Reservar mi lugar <span class="arr">→</span></a>
+          <a class="btn btn-wa" data-wa href="#">Consultar por WhatsApp</a>
+        </div>
+        <p class="hero-note">Seña $13.000 · 100% reembolsable · 45 días de piloto gratis</p>
+      </div>
+
+      <!-- Mockup de producto: la rendición real -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="phone">
+          <div class="screen">
+            <div class="scr-head"><b>Cierre de hoy</b><span>3 puestos · 21:40</span></div>
+            <div class="puesto">
+              <div class="top"><span>Marcos</span><small>Feria Central</small></div>
+              <div class="row"><span>Esperado</span><span>$210.000</span></div>
+              <div class="row"><span>Contado</span><span><b>$210.000</b></span></div>
+              <span class="pill pill-ok">✓ Sin diferencia</span>
+            </div>
+            <div class="puesto">
+              <div class="top"><span>Alejandra</span><small>Plaza Italia</small></div>
+              <div class="row"><span>Esperado</span><span>$168.400</span></div>
+              <div class="row"><span>Contado</span><span><b>$152.000</b></span></div>
+              <div class="row"><span>Merma declarada</span><span>18 u.</span></div>
+              <span class="pill pill-warn">⚠ Faltan $16.400</span>
+            </div>
+            <div class="puesto">
+              <div class="top"><span>Diego</span><small>Costanera</small></div>
+              <div class="row"><span>QR cobrados</span><span>$38.500</span></div>
+              <div class="row"><span>→ cuenta del vendedor</span><span><b>$38.500</b></span></div>
+              <span class="pill pill-warn">⚠ QR fuera de tu cuenta</span>
+            </div>
+          </div>
+        </div>
+        <div class="float-card">
+          <small>Hoy, 21:42</small>
+          Diego declaró $0 en QR. Sus otros días promedian $30.000.
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="stripe-band" aria-hidden="true"></div>
+
+  <!-- ═══ EL PROBLEMA ═══ -->
+  <section>
+    <div class="wrap">
+      <p class="kicker">El problema</p>
+      <h2>El cuaderno no te dice cuándo te falta plata</h2>
+      <p class="lead">Rendir con papel, WhatsApp o memoria tiene un problema de fondo: anota lo que el vendedor dice, no lo que pasó.</p>
+      <div class="grid g3">
+        <div class="cell">
+          <span class="ico">🕳️</span>
+          <h3>El faltante se descubre tarde</h3>
+          <p>Cuando te das cuenta, ya pasaron semanas. Y nunca sabés si fue error, merma o mano larga.</p>
+        </div>
+        <div class="cell">
+          <span class="ico">📲</span>
+          <h3>El QR puede caer a cualquier cuenta</h3>
+          <p>Si el cliente paga al alias del vendedor, esa plata nunca aparece en tu caja. En Argentina ya pasó: empleados cobraban a su alias y nadie lo vio hasta cruzar datos.</p>
+        </div>
+        <div class="cell">
+          <span class="ico">🌫️</span>
+          <h3>Cada puesto es una caja negra</h3>
+          <p>No sabés cuál rinde más, cuál merma más, ni cuánto pedirle al panadero la semana que viene.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CÓMO FUNCIONA ═══ -->
+  <section id="como" style="background:var(--white);">
+    <div class="wrap">
+      <p class="kicker">Cómo funciona</p>
+      <h2>10 minutos por día. Cero planillas.</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="n">1</div>
+          <div>
+            <h3>A la mañana, cargás lo que sale</h3>
+            <p>Mercadería que llevó cada vendedor y el fondo de caja. Lo cargás vos, desde tu celular — no depende del vendedor.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <div>
+            <h3>Al cierre, el vendedor cuenta</h3>
+            <p>Lo que quedó sin vender, lo que se mermó, el efectivo y los QR que cobró. Solo cuenta cosas físicas — no "declara ventas".</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <div>
+            <h3>Vos ves la diferencia al instante</h3>
+            <p>Esperado vs. contado, por puesto, separando efectivo y digital y marcando a qué cuenta cayó cada QR. Si hay faltante, lo ves el mismo día — no a fin de mes.</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <b>Funciona sin internet en el puesto.</b> Todo se guarda en el celular del vendedor y se sincroniza cuando hay señal. Y tus datos son tuyos: es tu libreta privada, no reporta a AFIP ni a nadie.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ QUÉ VES ═══ -->
+  <section id="queves">
+    <div class="wrap">
+      <p class="kicker">Visibilidad</p>
+      <h2>Esto es lo que vas a mirar a la noche</h2>
+      <p class="lead">Tu panel del día. Números reales, no promesas.</p>
+
+      <div class="bento">
+        <!-- Panel de rendición (tarjeta grande) -->
+        <div class="bcell b-span4">
+          <div class="tag">Rendición diaria <span class="live">en vivo</span></div>
+          <div class="rend-head"><b>Martes 21</b><small>3 puestos · 2 cerrados</small></div>
+          <div class="rend-row">
+            <div class="who"><b>Marcos</b><small>Feria Central</small></div>
+            <div class="amt">esp. $210.000<br><b>$210.000</b></div>
+            <span class="pill pill-ok">✓ 19:55</span>
+          </div>
+          <div class="rend-row hot">
+            <div class="who"><b>Alejandra</b><small>Plaza Italia · merma 18 u.</small></div>
+            <div class="amt">esp. $168.400<br><b>$152.000</b></div>
+            <span class="pill pill-warn">⚠ −$16.400</span>
+          </div>
+          <div class="rend-row">
+            <div class="who"><b>Diego</b><small>Costanera</small></div>
+            <div class="amt">todavía abierto<br><b>—</b></div>
+            <span class="pill" style="background:#e8eef5;color:var(--muted);">vendiendo</span>
+          </div>
+          <p style="margin-top:12px;">Cerró tarde, cerró mal o no cerró: lo sabés esa misma noche, no a fin de mes.</p>
+        </div>
+
+        <!-- Efectivo vs QR -->
+        <div class="bcell b-span2">
+          <div class="tag">Efectivo vs QR</div>
+          <div class="bignum mono">$431.900 <small>del día</small></div>
+          <div class="splitbar">
+            <i class="sb-cash" style="width:61%"></i>
+            <i class="sb-qrok" style="width:30%"></i>
+            <i class="sb-qrwarn" style="width:9%"></i>
+          </div>
+          <ul class="legend">
+            <li><span><i class="dot" style="background:var(--green);"></i>Efectivo</span><b class="mono">$263.000</b></li>
+            <li><span><i class="dot" style="background:var(--cyan);"></i>QR → tu cuenta</span><b class="mono">$130.400</b></li>
+            <li><span><i class="dot" style="background:#f59e42;"></i>QR → cuenta del vendedor</span><b class="mono">$38.500</b></li>
+          </ul>
+          <p style="margin-top:10px;">El QR no es una bolsa negra: sabés a qué cuenta cayó.</p>
+        </div>
+
+        <!-- Comparación entre puestos -->
+        <div class="bcell b-span2">
+          <div class="tag">Entre puestos</div>
+          <h3>¿Cuál rinde más?</h3>
+          <div class="hbar-row"><span class="name">F. Central</span><div class="hbar"><i style="width:100%"></i></div><span class="val mono">$210k</span></div>
+          <div class="hbar-row"><span class="name">P. Italia</span><div class="hbar"><i style="width:72%"></i></div><span class="val mono">$152k</span></div>
+          <div class="hbar-row"><span class="name">Costanera</span><div class="hbar"><i style="width:81%"></i></div><span class="val mono">$171k</span></div>
+          <p class="hbar-note">↑ Plaza Italia merma 3× más que el promedio</p>
+        </div>
+
+        <!-- Promedio 4 semanas -->
+        <div class="bcell b-span2">
+          <div class="tag">Tendencia</div>
+          <h3>Tus últimas 4 semanas</h3>
+          <div class="vbars">
+            <div class="vbar"><i style="height:62%"></i><small>S40</small></div>
+            <div class="vbar"><i style="height:74%"></i><small>S41</small></div>
+            <div class="vbar"><i style="height:58%"></i><small>S42</small></div>
+            <div class="vbar cur"><i style="height:88%"></i><small>esta</small></div>
+          </div>
+          <p style="margin-top:12px;"><b class="mono">+12%</b> vs. tu promedio → pedile más al panadero.</p>
+        </div>
+
+        <!-- Precios -->
+        <div class="bcell b-span2">
+          <div class="tag">Precios</div>
+          <div class="plist">
+            <div class="pr"><span>Chipá (u.)</span><span><b class="mono">$550</b> <span class="up">era $500</span></span></div>
+            <div class="pr"><span>Docena chipá</span><b class="mono">$6.000</b></div>
+            <div class="pr"><span>Sándwich</span><b class="mono">$4.800</b></div>
+            <div class="pr"><span>Gaseosa 500 ml</span><b class="mono">$2.500</b></div>
+          </div>
+          <p style="margin-top:10px;">Cambiás una vez → llega a los 3 puestos.</p>
+        </div>
+
+        <!-- Privacidad -->
+        <div class="bcell b-span6 dark-cell">
+          <span class="ico">🔒</span>
+          <div>
+            <h3>Tu libreta privada. Punto.</h3>
+            <p>No factura, no reporta a AFIP ni a nadie. Es tu cuaderno de siempre — solo que no se puede "acomodar" después.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ OFERTA / PRECIO (dark) ═══ -->
+  <section id="precio" class="dark">
+    <div class="wrap">
+      <div>
+        <p class="kicker">Programa de fundadores</p>
+        <h2>Los primeros 20 negocios fijan el precio y el producto</h2>
+        <p class="lead">Buscamos dueños reales para construir con ellos. Tu palabra pesa: el grupo de fundadores decide qué se construye después.</p>
+        <div class="garantias">
+          <div class="gar"><span class="ico">🛡️</span><p><b>Seña 100% reembolsable.</b> Si no te sirve en el piloto o si no lanzamos, te devolvemos todo. Sin letra chica.</p></div>
+          <div class="gar"><span class="ico">🔒</span><p><b>Precio congelado de por vida.</b> Los fundadores pagan $12.900/mes para siempre, aunque el precio suba.</p></div>
+          <div class="gar"><span class="ico">🧪</span><p><b>45 días de piloto gratis.</b> Lo probás con tus puestos reales antes de pagar el primer mes.</p></div>
+        </div>
+      </div>
+      <div class="price-card">
+        <span class="tag">Precio fundador</span>
+        <p class="price">$12.900<small>/mes</small></p>
+        <p class="sub">Hasta 3 puestos incluidos · puesto extra $3.000/mes</p>
+        <hr>
+        <p style="font-weight:700;">Seña de reserva: $13.000</p>
+        <ul class="ticks">
+          <li>Se descuenta del primer mes</li>
+          <li>45 días de piloto gratis al lanzar tu cuenta</li>
+          <li>Devolución total si no te sirve o no lanzamos</li>
+          <li>Acceso al grupo de fundadores</li>
+        </ul>
+        <p class="cupo">Quedan <span data-cupos>20</span> lugares.</p>
+        <a class="btn btn-dark" data-mp href="#">Reservar con Mercado Pago</a>
+        <a class="btn btn-wa" data-wa href="#">Prefiero hablar primero</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PARA QUIÉN ═══ -->
+  <section>
+    <div class="wrap">
+      <p class="kicker">Para quién es</p>
+      <h2>Sé honesto: ¿esto es para vos?</h2>
+      <div class="fitcols">
+        <div class="fit yes">
+          <h3>Sí, si...</h3>
+          <ul>
+            <li>Tenés 2 o más puestos o vendedores</li>
+            <li>No podés estar en todos lados a la vez</li>
+            <li>Hoy rendís con cuaderno, WhatsApp o memoria</li>
+            <li>Querés saber el mismo día si falta plata</li>
+          </ul>
+        </div>
+        <div class="fit no">
+          <h3>No, si...</h3>
+          <ul>
+            <li>Atendés vos solo, un solo puesto</li>
+            <li>Buscás facturación electrónica (no somos eso)</li>
+            <li>Todos tus vendedores son familia y no querés controlar nada</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section id="faq" style="background:var(--white);">
+    <div class="wrap">
+      <p class="kicker">Preguntas frecuentes</p>
+      <h2>Lo que todos preguntan</h2>
+      <details>
+        <summary>¿Mis vendedores tienen que instalar algo?</summary>
+        <p>Sí, una app liviana en su celular (Android). Al cierre del día cuenta lo que quedó — no tiene que anotar cada venta. Funciona sin internet y sincroniza después.</p>
+      </details>
+      <details>
+        <summary>¿Esto le manda datos a AFIP? ¿Queda registrado en algún lado oficial?</summary>
+        <p>No. Es tu herramienta privada de control interno, como tu cuaderno — pero que no se puede "dibujar" después. No emitimos facturas ni reportamos a ningún organismo.</p>
+      </details>
+      <details>
+        <summary>¿Y si el cliente paga el QR al alias del vendedor?</summary>
+        <p>Justamente para eso existe TuPuesto. Cada cobro QR queda registrado separado del efectivo, y vos definís a qué cuenta debería caer. Un puesto que declara "cero QR" toda la semana es una anomalía visible.</p>
+      </details>
+      <details>
+        <summary>¿Qué pasa si pago la seña y después no me convence?</summary>
+        <p>Tenés 45 días de piloto gratis para probarlo con tus puestos reales. Si no te sirve, te devolvemos la seña completa. Si no llegamos a lanzar, también.</p>
+      </details>
+      <details>
+        <summary>¿Cuánto tiempo me lleva usarlo?</summary>
+        <p>Unos 10 minutos por día: cargar lo que sale a la mañana y mirar la rendición a la noche. El resto lo hace solo.</p>
+      </details>
+      <details>
+        <summary>¿Necesito internet en el puesto?</summary>
+        <p>No. Funciona offline en el celular del vendedor y se sincroniza cuando hay señal.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span class="logo">Tu<b>Puesto</b></span>
+      <p>Control de puestos para dueños que no pueden estar en todos lados. Hecho en Argentina. Precios en pesos argentinos.</p>
+    </div>
+  </footer>
+
+  <div class="sticky">
+    <div class="wrap">
+      <a class="btn btn-dark" data-mp href="#" style="flex:1.4;">Reservar — $13.000</a>
+      <a class="btn btn-wa" data-wa href="#" style="flex:1;">WhatsApp</a>
+    </div>
+  </div>
+
+  <script>
+    // ═══ CONFIG — editar estos 3 valores antes de publicar ═══
+    const WA_NUMBER = "5493884558285";            // WhatsApp del fundador (54+9+3884558285)
+    const MP_LINK   = "https://mpago.la/TU_LINK"; // TODO: link de pago Mercado Pago $13.000 (el fundador lo pasa)
+    const CUPOS     = 20;                         // cupos de fundador restantes
+    // ════════════════════════════════════════════════════════
+
+    const waMsg = encodeURIComponent(
+      "Hola, vi la página de TuPuesto. Tengo un negocio con puestos/vendedores y quiero más info sobre la reserva de fundador."
+    );
+    document.querySelectorAll("[data-wa]").forEach(a => {
+      a.href = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
+    });
+    document.querySelectorAll("[data-mp]").forEach(a => { a.href = MP_LINK; });
+    document.querySelectorAll("[data-cupos]").forEach(el => { el.textContent = CUPOS; });
+  </script>
+</body>
+</html>

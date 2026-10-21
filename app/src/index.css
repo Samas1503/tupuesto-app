@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/* ── Marca (Tailwind utilidades sueltas) ──────────────────── */
+@theme {
+  --color-navy: #0a2540;
+  --color-blurple: #635bff;
+  --color-paper: #f6f9fc;
+  --color-warm: #b84900;
+}
+
+/* ── Marca → tokens semánticos HeroUI v3 ──────────────────── */
+:root, [data-theme='light'] {
+  --background: #f6f9fc;            /* paper */
+  --foreground: #0a2540;            /* navy */
+  --surface: #ffffff;
+  --surface-foreground: #0a2540;
+  --surface-secondary: #f6f9fc;
+  --surface-secondary-foreground: #0a2540;
+  --surface-tertiary: #eef3f8;
+  --surface-tertiary-foreground: #0a2540;
+  --muted: #425466;
+  --border: #e6ebf1;
+  --separator: #e6ebf1;
+  --radius: 0.625rem;
+
+  --accent: #635bff;                /* blurple */
+  --accent-foreground: #ffffff;
+  --success: #0f6b3a;
+  --success-foreground: #ffffff;
+  --warning: #f59e42;
+  --warning-foreground: #4a2c00;
+  --danger: #b84900;
+  --danger-foreground: #ffffff;
+  --link: #635bff;
+
+  /* data-viz: barras del día / merma — sin componente nativo */
+  --viz-cash: #0f6b3a;
+  --viz-qr: #00d4ff;
+  --viz-qr-warn: repeating-linear-gradient(45deg, #f59e42, #f59e42 4px, #d97c1e 4px, #d97c1e 8px);
+  --viz-track: #e8eef5;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
