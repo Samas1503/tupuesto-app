@@ -25,6 +25,11 @@ export function fmtFecha(iso: string): string {
   return `${DIAS[new Date(y, m - 1, d).getDay()]} ${d}/${m}`
 }
 
+export function fmtFechaCorta(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number)
+  return `${d}/${m}`
+}
+
 export function fmtHora(ts: number): string {
   const d = new Date(ts)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`

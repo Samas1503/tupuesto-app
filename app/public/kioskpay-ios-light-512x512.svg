@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+            <defs>
+              <linearGradient id="iosLightBg" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF" />
+                <stop offset="100%" stop-color="#F1F5F9" />
+              </linearGradient>
+              <filter id="iosShadow" x="-10%" y="-10%" width="120%" height="120%">
+                <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#0f172a" flood-opacity="0.12" />
+              </filter>
+            </defs>
+            <!-- iOS Squircle Frame (22.5% radius standard) -->
+            <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#iosLightBg)" stroke="#E2E8F0" stroke-width="4" filter="url(#iosShadow)"/>
+            <g transform="translate(0, 4)">
+              
+        <!-- AWNING BACKGROUND & CURVATURE -->
+        <defs>
+          <clipPath id="awningClip_ios_light">
+            <path d="M 125,145 L 387,145 L 382,90 Q 256,76 130,90 Z" />
+          </clipPath>
+        </defs>
+
+        <!-- Awning Body -->
+        <path d="M 124,148 L 388,148 L 383,88 Q 256,74 129,88 Z" fill="#5FD536" />
+
+        <!-- Awning Stripes -->
+        <g clip-path="url(#awningClip_ios_light)">
+          <polygon points="120,70 162,70 162,150 120,150" fill="#5FD536" />
+          <polygon points="162,70 200,70 200,150 162,150" fill="#F1F5F9" />
+          <polygon points="200,70 237,70 237,150 200,150" fill="#5FD536" />
+          <polygon points="237,70 275,70 275,150 237,150" fill="#F1F5F9" />
+          <polygon points="275,70 312,70 312,150 275,150" fill="#5FD536" />
+          <polygon points="312,70 350,70 350,150 312,150" fill="#F1F5F9" />
+          <polygon points="350,70 392,70 392,150 350,150" fill="#5FD536" />
+        </g>
+
+        <!-- Awning Scallops Shadow Layer -->
+        <path d="
+          M 122,142 
+          C 122,142 120,172 138,172 
+          C 156,172 156,145 174,145 
+          C 192,145 192,172 210,172 
+          C 228,172 228,145 246,145 
+          C 264,145 264,172 282,172 
+          C 300,172 300,145 318,145 
+          C 336,145 336,172 354,172 
+          C 372,172 372,145 390,145
+          L 390,138 
+          L 122,138 Z" 
+          fill="#1E293B" />
+
+        <!-- Scallop Waves with outline stroke -->
+        <path d="M 125,138 C 125,138 123,166 138,166 C 153,166 153,138 153,138 Z" fill="#5FD536" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M 153,138 C 153,138 153,166 174,166 C 195,166 195,138 195,138 Z" fill="#F1F5F9" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M 195,138 C 195,138 195,166 216,166 C 237,166 237,138 237,138 Z" fill="#5FD536" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M 237,138 C 237,138 237,166 258,166 C 279,166 279,138 279,138 Z" fill="#F1F5F9" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M 279,138 C 279,138 279,166 300,166 C 321,166 321,138 321,138 Z" fill="#5FD536" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M 321,138 C 321,138 321,166 342,166 C 363,166 363,138 363,138 Z" fill="#F1F5F9" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        <path d="M 363,138 C 363,138 363,166 381,166 C 396,166 388,138 388,138 Z" fill="#5FD536" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+
+        <!-- Roof Border Arch -->
+        <path d="M 125,142 L 129,88 Q 256,74 383,88 L 387,142" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Support Poles -->
+        <line x1="172" y1="166" x2="172" y2="280" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+        <line x1="346" y1="166" x2="346" y2="340" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+
+        <!-- Right Pole Foot Base -->
+        <path d="M 346,330 L 346,355 L 386,355" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Cash Register / Machine on Counter -->
+        <rect x="272" y="222" width="50" height="24" rx="7" fill="#5FD536" stroke="#1E293B" stroke-width="8" stroke-linejoin="round"/>
+        
+        <!-- Main Desk Counter -->
+        <rect x="230" y="246" width="130" height="66" rx="10" fill="#6DE043" stroke="#1E293B" stroke-width="9" stroke-linejoin="round"/>
+        <!-- Desk Bottom Shadow Edge -->
+        <path d="M 230,302 L 350,302" stroke="#4EBE27" stroke-width="8" stroke-linecap="round"/>
+
+        <!-- Ground Line Accent -->
+        <line x1="258" y1="355" x2="318" y2="355" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+
+        <!-- RECEIPT / INVOICE CARD -->
+        <g id="receipt_layer_ios_light">
+          <path d="
+            M 148,242 
+            L 204,242 
+            C 204,242 208,252 216,252 
+            C 224,252 227,242 236,242 
+            L 236,400 
+            C 236,406 231,411 225,411 
+            L 148,411 
+            C 142,411 137,406 137,400 
+            L 137,253 
+            C 137,247 142,242 148,242 Z" 
+            fill="#FFFFFF" 
+            stroke="#1E293B" 
+            stroke-width="9" 
+            stroke-linejoin="round"/>
+
+          <path d="M 221,242 L 235,242" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+
+          <!-- Top Item Line -->
+          <line x1="162" y1="282" x2="210" y2="282" stroke="#1E293B" stroke-width="8" stroke-linecap="round"/>
+
+          <!-- VERIFIED GREEN CHECKMARK -->
+          <path d="M 164,324 L 180,342 L 210,310" 
+                fill="none" 
+                stroke="#22C55E" 
+                stroke-width="12" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"/>
+
+          <!-- Receipt Details Dashes -->
+          <line x1="162" y1="368" x2="175" y2="368" stroke="#1E293B" stroke-width="8" stroke-linecap="round"/>
+          <line x1="189" y1="368" x2="211" y2="368" stroke="#1E293B" stroke-width="8" stroke-linecap="round"/>
+          
+          <line x1="162" y1="384" x2="175" y2="384" stroke="#1E293B" stroke-width="8" stroke-linecap="round"/>
+          <line x1="189" y1="384" x2="204" y2="384" stroke="#1E293B" stroke-width="8" stroke-linecap="round"/>
+        </g>
+      
+            </g>
+          </svg>

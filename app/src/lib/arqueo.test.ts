@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import type { Cierre, Jornada, Producto } from '../types'
+import type { Cierre, Jornada, Producto, Venta } from '../types'
 import {
   cobrado,
+  cruceCierre,
   despachoValor,
   diferencia,
   esperado,
+  gananciaPotencial,
   mermaUnidades,
   mermaValor,
   qrEnCero,
   qrFueraDeCuenta,
+  stockActual,
   totalVentas,
   vendidos,
+  vendidosRegistrados,
+  ventasTotal,
 } from './arqueo'
 
 // Mocks del dominio — sin DB. La fórmula es la única fuente (R13):
@@ -42,6 +47,17 @@ function cierre(partial: Partial<Cierre> = {}): Cierre {
     qrTotal: 0,
     qrDestino: 'negocio',
     cerradaAt: 0,
+    ...partial,
+  }
+}
+
+function venta(partial: Partial<Venta> = {}): Venta {
+  return {
+    jornadaId: 1,
+    items: [],
+    total: 0,
+    metodoPago: 'efectivo',
+    createdAt: 0,
     ...partial,
   }
 }
@@ -261,5 +277,108 @@ describe('caso realista del wedge', () => {
     expect(diferencia(j, productos)).toBe(-5000)
     expect(qrEnCero(j)).toBe(true)
     expect(qrFueraDeCuenta(j)).toBe(false)
+  })
+})
+
+describe('ventasTotal / vendidosRegistrados', () => {
+  const ventas = [
+    venta({
+      items: [
+        { productoId: 1, cantidad: 3 },
+        { productoId: 2, cantidad: 1 },
+      ],
+      total: 3 * 550 + 300,
+      metodoPago: 'efectivo',
+    }),
+    venta({
+      items: [{ productoId: 1, cantidad: 2 }],
+      total: 2 * 550,
+      metodoPago: 'qr',
+    }),
+  ]
+
+  it('ventasTotal suma los totales de cada venta', () => {
+    expect(ventasTotal(ventas)).toBe(3050)
+    expect(ventasTotal([])).toBe(0)
+  })
+
+  it('vendidosRegistrados suma unidades del producto entre ventas', () => {
+    expect(vendidosRegistrados(ventas, 1)).toBe(5)
+    expect(vendidosRegistrados(ventas, 2)).toBe(1)
+  })
+
+  it('producto sin registrar da 0', () => {
+    expect(vendidosRegistrados(ventas, 99)).toBe(0)
+  })
+})
+
+describe('gananciaPotencial', () => {
+  const j = jornada({
+    despacho: [
+      { productoId: 1, cantidad: 10 },
+      { productoId: 2, cantidad: 4 },
+    ],
+  })
+
+  it('es Σ despacho × (precio − costo)', () => {
+    const conCosto: Producto[] = [
+      { id: 1, nombre: 'Choripán', precio: 550, precioCosto: 380, activo: true, orden: 1 },
+      { id: 2, nombre: 'Papas', precio: 300, precioCosto: 150, activo: true, orden: 2 },
+    ]
+    // chori: 10 × (550−380) = 1700; papas: 4 × (300−150) = 600
+    expect(gananciaPotencial(j, conCosto)).toBe(2300)
+  })
+
+  it('sin precioCosto usa 0 (toda la venta es margen)', () => {
+    // chori: 10 × 550 = 5500; papas: 4 × 300 = 1200
+    expect(gananciaPotencial(j, productos)).toBe(6700)
+  })
+})
+
+describe('stockActual', () => {
+  const j = jornada({ despacho: [{ productoId: 1, cantidad: 20 }] })
+
+  it('es despachado − vendido registrado', () => {
+    const ventas = [
+      venta({ items: [{ productoId: 1, cantidad: 4 }] }),
+      venta({ items: [{ productoId: 1, cantidad: 3 }] }),
+    ]
+    expect(stockActual(j, ventas, 1)).toBe(13)
+  })
+
+  it('clampa a 0 si el registro supera lo despachado', () => {
+    const ventas = [venta({ items: [{ productoId: 1, cantidad: 25 }] })]
+    expect(stockActual(j, ventas, 1)).toBe(0)
+  })
+
+  it('sin ventas registradas queda todo el despacho', () => {
+    expect(stockActual(j, [], 1)).toBe(20)
+  })
+})
+
+describe('cruceCierre', () => {
+  // conteo físico: despacho 10, vuelven 2 → vendidos 8 × 550 = 4400
+  const j = jornada({
+    estado: 'cerrada',
+    despacho: [{ productoId: 1, cantidad: 10 }],
+    cierre: cierre({ remanente: [{ productoId: 1, cantidad: 2 }] }),
+  })
+
+  it('es 0 cuando el registro iguala el conteo físico', () => {
+    const ventas = [
+      venta({ items: [{ productoId: 1, cantidad: 5 }] }),
+      venta({ items: [{ productoId: 1, cantidad: 3 }] }),
+    ]
+    expect(cruceCierre(j, ventas, productos)).toBe(0)
+  })
+
+  it('es positivo cuando faltan registrar ventas', () => {
+    // registró 5, el conteo dice 8 → faltan 3 × 550
+    const ventas = [venta({ items: [{ productoId: 1, cantidad: 5 }] })]
+    expect(cruceCierre(j, ventas, productos)).toBe(1650)
+  })
+
+  it('sin ventas registradas es todo lo vendido según conteo', () => {
+    expect(cruceCierre(j, [], productos)).toBe(4400)
   })
 })

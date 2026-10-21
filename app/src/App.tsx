@@ -1,21 +1,24 @@
 import { useState } from 'react'
 import { Tabs, ToggleButton, ToggleButtonGroup } from '@heroui/react'
+import { Icon } from '@iconify/react'
 import type { Rol } from './types'
 import Hoy from './views/Hoy'
 import Despacho from './views/Despacho'
 import Catalogo from './views/Catalogo'
 import Puestos from './views/Puestos'
+import Vendedores from './views/Vendedores'
 import Historial from './views/Historial'
 import MiDia from './views/MiDia'
 
-type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'historial'
+type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'vendedores' | 'historial'
 
-const NAV_DUENIO: { id: Vista; label: string; ico: string }[] = [
-  { id: 'hoy', label: 'Hoy', ico: '📋' },
-  { id: 'despacho', label: 'Despacho', ico: '📦' },
-  { id: 'catalogo', label: 'Precios', ico: '🏷️' },
-  { id: 'puestos', label: 'Puestos', ico: '📍' },
-  { id: 'historial', label: 'Historial', ico: '📊' },
+const NAV_DUENIO: { id: Vista; label: string; icon: string }[] = [
+  { id: 'hoy', label: 'Hoy', icon: 'tabler:clipboard-check' },
+  { id: 'despacho', label: 'Despacho', icon: 'tabler:package' },
+  { id: 'catalogo', label: 'Precios', icon: 'tabler:tag' },
+  { id: 'puestos', label: 'Puestos', icon: 'tabler:building-store' },
+  { id: 'vendedores', label: 'Equipo', icon: 'tabler:users' },
+  { id: 'historial', label: 'Stats', icon: 'tabler:chart-bar' },
 ]
 
 export default function App() {
@@ -38,7 +41,12 @@ export default function App() {
         <div className="absolute -top-28 -right-16 w-64 h-64 rounded-full bg-[#00d4ff]/15 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-baseline gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <img
+              src="/kioskpay-ios-light-512x512.svg"
+              alt=""
+              className="h-8 w-8 rounded-[9px] shrink-0"
+            />
             <span className="font-extrabold tracking-tight text-xl leading-none">
               Tu<span className="text-[#8f8aff]">Puesto</span>
             </span>
@@ -78,6 +86,7 @@ export default function App() {
             {vista === 'despacho' && <Despacho />}
             {vista === 'catalogo' && <Catalogo />}
             {vista === 'puestos' && <Puestos />}
+            {vista === 'vendedores' && <Vendedores />}
             {vista === 'historial' && <Historial />}
           </>
         ) : (
@@ -101,7 +110,7 @@ export default function App() {
                     id={item.id}
                     className="flex-1 flex-col gap-0.5 !h-auto py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-[0.68rem] font-semibold"
                   >
-                    <span className="text-lg leading-none">{item.ico}</span>
+                    <Icon icon={item.icon} className="text-xl leading-none" />
                     {item.label}
                     <Tabs.Indicator className="!rounded-none !h-0.5 !bottom-0 !top-auto" />
                   </Tabs.Tab>

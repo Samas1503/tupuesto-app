@@ -44,8 +44,76 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
 }
 
 .num {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Animaciones del sistema ────────────────────────────── */
+
+/* entrada suave: todo hijo directo de las columnas de vistas */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+main > .flex.flex-col > * {
+  animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* stagger: cada hijo un toque después */
+main > .flex.flex-col > *:nth-child(1) { animation-delay: 0.03s; }
+main > .flex.flex-col > *:nth-child(2) { animation-delay: 0.08s; }
+main > .flex.flex-col > *:nth-child(3) { animation-delay: 0.13s; }
+main > .flex.flex-col > *:nth-child(4) { animation-delay: 0.18s; }
+main > .flex.flex-col > *:nth-child(5) { animation-delay: 0.23s; }
+main > .flex.flex-col > *:nth-child(n+6) { animation-delay: 0.28s; }
+
+/* cards vivas: lift + sombra en hover/press */
+[class*="card" i][data-slot],
+main .flex.flex-col > * {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+main .flex.flex-col > *:hover {
+  transform: translateY(-2px);
+}
+main .flex.flex-col > *:active {
+  transform: translateY(0) scale(0.995);
+}
+
+/* números: parpadeo suave cuando aparecen (live data) */
+@keyframes pulseIn {
+  from { opacity: 0.4; }
+  to   { opacity: 1; }
+}
+.num { animation: pulseIn 0.35s ease-out; }
+
+/* chips: entrada pop */
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+[data-slot="chip"], [class*="chip" i] { animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* barras de viz: crecen desde la izquierda */
+@keyframes growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+main [style*="width"] { transform-origin: left; }
+
+/* foco visible amable para a11y */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* reducción de movimiento: respetar preferencia del sistema */
+@media (prefers-reduced-motion: reduce) {
+  main > .flex.flex-col > *,
+  .num,
+  [data-slot="chip"], [class*="chip" i] {
+    animation: none !important;
+  }
+  main .flex.flex-col > *:hover { transform: none; }
 }

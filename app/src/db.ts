@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Jornada, Linea, Producto, Puesto, Vendedor } from './types'
+import type { Jornada, Linea, Producto, Puesto, Solicitud, Vendedor, Venta } from './types'
 import { hoyISO, isoMenosDias } from './lib/format'
 
 export class TuPuestoDB extends Dexie {
@@ -7,14 +7,27 @@ export class TuPuestoDB extends Dexie {
   puestos!: Table<Puesto, number>
   vendedores!: Table<Vendedor, number>
   jornadas!: Table<Jornada, number>
+  ventas!: Table<Venta, number>
+  solicitudes!: Table<Solicitud, number>
 
   constructor() {
     super('tupuesto')
-    this.version(1).stores({
-      productos: '++id, orden, activo',
+    this.version(1).stores({      productos: '++id, orden, activo',
       puestos: '++id, activo',
       vendedores: '++id, puestoId, activo',
       jornadas: '++id, fecha, puestoId, vendedorId, estado, [fecha+puestoId]',
+    })
+    // v2: índice compuesto para "la jornada de ESTE vendedor hoy" (MiDia)
+    this.version(2).stores({
+      jornadas: '++id, fecha, puestoId, vendedorId, estado, [fecha+puestoId], [fecha+vendedorId]',
+    })
+    // v3: registro de ventas en el turno
+    this.version(3).stores({
+      ventas: '++id, jornadaId, createdAt',
+    })
+    // v4: solicitudes del vendedor al admin
+    this.version(4).stores({
+      solicitudes: '++id, estado, vendedorId, createdAt',
     })
   }
 }
@@ -35,19 +48,80 @@ function rng(seed: number) {
   }
 }
 
-export async function seedIfEmpty() {
-  if ((await db.puestos.count()) > 0) return
+/** placeholder chico (<500B): inicial del producto sobre el accent #635bff */
+const img = (letra: string) =>
+  `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%23635bff'/%3E%3Ctext x='32' y='42' font-size='32' fill='%23fff' text-anchor='middle' font-family='sans-serif'%3E${letra}%3C/text%3E%3C/svg%3E`
 
-  await db.transaction('rw', db.productos, db.puestos, db.vendedores, db.jornadas, async () => {
-    const productos: Omit<Producto, 'id'>[] = [
-      { nombre: 'Chipá (u.)', precio: 550, activo: true, orden: 1 },
-      { nombre: 'Docena chipá', precio: 6000, activo: true, orden: 2 },
-      { nombre: 'Sándwich de miga', precio: 4800, activo: true, orden: 3 },
-      { nombre: 'Medialuna', precio: 600, activo: true, orden: 4 },
-      { nombre: 'Gaseosa 500 ml', precio: 2500, activo: true, orden: 5 },
-      { nombre: 'Alfajor', precio: 1800, activo: true, orden: 6 },
-    ]
-    await db.productos.bulkAdd(productos as Producto[])
+const PRODUCTOS_SEED: Omit<Producto, 'id'>[] = [
+  { nombre: 'Chipá (u.)', precio: 550, precioCosto: 380, imagen: img('C'), ingredientes: 'almidón de mandioca, queso, huevo, manteca', activo: true, orden: 1 },
+  { nombre: 'Docena chipá', precio: 6000, precioCosto: 4000, imagen: img('D'), ingredientes: 'almidón de mandioca, queso, huevo, manteca', activo: true, orden: 2 },
+  { nombre: 'Sándwich de miga', precio: 4800, precioCosto: 3200, imagen: img('S'), ingredientes: 'pan de miga, jamón, queso, huevo, mayonesa', activo: true, orden: 3 },
+  { nombre: 'Medialuna', precio: 600, precioCosto: 380, imagen: img('M'), ingredientes: 'harina, manteca, azúcar, huevo, esencia de vainilla', activo: true, orden: 4 },
+  { nombre: 'Gaseosa 500 ml', precio: 2500, precioCosto: 1400, imagen: img('G'), activo: true, orden: 5 },
+  { nombre: 'Alfajor', precio: 1800, precioCosto: 1100, imagen: img('A'), ingredientes: 'dulce de leche, chocolate, tapitas de maizena', activo: true, orden: 6 },
+]
+
+/** DB ya seedeada de una versión vieja: completa precioCosto/imagen sin pisar datos */
+async function backfillProductos() {
+  const actuales = await db.productos.toArray()
+  const updates = actuales
+    .filter(p => p.precioCosto === undefined || p.imagen === undefined)
+    .map(p => {
+      const seed = PRODUCTOS_SEED.find(s => s.nombre === p.nombre)
+      if (!seed) return p
+      return { ...p, precioCosto: p.precioCosto ?? seed.precioCosto, imagen: p.imagen ?? seed.imagen }
+    })
+  if (updates.length) await db.productos.bulkPut(updates)
+}
+
+// backfill pins de vendedores en DBs viejas (match por nombre)
+const PINS_SEED: Record<string, string> = { Marcos: '1234', Alejandra: '2345', Diego: '3456' }
+async function backfillVendedores() {
+  const vs = await db.vendedores.toArray()
+  const faltan = vs.filter(v => !v.pin && PINS_SEED[v.nombre])
+    .map(v => ({ ...v, pin: PINS_SEED[v.nombre] }))
+  if (faltan.length) await db.vendedores.bulkPut(faltan)
+}
+
+/** hidrata la DB desde el archivo estático (demo Vercel) — devuelve false si no está */
+async function cargarDesdeSqlite(): Promise<boolean> {
+  try {
+    const res = await fetch('/tupuesto.sqlite')
+    if (!res.ok) return false
+    const initSqlJs = (await import('sql.js')).default
+    const SQL = await initSqlJs({ locateFile: () => '/sql-wasm.wasm' })
+    const sq = new SQL.Database(new Uint8Array(await res.arrayBuffer()))
+    const tablas = <T,>(q: string, map: (r: Record<string, unknown>) => T): T[] => {
+      const rs = sq.exec(q)
+      if (!rs.length) return []
+      return rs[0].values.map((row: unknown[]) => Object.fromEntries(rs[0].columns.map((c: string, i: number) => [c, row[i]])) as Record<string, unknown>).map(map)
+    }
+    const J = (v: unknown) => (v ? JSON.parse(v as string) : undefined)
+    await db.transaction('rw', [db.productos, db.puestos, db.vendedores, db.jornadas, db.ventas, db.solicitudes], async () => {
+      await db.productos.bulkPut(tablas('SELECT * FROM productos', r => ({ id: r.id as number, nombre: r.nombre as string, precio: r.precio as number, precioCosto: r.precioCosto as number ?? undefined, imagen: r.imagen as string ?? undefined, ingredientes: r.ingredientes as string ?? undefined, activo: !!r.activo, orden: r.orden as number })) as Producto[])
+      await db.puestos.bulkPut(tablas('SELECT * FROM puestos', r => ({ id: r.id as number, nombre: r.nombre as string, ubicacion: r.ubicacion as string, qrDestinoDefault: r.qrDestinoDefault as Puesto['qrDestinoDefault'], activo: !!r.activo })) as Puesto[])
+      await db.vendedores.bulkPut(tablas('SELECT * FROM vendedores', r => ({ id: r.id as number, nombre: r.nombre as string, puestoId: r.puestoId as number ?? undefined, email: r.email as string ?? undefined, pin: r.pin as string ?? undefined, debeCambiarPin: !!r.debeCambiarPin, activo: !!r.activo })) as Vendedor[])
+      await db.jornadas.bulkPut(tablas('SELECT * FROM jornadas', r => ({ id: r.id as number, puestoId: r.puestoId as number, vendedorId: r.vendedorId as number ?? undefined, fecha: r.fecha as string, fondoCaja: r.fondoCaja as number ?? undefined, despacho: J(r.despacho), reposiciones: J(r.reposiciones), estado: r.estado as Jornada['estado'], cierre: J(r.cierre), confirmadaAt: r.confirmadaAt as number ?? undefined, createdAt: r.createdAt as number })) as Jornada[])
+      await db.ventas.bulkPut(tablas('SELECT * FROM ventas', r => ({ id: r.id as number, jornadaId: r.jornadaId as number, items: J(r.items), total: r.total as number, metodoPago: r.metodoPago as Venta['metodoPago'], createdAt: r.createdAt as number })) as Venta[])
+      await db.solicitudes.bulkPut(tablas('SELECT * FROM solicitudes', r => ({ id: r.id as number, tipo: r.tipo as 'eliminar-usuario', vendedorId: r.vendedorId as number, solicitadoPor: r.solicitadoPor as number, motivo: r.motivo as string ?? undefined, estado: r.estado as 'pendiente', createdAt: r.createdAt as number, resueltaAt: r.resueltaAt as number ?? undefined })))
+    })
+    return true
+  } catch (e) {
+    console.warn('sqlite no disponible, uso seed local', e)
+    return false
+  }
+}
+
+export async function seedIfEmpty() {
+  if (await db.puestos.count() === 0 && await cargarDesdeSqlite()) return
+  if ((await db.puestos.count()) > 0) {
+    await backfillProductos()
+    await backfillVendedores()
+    return
+  }
+
+  await db.transaction('rw', db.productos, db.puestos, db.vendedores, db.jornadas, db.ventas, async () => {
+    await db.productos.bulkAdd(PRODUCTOS_SEED as Producto[])
     const prods = await db.productos.orderBy('orden').toArray()
     const pid = (i: number) => prods[i].id!
 
@@ -60,9 +134,9 @@ export async function seedIfEmpty() {
     const psts = await db.puestos.orderBy('id').toArray()
 
     const vendedores: Omit<Vendedor, 'id'>[] = [
-      { nombre: 'Marcos', puestoId: psts[0].id!, activo: true },
-      { nombre: 'Alejandra', puestoId: psts[1].id!, activo: true },
-      { nombre: 'Diego', puestoId: psts[2].id!, activo: true },
+      { nombre: 'Marcos', puestoId: psts[0].id!, email: 'marcos@demo.tupuesto', pin: '1234', activo: true },
+      { nombre: 'Alejandra', puestoId: psts[1].id!, email: 'alejandra@demo.tupuesto', pin: '2345', activo: true },
+      { nombre: 'Diego', puestoId: psts[2].id!, email: 'diego@demo.tupuesto', pin: '3456', activo: true },
     ]
     await db.vendedores.bulkAdd(vendedores as Vendedor[])
     const vends = await db.vendedores.orderBy('id').toArray()
@@ -186,10 +260,51 @@ export async function seedIfEmpty() {
       fecha: hoyISO(),
       fondoCaja: 15000,
       despacho: [L(0, 120), L(1, 5), L(2, 10), L(3, 35), L(4, 20), L(5, 10)],
+      reposiciones: [{ items: [L(0, 30), L(3, 10)], createdAt: Date.now() - 3 * 3600e3 }],
       estado: 'abierta',
       createdAt: Date.now() - 10 * 3600e3,
     })
 
     await db.jornadas.bulkAdd(hist)
+
+    // ── Ventas registradas por Marcos durante la mañana de hoy ──
+    const jornadaMarcos = await db.jornadas
+      .where('[fecha+puestoId]')
+      .equals([hoyISO(), psts[0].id!])
+      .first()
+    const hoy0 = new Date(hoyISO()).getTime()
+    const ventasDemo: Omit<Venta, 'id'>[] = [
+      {
+        jornadaId: jornadaMarcos!.id!,
+        items: [
+          { productoId: pid(0), cantidad: 10 },
+          { productoId: pid(4), cantidad: 2 },
+        ],
+        total: 10 * 550 + 2 * 2500, // 10.500
+        metodoPago: 'efectivo',
+        createdAt: hoy0 + 9 * 3600e3,
+      },
+      {
+        jornadaId: jornadaMarcos!.id!,
+        items: [
+          { productoId: pid(1), cantidad: 1 },
+          { productoId: pid(2), cantidad: 2 },
+        ],
+        total: 6000 + 2 * 4800, // 15.600
+        metodoPago: 'qr',
+        createdAt: hoy0 + 10.5 * 3600e3,
+      },
+      {
+        jornadaId: jornadaMarcos!.id!,
+        items: [
+          { productoId: pid(3), cantidad: 5 },
+          { productoId: pid(5), cantidad: 3 },
+        ],
+        total: 5 * 600 + 3 * 1800, // 8.400
+        metodoPago: 'efectivo',
+        createdAt: hoy0 + 11.75 * 3600e3,
+      },
+    ]
+    await db.ventas.bulkAdd(ventasDemo as Venta[])
   })
 }

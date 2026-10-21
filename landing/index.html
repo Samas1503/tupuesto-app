@@ -9,7 +9,8 @@
     (al final del <body>, en el <script>):
       1. WA_NUMBER  → tu WhatsApp con código de país, sin "+" ni espacios
       2. MP_LINK    → link de pago de Mercado Pago para la seña $13.000
-      3. CUPOS      → cupos de fundador restantes
+      3. DEMO_URL = "../app/"   // demo pública
+      const CUPOS      → cupos de fundador restantes
     Todo lo demás se actualiza solo. No hace falta backend.
     ══════════════════════════════════════════════════════════════
   -->
@@ -340,6 +341,7 @@
         <a href="#queves">Qué ves</a>
         <a href="#precio">Precio</a>
         <a href="#faq">Preguntas</a>
+        <a class="nav-cta" id="demo-nav" style="margin-right:10px;background:#635bff">▶ Demo</a>
         <a class="nav-cta" data-mp href="#">Reservar lugar</a>
       </div>
     </div>
@@ -658,6 +660,7 @@
     // ═══ CONFIG — editar estos 3 valores antes de publicar ═══
     const WA_NUMBER = "5493884558285";            // WhatsApp del fundador (54+9+3884558285)
     const MP_LINK   = "https://mpago.la/TU_LINK"; // TODO: link de pago Mercado Pago $13.000 (el fundador lo pasa)
+    const DEMO_URL  = "../app/";                  // demo pública (URL de la app en Vercel)
     const CUPOS     = 20;                         // cupos de fundador restantes
     // ════════════════════════════════════════════════════════
 
@@ -670,5 +673,6 @@
     document.querySelectorAll("[data-mp]").forEach(a => { a.href = MP_LINK; });
     document.querySelectorAll("[data-cupos]").forEach(el => { el.textContent = CUPOS; });
   </script>
+<script>document.getElementById("demo-nav")&&(document.getElementById("demo-nav").href=DEMO_URL)</script>
 </body>
 </html>

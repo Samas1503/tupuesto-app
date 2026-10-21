@@ -6,12 +6,32 @@ export type Rol = 'duenio' | 'vendedor'
 /** A qué cuenta cae el dinero digital. 'negocio' = alias del dueño (default). */
 export type DestinoQR = 'negocio' | 'vendedor'
 
+export type MetodoPago = 'efectivo' | 'qr' | 'transferencia'
+
 export interface Producto {
   id?: number
   nombre: string
+  /** precio de venta al público */
   precio: number
+  /** costo de producción — para margen estimado (opcional) */
+  precioCosto?: number
+  /** imagen del producto como dataURL (IndexedDB local) */
+  imagen?: string
+  /** ingredientes del producto (referencia del vendedor) */
+  ingredientes?: string
   activo: boolean
   orden: number
+}
+
+/** una venta registrada por el vendedor durante el turno */
+export interface Venta {
+  id?: number
+  jornadaId: number
+  items: Linea[]
+  /** total cobrado — calculado con el precio vigente al registrar */
+  total: number
+  metodoPago: MetodoPago
+  createdAt: number
 }
 
 export interface Puesto {
@@ -25,13 +45,26 @@ export interface Puesto {
 export interface Vendedor {
   id?: number
   nombre: string
-  puestoId: number
+  /** puesto habitual (opcional — el vínculo real es la jornada del día) */
+  puestoId?: number
+  /** correo del vendedor — destino del link de acceso/reseteo (con backend) */
+  email?: string
+  /** PIN de acceso (demo local — auth real espera backend). Nunca se muestra al dueño. */
+  pin?: string
+  /** true si debe elegir PIN nuevo en su próximo ingreso (alta/reseteo) */
+  debeCambiarPin?: boolean
   activo: boolean
 }
 
 export interface Linea {
   productoId: number
   cantidad: number
+}
+
+/** reposición de mercadería en mitad del turno (la carga el dueño) */
+export interface Reposicion {
+  items: Linea[]
+  createdAt: number
 }
 
 export interface Cierre {
@@ -46,18 +79,35 @@ export interface Cierre {
   cerradaAt: number
 }
 
+/** solicitud de un vendedor al admin — p. ej. eliminar un usuario */
+export interface Solicitud {
+  id?: number
+  tipo: 'eliminar-usuario'
+  /** usuario a eliminar */
+  vendedorId: number
+  /** quién lo pide */
+  solicitadoPor: number
+  motivo?: string
+  estado: 'pendiente' | 'aprobada' | 'rechazada'
+  createdAt: number
+  resueltaAt?: number
+}
+
 export type EstadoJornada = 'abierta' | 'cerrada' | 'confirmada'
 
 export interface Jornada {
   id?: number
   puestoId: number
-  vendedorId: number
+  /** se asigna cuando el vendedor inicia su turno — null mientras el despacho está libre */
+  vendedorId?: number
   /** YYYY-MM-DD */
   fecha: string
-  /** fondo fijo que el dueño le da al vendedor para cambio */
-  fondoCaja: number
+  /** fondo fijo que el dueño le da al vendedor — se fija al crear el turno */
+  fondoCaja?: number
   /** mercadería que el dueño cargó al salir — la carga el dueño, no el vendedor */
   despacho: Linea[]
+  /** reposiciones durante el turno — se venden igual, pero se registran aparte */
+  reposiciones?: Reposicion[]
   estado: EstadoJornada
   cierre?: Cierre
   confirmadaAt?: number
