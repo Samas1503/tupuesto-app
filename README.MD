@@ -43,7 +43,7 @@ python3 -m http.server 8765 --directory landing
 
 - **RULES.MD** → lo que no se negocia. Leer antes de proponer nada.
 - **GLOSARY.MD** → el vocabulario del dominio (arqueo, despacho, merma, faltante).
-- **DOCUMENTATION.MD** → arquitectura, modelo de datos, la matemática del arqueo.
+- **docs/** → arquitectura, modelo de datos, arqueo, vistas, desarrollo (`docs/README.md`).
 - **AGENTS.MD** → instrucciones para agentes que trabajen acá.
 - `docs/integracion-mercado-pago.md` → roadmap D post-piloto (QR verificado).
 - `preventa/mercado-pago.md` → cobro de señas con MP (link + API).

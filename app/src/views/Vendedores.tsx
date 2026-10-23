@@ -34,7 +34,21 @@ export default function Vendedores() {
   }
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
-  const [credencial, setCredencial] = useState<{ nombre: string; pin: string; email?: string } | null>(null)
+  const [credencial, setCredencial] = useState<{ nombre: string; pin?: string; email?: string; enviado: boolean } | null>(null)
+  async function enviarPin(nombre: string, pin: string, email?: string) {
+    // el PIN viaja por email — solo se muestra acá si el envío falla (sin api en dev local)
+    if (!email) { setCredencial({ nombre, pin, enviado: false }); return }
+    try {
+      const r = await fetch('/api/send-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, nombre, pin, appUrl: location.origin }),
+      })
+      setCredencial(r.ok ? { nombre, email, enviado: true } : { nombre, pin, email, enviado: false })
+    } catch {
+      setCredencial({ nombre, pin, email, enviado: false })
+    }
+  }
 
   async function agregar() {
     const n = nombre.trim()
@@ -44,7 +58,7 @@ export default function Vendedores() {
     await db.vendedores.add({ nombre: n, email: e, pin, debeCambiarPin: true, activo: true })
     setNombre('')
     setEmail('')
-    setCredencial({ nombre: n, pin, email: e }) // se muestra UNA vez
+    await enviarPin(n, pin, e) // al vendedor por email; solo se muestra si falla
   }
 
   async function resolver(solId: number, aprobar: boolean, vendedorId: number) {
@@ -59,7 +73,7 @@ export default function Vendedores() {
   async function resetear(nombre: string, id: number) {
     const pin = pinAleatorio()
     await db.vendedores.update(id, { pin, debeCambiarPin: true })
-    setCredencial({ nombre, pin, email: vendedores.find(x => x.id === id)?.email })
+    await enviarPin(nombre, pin, vendedores.find(x => x.id === id)?.email)
   }
 
   return (
@@ -194,15 +208,26 @@ export default function Vendedores() {
                 <AlertDialog.Heading>Acceso de {credencial?.nombre}</AlertDialog.Heading>
               </AlertDialog.Header>
               <AlertDialog.Body>
-                <p className="text-sm text-muted">
-                  Compartí este PIN{credencial?.email ? <> a <b>{credencial.email}</b></> : ' por WhatsApp'} — <b>se muestra una sola vez</b>:
-                </p>
-                <p className="text-3xl font-extrabold num text-center py-2 tracking-[0.3em]">
-                  {credencial?.pin}
-                </p>
-                <p className="text-xs text-muted">
-                  Al entrar por primera vez va a tener que elegir su propio PIN.
-                </p>
+                {credencial?.enviado ? (
+                  <>
+                    <p className="text-sm text-muted">
+                      El PIN fue enviado a <b>{credencial.email}</b> — el vendedor elige el suyo en el primer ingreso.
+                    </p>
+                    <p className="text-2xl text-center py-2">✓</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted">
+                      {credencial?.email ? <>El envío a <b>{credencial.email}</b> falló — compartí este PIN manualmente</> : 'Sin email — compartí este PIN'} — <b>se muestra una sola vez</b>:
+                    </p>
+                    <p className="text-3xl font-extrabold num text-center py-2 tracking-[0.3em]">
+                      {credencial?.pin}
+                    </p>
+                    <p className="text-xs text-muted">
+                      Al entrar por primera vez va a tener que elegir su propio PIN.
+                    </p>
+                  </>
+                )}
               </AlertDialog.Body>
               <AlertDialog.Footer>
                 <Button slot="close" variant="primary">Entendido</Button>

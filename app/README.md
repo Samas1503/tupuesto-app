@@ -14,7 +14,7 @@ npm run lint      # oxlint
 
 Stack: Vite · React 19 · TS · HeroUI **v3** · Tailwind **v4** · Dexie ·
 vite-plugin-pwa. Todo lo demás — dominio, reglas, glosario, decisiones —
-vive en la raíz del repo: `RULES.MD`, `GLOSARY.MD`, `DOCUMENTATION.MD`,
+vive en la raíz del repo: `RULES.MD`, `GLOSARY.MD`, `docs/`,
 `decisions.md`, `AGENTS.MD`.
 
 ## Demo estática (Vercel)

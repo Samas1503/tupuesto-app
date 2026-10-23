@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  server: {
+    proxy: { '/api': 'http://localhost:3000' }, // api/ corre en `vercel dev` (raíz)
+  },
   plugins: [
     react(),
     tailwindcss(),

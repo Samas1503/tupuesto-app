@@ -27,7 +27,7 @@ export default function MiDia() {
 
   // estado del formulario de cierre
   const [nota, setNota] = useState('')
-  const [selLogin, setSelLogin] = useState<number | null>(null)
+  const [emailLogin, setEmailLogin] = useState('')
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState(false)
   const [debeElegirPin, setDebeElegirPin] = useState<number | null>(null)
@@ -49,9 +49,8 @@ export default function MiDia() {
   }, [jornada?.id])
 
   function entrar() {
-    const v = vendedores.find(x => x.id === selLogin)
-    if (!v) return
-    if (v.pin && v.pin !== pin.trim()) { setPinError(true); return }
+    const v = vendedores.find(x => x.activo && x.email?.toLowerCase() === emailLogin.trim().toLowerCase())
+    if (!v || (v.pin && v.pin !== pin.trim())) { setPinError(true); return }
     if (v.debeCambiarPin) { setDebeElegirPin(v.id!); return }
     setVendedorId(v.id!)
     localStorage.setItem('tp-vendedor', String(v.id))
@@ -86,7 +85,7 @@ export default function MiDia() {
 
   function salir() {
     setVendedorId(null)
-    setPin(''); setSelLogin(null); setPinError(false)
+    setPin(''); setEmailLogin(''); setPinError(false)
     localStorage.removeItem('tp-vendedor')
   }
 
@@ -150,35 +149,19 @@ export default function MiDia() {
         <Card>
           <Card.Header className="px-4 pt-4 pb-0">
             <Card.Title className="text-base">¿Quién sos?</Card.Title>
-            <Card.Description>Entrá con tu nombre y tu PIN.</Card.Description>
+            <Card.Description>Entrá con tu email y el PIN que te mandamos.</Card.Description>
           </Card.Header>
           <Card.Content className="px-4 py-3 flex flex-col gap-3">
-            <Select
-              placeholder="Elegí tu nombre"
-              selectedKey={selLogin != null ? String(selLogin) : null}
-              onSelectionChange={k => { setSelLogin(k != null ? Number(k) : null); setPinError(false) }}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  {vendedores.filter(v => v.activo).map(v => (
-                    <ListBox.Item key={v.id} id={String(v.id)} textValue={v.nombre}>
-                      {v.nombre}
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+            <TextField value={emailLogin} onChange={v => { setEmailLogin(v); setPinError(false) }}>
+              <Label>Email</Label>
+              <Input type="email" placeholder="tu@correo.com" autoComplete="email" />
+            </TextField>
             <TextField value={pin} onChange={v => { setPin(v); setPinError(false) }}>
               <Label>PIN</Label>
               <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" />
             </TextField>
-            {pinError && <p className="text-xs text-danger font-semibold">PIN incorrecto.</p>}
-            <Button variant="primary" onPress={entrar} isDisabled={selLogin == null || (vendedores.find(x => x.id === selLogin)?.pin != null && pin.trim() === '')}>
+            {pinError && <p className="text-xs text-danger font-semibold">Email o PIN incorrecto.</p>}
+            <Button variant="primary" onPress={entrar} isDisabled={emailLogin.trim() === '' || pin.trim() === ''}>
               Entrar
             </Button>
           </Card.Content>

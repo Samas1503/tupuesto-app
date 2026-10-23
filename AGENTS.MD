@@ -10,7 +10,7 @@
 2. **decisions.md** — ADR-001 locked: gates, wedge, pricing, qué NO construir.
 3. **GLOSARY.MD** — hablar el dominio. `jornada`, `despacho`, `remanente`,
    `merma`, `faltante`, `destino del QR`. Los sinónimos acá cuestan plata.
-4. **DOCUMENTATION.MD** — arquitectura, modelo, la fórmula del arqueo.
+4. **docs/** — arquitectura, modelo de datos, arqueo, vistas, desarrollo (`docs/README.md` es el índice).
 
 ## En 5 líneas
 
