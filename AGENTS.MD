@@ -15,9 +15,10 @@
 ## En 5 líneas
 
 PWA local-first para dueños de venta ambulante multi-puesto (Argentina).
-El dueño carga despacho + fondo; el vendedor cuenta físico al cierre; la app
-dice esperado vs. contado con efectivo/QR separados. Anti-faltante, no POS.
-Pre-MVP: Gate 0 en curso, wedge demo andando.
+El dueño despacha al puesto y arma el turno (vendedor+fondo); el vendedor
+registra cada venta con método y cierra con un tap — la app calcula
+remanente, cobrado y diferencia. Anti-faltante, no POS.
+Pre-MVP: Gate 0 en curso, demo deployada en Vercel.
 
 ## DO / DON'T
 

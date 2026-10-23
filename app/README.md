@@ -1,8 +1,9 @@
 **TuPuesto** · `app/` — la PWA del producto
 
-> Wedge local-first: arqueo por conteo físico al cierre, doble corriente
-> efectivo/QR, merma acotada, confirmación del dueño. Datos en IndexedDB —
-> sin backend todavía.
+> Wedge local-first: despacho→puesto + turno (vendedor+fondo), ventas
+> registradas con método de pago, cierre automático, doble corriente
+> efectivo/QR, merma acotada, confirmación del dueño. IndexedDB hidratada
+> desde sqlite estático — sin backend todavía.
 
 ```bash
 npm install

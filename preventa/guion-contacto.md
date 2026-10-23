@@ -39,7 +39,8 @@ Sin calificar no se vende. Se anota y se sigue.
 > "Te muestro una cosa. Estoy armando una herramienta para dueños con varios
 > puestos que no pueden estar en todos lados. Funciona así: **a la mañana vos
 > cargás lo que le diste a cada vendedor** — mercadería y fondo de caja.
-> **Al cerrar, el vendedor cuenta lo que quedó** desde su celular. Y **vos ves
+> **El vendedor anota cada venta con un tap** (producto + efectivo/QR) y al cerrar
+> el día la app calcula sola lo que quedó y lo que juntó. Y **vos ves
 > al toque si falta plata o mercadería** — separando el efectivo de los QR, y
 > a qué cuenta cayó cada QR. Cada día, no a fin de mes. ¿Te serviría?"
 
@@ -61,7 +62,8 @@ audio a texto largo).
 1. Mostrá la landing en tu celular, sección "Cómo funciona".
 2. Simulación verbal:
 
-> "Le diste a Marcos 200 chipás y $20.000 de fondo. A la noche cuenta que le
+> "Le diste a Marcos 200 chipás y $20.000 de fondo. Vendió durante el día y a
+> la noche cerró — la app ya tiene lo que quedó y lo que juntó. Vos ves
 > quedaron 30 chipás y tiene $195.000 en efectivo más $15.000 en QR a tu
 > cuenta. La app te dice: esperado $210.000, contado $210.000. Cero faltante,
 > sin llamarlo, sin cuaderno."
@@ -84,7 +86,7 @@ otro alias."
 
 — **"No tengo tiempo"**
 → "Diez minutos: cargás a la mañana, mirás a la noche. El vendedor solo
-cuenta — no anota ventas durante el día."
+cuenta — ahora anota cada venta con un tap y el cierre es automático."
 
 — **"Mi vendedor no sabe usar apps"**
 → "Si usa WhatsApp, usa esto: cuenta lo que quedó y toca 'cerrar día'.

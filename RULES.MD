@@ -15,12 +15,15 @@ declara — nada más.
 > *Por qué:* La Cajita cobra $9.600–16.000/mes por control sobre empleados;
 > los POS de mostrador compiten con el cuaderno gratis y pierden.
 
-**R2 — La primitiva es el arqueo por conteo físico al cierre.**
-El vendedor cuenta hechos físicos inspeccionables (lo que quedó, lo que se
-mermó, la plata). Nunca "declara ventas", nunca hace tap por venta en la calle.
+**R2 — La primitiva es el arqueo verificable al cierre.** *(enmendada ADR-003)*
+El vendedor registra cada venta (producto, cantidad, método) en el turno;
+al cierre el sistema calcula remanente y cobrado desde ese registro.
+El conteo físico queda disponible como cruce (`cruceCierre`) si los
+pilotos lo piden — no es el flujo principal hoy.
 
-> *Por qué:* el tap en un semáforo es inviable y la venta declarada es la
-> confesión del ladrón. El conteo es verificable por spot-check.
+> *Por qué:* el wedge es detectar el faltante, no la mecánica del conteo.
+> Riesgo asumido: si el vendedor no registra una venta, la app no la ve —
+> a mitigar con el cruce si el piloto lo amerita.
 
 **R3 — Doble corriente, siempre con destino.**
 Efectivo y QR se registran por separado, y el QR lleva `destino`:
@@ -55,8 +58,9 @@ anomalía. Es configuración válida (familia), pero visible.
 
 ## II · Alcance (ADR-001, locked)
 
-**R8 — Solo el wedge.** Fondo fijo · arqueo por conteo · doble corriente con
-destino · merma acotada · confirmación · catálogo+precios · promedio 4 semanas.
+**R8 — Solo el wedge.** Fondo fijo · arqueo al cierre · registro de venta con
+método · doble corriente con destino · merma acotada · confirmación ·
+catálogo+precios · promedio 4 semanas · stats de decisión.
 
 **R9 — Lo que está afuera, está afuera.** Proyecciones, proveedores, API de
 Mercado Pago, facturación, merma valuada, recetas, freemium. Reabrir requiere
@@ -73,8 +77,8 @@ real; sin ≥60% de cierres diarios al día 30 del piloto no hay continuación.
 "Vos", frases cortas, botones grandes — se usa en la calle, con guantes,
 a contraluz. Números `tabular-nums`, plata en ARS enteros formato `es-AR`.
 
-**R12 — Cada dato lo escribe su rol.** El dueño escribe `despacho`, `fondoCaja`
-y precios. El vendedor solo escribe `cierre`. En UI, el despacho es read-only
+**R12 — Cada dato lo escribe su rol.** El dueño escribe `despacho`, `fondoCaja`,
+asignación de turno y precios. El vendedor escribe `ventas` y `cierre.nota`. En UI, el despacho es read-only
 para el vendedor — siempre.
 
 **R13 — `arqueo.ts` es la única fuente de la fórmula.** Las vistas importan,

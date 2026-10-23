@@ -11,7 +11,7 @@
 en ninguno. Carga el despacho, toca los precios, confirma rendiciones.
 
 **vendedor** — el empleado que atiende el puesto. Su celular es el terminal.
-Al cierre cuenta lo físico; jamás declara ventas ni toca el despacho.
+Registra cada venta (producto + método) durante el turno; al cierre solo cierra con nota — los números salen solos del registro. Jamás toca el despacho ni los precios.
 
 **ICP** — el dueño con 2+ puestos atendidos por otros. El vendedor solitario
 que atiende su propio puesto **no es ICP**: no tiene a quién verificar.
@@ -33,7 +33,7 @@ inicio. Vuelve adentro del efectivo contado al cierre.
 en unidades. Única variable que el vendedor controla solo → se audita por
 comparación cross-puesto, no por confianza.
 
-**rendición / arqueo / cierre** — el acto diario: el vendedor cuenta físico
+**rendición / arqueo / cierre** — el acto diario: el sistema calcula
 y presenta plata; el día lo cierra la confirmación del dueño.
 
 ### La plata
@@ -72,7 +72,7 @@ al día 30, ≥15% conversión a pago.
 
 ### Anti-términos (no usar, espantan)
 
-~~facturación~~ · ~~AFIP/ARCA~~ · ~~ventas registradas~~ · ~~punto de venta~~
+~~facturación~~ · ~~AFIP/ARCA~~ · ~~punto de venta~~
 · ~~POS~~. El segmento rechaza el registro *oficial*, no el registro.
 
 ---

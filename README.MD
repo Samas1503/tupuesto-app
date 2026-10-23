@@ -2,7 +2,7 @@
 
 # TuPuesto
 
-**El dueño carga lo que sale a la mañana. El vendedor cuenta lo que quedó a la noche.**
+**El dueño despacha a la mañana. El vendedor anota cada venta y cierra con un tap.**
 La diferencia se ve el mismo día — no a fin de mes.
 
 `control de puestos` `venta ambulante` `Argentina` `PWA offline-first`
@@ -34,7 +34,9 @@ python3 -m http.server 8765 --directory landing
 
 | Dónde | Qué |
 |---|---|
-| `app/` | La app — PWA local-first, datos en IndexedDB |
+| `app/` | La app — PWA local-first, IndexedDB + hidratación sqlite |
+| `api/` | Serverless Vercel: `mp-preference`, `mp-webhook`, `send-pin` (Resend) |
+| `docs/` | Documentación técnica dividida por tema |
 | `landing/` | Landing de preventa estática (estilo Stripe) |
 | `preventa/` | Guion de contacto + criterios del Gate 0 |
 | `decisions.md` | ADR-001 — decisión de negocio lockeada |
@@ -50,10 +52,14 @@ python3 -m http.server 8765 --directory landing
 
 ## Demo
 
-El seed trae el negocio de la landing: tres puestos — Marcos en Feria Central,
-Alejandra en Plaza Italia, Diego en Costanera — cuatro semanas de historial y un
-día de hoy con faltante de $16.400. El toggle **Dueño / Vendedor** arriba a la
-derecha recorre los dos flujos en el mismo dispositivo.
+Demo en vivo: **landing** [tupuesto-app.vercel.app](https://tupuesto-app.vercel.app) →
+botón "▶ Demo" → **app** [app-ten-tan-35.vercel.app](https://app-ten-tan-35.vercel.app)
+(IndexedDB hidratada desde `tupuesto.sqlite` — sin backend).
+
+El seed trae el negocio de la landing: tres puestos — Marcos en Feria Central
+(cerrado OK), Alejandra en Plaza Italia (faltante $16.400 + merma), Diego en
+Costanera (abierto con reposición y ventas). Vendedor entra con email + PIN
+(`marcos@demo.tupuesto` / `1234`); el toggle Dueño/Vendedor recorre ambos flujos.
 
 <div align="center">
 <sub>TuPuesto · pre-MVP · validado por gates, no por entusiasmo</sub>
