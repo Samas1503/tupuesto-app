@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Jornada, Linea, Producto, Puesto, Solicitud, Vendedor, Venta } from './types'
+import type { Duenio, Jornada, Linea, Producto, Puesto, Solicitud, Vendedor, Venta } from './types'
 import { hoyISO, isoMenosDias } from './lib/format'
 
 export class TuPuestoDB extends Dexie {
@@ -9,6 +9,7 @@ export class TuPuestoDB extends Dexie {
   jornadas!: Table<Jornada, number>
   ventas!: Table<Venta, number>
   solicitudes!: Table<Solicitud, number>
+  duenios!: Table<Duenio, number>
 
   constructor() {
     super('tupuesto')
@@ -29,6 +30,11 @@ export class TuPuestoDB extends Dexie {
     this.version(4).stores({
       solicitudes: '++id, estado, vendedorId, createdAt',
     })
+    // v5: dueños gestionados por el admin del sistema
+    this.version(5).stores({
+      duenios: '++id, email',
+    })
+
   }
 }
 
@@ -112,7 +118,12 @@ async function cargarDesdeSqlite(): Promise<boolean> {
   }
 }
 
+const DUENIOS_SEED: Duenio[] = [
+  { nombre: 'Patricio (demo)', email: 'duenio@demo.tupuesto', pin: '0000', activo: true },
+]
+
 export async function seedIfEmpty() {
+  if ((await db.duenios.count()) === 0) await db.duenios.bulkPut(DUENIOS_SEED)
   if (await db.puestos.count() === 0 && await cargarDesdeSqlite()) return
   if ((await db.puestos.count()) > 0) {
     await backfillProductos()

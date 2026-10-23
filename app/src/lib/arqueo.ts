@@ -79,6 +79,13 @@ export function gananciaPotencial(j: Jornada, productos: Producto[]): number {
   return productos.reduce((acc, p) => acc + cargado(j, p.id!) * (p.precio - (p.precioCosto ?? 0)), 0)
 }
 
+/** margen ya ganado: cerrada → conteo físico · abierta → registro del turno */
+export function gananciaReal(j: Jornada, ventas: Venta[], productos: Producto[]): number {
+  const vendidoDe = (pid: number) =>
+    j.cierre ? vendidos(j, pid) : vendidosRegistrados(ventas, pid)
+  return productos.reduce((a, p) => a + vendidoDe(p.id!) * (p.precio - (p.precioCosto ?? 0)), 0)
+}
+
 /** stock que queda según registro: cargado (despacho + repos) − vendido registrado */
 export function stockActual(j: Jornada, ventas: Venta[], productoId: number): number {
   return Math.max(0, cargado(j, productoId) - vendidosRegistrados(ventas, productoId))

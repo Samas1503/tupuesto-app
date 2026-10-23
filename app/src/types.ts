@@ -1,7 +1,7 @@
 // Dominio TuPuesto — wedge según decisions.md
 // Arqueo por conteo físico: fondo + (cargado − remanente − merma) × precio = esperado
 
-export type Rol = 'duenio' | 'vendedor'
+export type Rol = 'duenio' | 'vendedor' | 'admin'
 
 /** A qué cuenta cae el dinero digital. 'negocio' = alias del dueño (default). */
 export type DestinoQR = 'negocio' | 'vendedor'
@@ -45,6 +45,8 @@ export interface Puesto {
 export interface Vendedor {
   id?: number
   nombre: string
+  /** eliminación lógica — el admin puede restaurar */
+  eliminado?: boolean
   /** puesto habitual (opcional — el vínculo real es la jornada del día) */
   puestoId?: number
   /** correo del vendedor — destino del link de acceso/reseteo (con backend) */
@@ -79,10 +81,12 @@ export interface Cierre {
   cerradaAt: number
 }
 
-/** solicitud de un vendedor al admin — p. ej. eliminar un usuario */
+/** solicitud de un vendedor al dueño — baja de usuario o cierre anticipado */
 export interface Solicitud {
   id?: number
-  tipo: 'eliminar-usuario'
+  tipo: 'eliminar-usuario' | 'cierre-anticipado'
+  /** turno al que aplica (cierre-anticipado) */
+  jornadaId?: number
   /** usuario a eliminar */
   vendedorId: number
   /** quién lo pide */
@@ -108,8 +112,23 @@ export interface Jornada {
   despacho: Linea[]
   /** reposiciones durante el turno — se venden igual, pero se registran aparte */
   reposiciones?: Reposicion[]
+  /** hora de fin del turno "HH:mm" — antes de horaFin−5' el cierre requiere aprobación */
+  horaFin?: string
+  /** el dueño aprobó un cierre anticipado */
+  cierreAnticipadoOk?: boolean
   estado: EstadoJornada
   cierre?: Cierre
   confirmadaAt?: number
   createdAt: number
+}
+
+/** dueño de la cuenta — el admin del sistema los gestiona, no son usuarios de la operación diaria */
+export interface Duenio {
+  id?: number
+  nombre: string
+  email?: string
+  pin?: string
+  debeCambiarPin?: boolean
+  activo: boolean
+  eliminado?: boolean
 }

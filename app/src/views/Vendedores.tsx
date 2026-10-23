@@ -35,6 +35,7 @@ export default function Vendedores() {
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [credencial, setCredencial] = useState<{ nombre: string; pin?: string; email?: string; enviado: boolean } | null>(null)
+  const [confirmElim, setConfirmElim] = useState<{ id: number; nombre: string; solId?: number } | null>(null)
   async function enviarPin(nombre: string, pin: string, email?: string) {
     // el PIN viaja por email — solo se muestra acá si el envío falla (sin api en dev local)
     if (!email) { setCredencial({ nombre, pin, enviado: false }); return }
@@ -61,14 +62,35 @@ export default function Vendedores() {
     await enviarPin(n, pin, e) // al vendedor por email; solo se muestra si falla
   }
 
-  async function resolver(solId: number, aprobar: boolean, vendedorId: number) {
-    if (aprobar) await db.vendedores.delete(vendedorId)
-    await db.solicitudes.update(solId, { estado: aprobar ? 'aprobada' : 'rechazada', resueltaAt: Date.now() })
+  async function resolver(solId: number, aprobar: boolean, vendedorId: number, tipo: string, jornadaId?: number) {
+    if (!aprobar) {
+      await db.solicitudes.update(solId, { estado: 'rechazada', resueltaAt: Date.now() })
+      return
+    }
+    if (tipo === 'cierre-anticipado') {
+      // aprobar = habilita el botón de cerrar del vendedor en esa jornada
+      if (jornadaId != null) await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true })
+      await db.solicitudes.update(solId, { estado: 'aprobada', resueltaAt: Date.now() })
+      return
+    }
+    // eliminar-usuario: el delete real pasa por confirmarEliminar
+    const v = vendedores.find(x => x.id === vendedorId)
+    setConfirmElim({ id: vendedorId, nombre: v?.nombre ?? 'vendedor', solId })
   }
 
-  async function eliminar(id: number) {
-    await db.vendedores.delete(id)
+  async function restaurar(id: number) {
+    await db.vendedores.update(id, { eliminado: false, activo: true })
   }
+
+  async function confirmarEliminar() {
+    if (!confirmElim) return
+    // eliminación lógica — restaura desde la sección Eliminados
+    await db.vendedores.update(confirmElim.id, { eliminado: true, activo: false })
+    if (confirmElim.solId != null)
+      await db.solicitudes.update(confirmElim.solId, { estado: 'aprobada', resueltaAt: Date.now() })
+    setConfirmElim(null)
+  }
+
 
   async function resetear(nombre: string, id: number) {
     const pin = pinAleatorio()
@@ -90,21 +112,25 @@ export default function Vendedores() {
         <Card className="border-warning">
           <Card.Header className="px-4 pt-4 pb-0">
             <Card.Title className="text-base">Solicitudes pendientes</Card.Title>
-            <Card.Description>El equipo pidió estas bajas — vos decidís.</Card.Description>
+            <Card.Description>Bajas y cierres anticipados — vos decidís.</Card.Description>
           </Card.Header>
           <Card.Content className="px-4 py-3 flex flex-col gap-2">
             {solicitudes.map(sol => {
               const target = vendedores.find(v => v.id === sol.vendedorId)
               const quien = vendedores.find(v => v.id === sol.solicitadoPor)
+              const esCierre = sol.tipo === 'cierre-anticipado'
               return (
                 <div key={sol.id} className="flex items-center justify-between gap-2 text-sm">
                   <span className="min-w-0 truncate">
-                    <b>{quien?.nombre ?? 'Vendedor'}</b> pidió eliminar a <b>{target?.nombre ?? '—'}</b>
+                    <b>{quien?.nombre ?? 'Vendedor'}</b>{' '}
+                    {esCierre ? 'pidió cerrar su turno antes' : <>pidió eliminar a <b>{target?.nombre ?? '—'}</b></>}
                     {sol.motivo ? <span className="text-muted"> · {sol.motivo}</span> : null}
                   </span>
                   <div className="flex gap-1.5 shrink-0">
-                    <Button size="sm" variant="primary" onPress={() => resolver(sol.id!, true, sol.vendedorId)}>Eliminar</Button>
-                    <Button size="sm" variant="tertiary" onPress={() => resolver(sol.id!, false, sol.vendedorId)}>Rechazar</Button>
+                    <Button size="sm" variant="primary" onPress={() => resolver(sol.id!, true, sol.vendedorId, sol.tipo, sol.jornadaId)}>
+                      {esCierre ? 'Permitir cierre' : 'Eliminar'}
+                    </Button>
+                    <Button size="sm" variant="tertiary" onPress={() => resolver(sol.id!, false, sol.vendedorId, sol.tipo, sol.jornadaId)}>Rechazar</Button>
                   </div>
                 </div>
               )
@@ -114,7 +140,7 @@ export default function Vendedores() {
       )}
 
       <div className="flex flex-col gap-3">
-        {vendedores.map(v => (
+        {vendedores.filter(v => !v.eliminado).map(v => (
           <Card key={v.id}>
             <Card.Content className="px-4 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
@@ -140,7 +166,7 @@ export default function Vendedores() {
                 <Button size="sm" variant="tertiary" onPress={() => resetear(v.nombre, v.id!)}>
                   Resetear PIN
                 </Button>
-                <Button size="sm" variant="danger-soft" onPress={() => eliminar(v.id!)}>
+                <Button size="sm" variant="danger-soft" onPress={() => setConfirmElim({ id: v.id!, nombre: v.nombre })}>
                   Eliminar
                 </Button>
                 <Switch
@@ -199,6 +225,25 @@ export default function Vendedores() {
       </AlertDialog>
 
 
+      {/* eliminados — restaurables */}
+      {vendedores.some(v => v.eliminado) && (
+        <Card>
+          <Card.Header className="px-4 pt-3 pb-0">
+            <Card.Title className="text-sm text-muted">Eliminados</Card.Title>
+          </Card.Header>
+          <Card.Content className="px-4 py-2 flex flex-col gap-1.5">
+            {vendedores.filter(v => v.eliminado).map(v => (
+              <div key={v.id} className="flex items-center justify-between text-sm">
+                <span className="text-muted line-through">{v.nombre}</span>
+                <Button size="sm" variant="tertiary" onPress={() => restaurar(v.id!)}>
+                  Restaurar
+                </Button>
+              </div>
+            ))}
+          </Card.Content>
+        </Card>
+      )}
+
       {/* credencial única — equivale al "link" que luego será un email */}
       <AlertDialog isOpen={credencial != null} onOpenChange={() => setCredencial(null)}>
         <AlertDialog.Backdrop>
@@ -231,6 +276,31 @@ export default function Vendedores() {
               </AlertDialog.Body>
               <AlertDialog.Footer>
                 <Button slot="close" variant="primary">Entendido</Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Dialog>
+          </AlertDialog.Container>
+        </AlertDialog.Backdrop>
+      </AlertDialog>
+      {/* confirmación antes de eliminar */}
+      <AlertDialog isOpen={confirmElim != null} onOpenChange={o => { if (!o) setConfirmElim(null) }}>
+        <AlertDialog.Backdrop>
+          <AlertDialog.Container>
+            <AlertDialog.Dialog className="sm:max-w-[360px]">
+              <AlertDialog.CloseTrigger />
+              <AlertDialog.Header>
+                <AlertDialog.Heading>Eliminar a {confirmElim?.nombre}</AlertDialog.Heading>
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                <p className="text-sm text-muted">
+                  El vendedor pasa a Eliminados y queda fuera de login y turnos.
+                  Sus jornadas y ventas históricas se conservan — podés restaurarlo después.
+                </p>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button slot="close" variant="tertiary">Cancelar</Button>
+                <Button slot="close" variant="danger" onPress={confirmarEliminar}>
+                  Eliminar
+                </Button>
               </AlertDialog.Footer>
             </AlertDialog.Dialog>
           </AlertDialog.Container>

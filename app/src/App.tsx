@@ -9,6 +9,7 @@ import Puestos from './views/Puestos'
 import Vendedores from './views/Vendedores'
 import Historial from './views/Historial'
 import MiDia from './views/MiDia'
+import Admin from './views/Admin'
 
 type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'vendedores' | 'historial'
 
@@ -70,6 +71,9 @@ export default function App() {
               <ToggleButton id="vendedor" className="!rounded-full data-[selected]:!bg-white data-[selected]:!text-navy data-[selected]:!shadow-md !text-white/70 !bg-transparent !border-0 !shadow-none !px-3.5">
                 Vendedor
               </ToggleButton>
+              <ToggleButton id="admin" className="!rounded-full data-[selected]:!bg-white data-[selected]:!text-navy data-[selected]:!shadow-md !text-white/70 !bg-transparent !border-0 !shadow-none !px-3.5">
+                Admin
+              </ToggleButton>
             </ToggleButtonGroup>
           </div>
         </div>
@@ -80,7 +84,9 @@ export default function App() {
 
       {/* contenido */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-5 pb-28">
-        {rol === 'duenio' ? (
+        {rol === 'admin' ? (
+          <Admin />
+        ) : rol === 'duenio' ? (
           <>
             {vista === 'hoy' && <Hoy />}
             {vista === 'despacho' && <Despacho />}

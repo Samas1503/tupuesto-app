@@ -36,6 +36,9 @@ export default function MiDia() {
   const [solMotivo, setSolMotivo] = useState('')
   const [solEnviada, setSolEnviada] = useState(false)
   const [fondoTurno, setFondoTurno] = useState(0)
+  const [solCierre, setSolCierre] = useState(false)
+  const [motivoCierre, setMotivoCierre] = useState('')
+  const [solCierreEnviada, setSolCierreEnviada] = useState(false)
   const libres = useJornadasLibres(hoy)
   const [listo, setListo] = useState(false)
 
@@ -54,6 +57,30 @@ export default function MiDia() {
     if (v.debeCambiarPin) { setDebeElegirPin(v.id!); return }
     setVendedorId(v.id!)
     localStorage.setItem('tp-vendedor', String(v.id))
+  }
+
+  // ventana de cierre normal: [horaFin − 5 min, en adelante] o si el dueño aprobó uno anticipado
+  const puedeCerrar = (() => {
+    if (!jornada?.horaFin || jornada.cierreAnticipadoOk) return true
+    const [h, m] = jornada.horaFin.split(':').map(Number)
+    const fin = new Date(); fin.setHours(h, m - 5, 0, 0)
+    return Date.now() >= fin.getTime()
+  })()
+
+  async function solicitarCierre() {
+    if (vendedorId == null || jornada?.id == null || !motivoCierre.trim()) return
+    await db.solicitudes.add({
+      tipo: 'cierre-anticipado',
+      jornadaId: jornada.id,
+      vendedorId,
+      solicitadoPor: vendedorId,
+      motivo: motivoCierre.trim(),
+      estado: 'pendiente',
+      createdAt: Date.now(),
+    })
+    setSolCierreEnviada(true)
+    setMotivoCierre('')
+    setSolCierre(false)
   }
 
   async function tomarTurno(jornadaId: number) {
@@ -110,7 +137,8 @@ export default function MiDia() {
     const cierre: Cierre = {
       remanente,
       merma: [],
-      efectivoContado: ventas.filter(v => v.metodoPago === 'efectivo').reduce((a, v) => a + v.total, 0),
+      // efectivo físico del cajón = fondo recibido + ventas en efectivo
+      efectivoContado: (jornada.fondoCaja ?? 0) + ventas.filter(v => v.metodoPago === 'efectivo').reduce((a, v) => a + v.total, 0),
       qrTotal: ventas.filter(v => v.metodoPago !== 'efectivo').reduce((a, v) => a + v.total, 0),
       qrDestino: puesto?.qrDestinoDefault ?? 'negocio',
       nota: nota.trim() || undefined,
@@ -314,9 +342,23 @@ export default function MiDia() {
                   <Label>Nota (opcional)</Label>
                   <Input placeholder="Ej: llovió, vendí menos" />
                 </TextField>
-                <Button size="lg" variant="primary" onPress={cerrarDia}>
-                  Cerrar el día
-                </Button>
+                {puedeCerrar ? (
+                  <Button size="lg" variant="primary" onPress={cerrarDia}>
+                    Cerrar el día
+                  </Button>
+                ) : solCierreEnviada ? (
+                  <p className="text-xs text-muted text-center">
+                    Pediste el cierre — cuando el dueño lo apruebe, acá aparece el botón.
+                  </p>
+                ) : (
+                  /* fuera de la ventana: pedir aprobación — discreto a propósito */
+                  <button
+                    onClick={() => setSolCierre(true)}
+                    className="text-xs text-muted/70 underline underline-offset-2 self-center"
+                  >
+                    ¿Terminaste antes? Pedí el cierre
+                  </button>
+                )}
               </Card.Content>
             </Card>
           )}
@@ -388,19 +430,44 @@ export default function MiDia() {
           )}
         </>
       )}
+      {/* solicitud de cierre anticipado — va al dueño con motivo */}
+      <AlertDialog isOpen={solCierre} onOpenChange={o => { if (!o) setSolCierre(false) }}>
+        <AlertDialog.Backdrop>
+          <AlertDialog.Container>
+            <AlertDialog.Dialog className="sm:max-w-[360px]">
+              <AlertDialog.CloseTrigger />
+              <AlertDialog.Header>
+                <AlertDialog.Heading>Pedir cierre anticipado</AlertDialog.Heading>
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-muted">
+                    El turno cierra a las <b className="num">{jornada?.horaFin}</b>. Para cerrar antes,
+                    tu motivo le llega al dueño — si lo aprueba, se habilita el botón.
+                  </p>
+                  <TextField value={motivoCierre} onChange={setMotivoCierre}>
+                    <Label>Motivo</Label>
+                    <Input placeholder="Ej: llovió y no hay gente" />
+                  </TextField>
+                </div>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button slot="close" variant="tertiary">Cancelar</Button>
+                <Button slot="close" variant="primary" onPress={solicitarCierre} isDisabled={!motivoCierre.trim()}>
+                  Enviar solicitud
+                </Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Dialog>
+          </AlertDialog.Container>
+        </AlertDialog.Backdrop>
+      </AlertDialog>
     </div>
   )
 }
 
-/* ── producto vendible: tarjeta que abre modal de venta ─────── */
+/** tarjeta de producto + modal de venta: cantidad + método → onVenta */
 function ProductoVenta({
-  p,
-  despachado,
-  repuesto,
-  stock,
-  habilitado,
-  metodoInicial,
-  onVenta,
+  p, despachado, repuesto, stock, habilitado, metodoInicial, onVenta,
 }: {
   p: Producto
   despachado: number
@@ -410,35 +477,34 @@ function ProductoVenta({
   metodoInicial: MetodoPago
   onVenta: (p: Producto, cantidad: number, metodo: MetodoPago) => void
 }) {
+  const [abierto, setAbierto] = useState(false)
   const [cant, setCant] = useState(1)
   const [metodo, setMetodo] = useState<MetodoPago>(metodoInicial)
   const agotado = stock <= 0
 
   return (
-    <AlertDialog>
+    <AlertDialog isOpen={abierto} onOpenChange={setAbierto}>
       <Button
-        isDisabled={!habilitado || agotado}
         variant="ghost"
-        className={`!h-auto !min-w-0 !w-full !p-2.5 !justify-start !flex-col !items-stretch !gap-1.5 !text-left !whitespace-normal !rounded-xl !border !border-border !bg-surface transition-all
-          ${agotado ? '!opacity-40' : habilitado ? 'hover:!border-accent hover:!shadow-md active:!scale-[0.97]' : ''}`}
+        isDisabled={!habilitado || agotado}
+        className={`!block !h-auto !p-2.5 !text-left !rounded-xl border border-border !bg-surface ${agotado ? 'opacity-40' : ''}`}
       >
         {p.imagen ? (
-          <img src={p.imagen} alt={p.nombre} className="h-16 w-full rounded-lg object-cover" />
+          <img src={p.imagen} alt="" className="w-full h-16 rounded-lg object-cover mb-1.5" />
         ) : (
-          <div className="h-16 w-full rounded-lg bg-accent text-accent-foreground flex items-center justify-center text-xl font-extrabold">
+          <div className="w-full h-16 rounded-lg bg-accent/15 flex items-center justify-center text-2xl font-extrabold text-accent mb-1.5">
             {p.nombre.charAt(0)}
           </div>
         )}
-        <span className="text-sm font-semibold truncate">{p.nombre}</span>
+        <p className="text-sm font-bold leading-tight truncate">{p.nombre}</p>
         {p.ingredientes && (
-          <span className="text-[0.65rem] text-muted/70 leading-tight line-clamp-2">{p.ingredientes}</span>
+          <p className="text-[0.6rem] text-muted/70 truncate">{p.ingredientes}</p>
         )}
-        <span className="text-xs num text-muted">
+        <p className="text-[0.65rem] num text-muted mt-0.5">
           llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''} · quedan {stock}
-        </span>
-        <span className="text-sm font-bold num">{fmtMoney(p.precio)}</span>
+        </p>
+        <p className="text-xs num font-bold text-accent">{fmtMoney(p.precio)}</p>
       </Button>
-
       <AlertDialog.Backdrop>
         <AlertDialog.Container>
           <AlertDialog.Dialog className="sm:max-w-[360px]">
@@ -447,39 +513,39 @@ function ProductoVenta({
               <AlertDialog.Heading>{p.nombre}</AlertDialog.Heading>
             </AlertDialog.Header>
             <AlertDialog.Body>
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between text-sm num">
-                  <span className="text-muted">Precio</span><b>{fmtMoney(p.precio)}</b>
-                </div>
-                <NumberField value={cant} onChange={v => setCant(Math.max(1, v ?? 1))} minValue={1} maxValue={Math.max(1, stock)}>
-                  <Label>Cantidad (quedan {stock})</Label>
+              <div className="flex flex-col gap-3">
+                <NumberField value={cant} onChange={v => setCant(Math.min(stock, Math.max(1, v ?? 1)))} minValue={1} maxValue={Math.max(1, stock)} aria-label="Cantidad">
+                  <Label>Cantidad</Label>
                   <NumberField.Group>
                     <NumberField.DecrementButton />
                     <NumberField.Input />
                     <NumberField.IncrementButton />
                   </NumberField.Group>
                 </NumberField>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">¿Cómo te pagaron?</p>
-                  <ToggleButtonGroup
-                    selectionMode="single"
-                    selectedKeys={new Set([metodo])}
-                    onSelectionChange={k => setMetodo(([...k][0] as MetodoPago) ?? 'efectivo')}
-                    size="sm"
-                  >
-                    <ToggleButton id="efectivo">Efectivo</ToggleButton>
-                    <ToggleButton id="qr">QR</ToggleButton>
-                    <ToggleButton id="transferencia">Transf.</ToggleButton>
-                  </ToggleButtonGroup>
-                </div>
-                <div className="flex justify-between text-base font-bold num">
-                  <span>Total</span><span>{fmtMoney(cant * p.precio)}</span>
+                <ToggleButtonGroup
+                  selectionMode="single"
+                  selectedKeys={new Set([metodo])}
+                  onSelectionChange={k => { const m = [...k][0] as MetodoPago | undefined; if (m) setMetodo(m) }}
+                  aria-label="Método de cobro"
+                >
+                  <ToggleButton id="efectivo">Efectivo</ToggleButton>
+                  <ToggleButton id="qr">QR</ToggleButton>
+                  <ToggleButton id="transferencia">Transf.</ToggleButton>
+                </ToggleButtonGroup>
+                <div className="flex justify-between text-sm num">
+                  <span className="text-muted">Total</span>
+                  <b>{fmtMoney(cant * p.precio)}</b>
                 </div>
               </div>
             </AlertDialog.Body>
             <AlertDialog.Footer>
-              <Button slot="close" variant="tertiary">Volver</Button>
-              <Button slot="close" variant="primary" onPress={() => onVenta(p, cant, metodo)}>
+              <Button slot="close" variant="tertiary">Cancelar</Button>
+              <Button
+                slot="close"
+                variant="primary"
+                onPress={() => { onVenta(p, cant, metodo); setCant(1) }}
+                isDisabled={cant <= 0 || cant > stock}
+              >
                 Anotar venta
               </Button>
             </AlertDialog.Footer>

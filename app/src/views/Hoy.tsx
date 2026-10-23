@@ -1,8 +1,8 @@
-import { AlertDialog, Button, Card, Chip, Disclosure, ListBox, Meter, NumberField, Select, Tabs } from '@heroui/react'
+import { AlertDialog, Button, Card, Chip, Disclosure, Input, Label, ListBox, Meter, NumberField, Select, Tabs, TextField } from '@heroui/react'
 import { db } from '../db'
 import { useDatos, useJornadasDe, useJornadasRango, useVentasDeJornadas } from '../lib/data'
 import { fmtDif, fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
-import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaPotencial, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
+import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
 import { useState } from 'react'
 import type { Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
@@ -88,6 +88,7 @@ export default function Hoy() {
   const [puestoDesp, setPuestoDesp] = useState<number | null>(null)
   const [vendTurno, setVendTurno] = useState<number | null>(null)
   const [fondoTurno, setFondoTurno] = useState(0)
+  const [horaFinTurno, setHoraFinTurno] = useState('')
   const [lineasDesp, setLineasDesp] = useState<Linea[]>([])
   const [prodDesp, setProdDesp] = useState<number | null>(null)
   const [cantDesp, setCantDesp] = useState(1)
@@ -115,12 +116,13 @@ export default function Hoy() {
       puestoId: p.id!,
       vendedorId: v.id!,
       fondoCaja: fondoTurno,
+      horaFin: horaFinTurno || undefined,
       fecha: hoy,
       despacho: lineasDesp,
       estado: 'abierta',
       createdAt: Date.now(),
     })
-    setPuestoDesp(null); setVendTurno(null); setFondoTurno(0)
+    setPuestoDesp(null); setVendTurno(null); setFondoTurno(0); setHoraFinTurno('')
     setLineasDesp([]); setProdDesp(null); setCantDesp(1)
   }
   const ocupados = new Set(jornadas.filter(j => j.estado !== 'confirmada').map(j => j.vendedorId).filter(Boolean))
@@ -244,8 +246,8 @@ export default function Hoy() {
                     <b>{fmtMoney(cobrado(j))}</b>
                   </div>
                   <div className="flex justify-between text-sm num">
-                    <span className="text-muted">Ganancia estimada del despacho</span>
-                    <b>{fmtMoney(gananciaPotencial(j, productos))}</b>
+                    <span className="text-muted">Ganancia hasta ahora</span>
+                    <b>{fmtMoney(gananciaReal(j, ventasJ, productos))}</b>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {dif === 0 ? (
@@ -304,8 +306,8 @@ export default function Hoy() {
                     productos.
                   </p>
                   <div className="flex justify-between text-sm num">
-                    <span className="text-muted">Ganancia estimada del despacho</span>
-                    <b>{fmtMoney(gananciaPotencial(j, productos))}</b>
+                    <span className="text-muted">Ganancia hasta ahora</span>
+                    <b>{fmtMoney(gananciaReal(j, ventasJ, productos))}</b>
                   </div>
                   {stockBajos.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -481,12 +483,19 @@ export default function Hoy() {
                     step={1000}
                     formatOptions={{ style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }}
                   >
+                    <Label>Caja inicial</Label>
                     <NumberField.Group>
                       <NumberField.DecrementButton />
-                      <NumberField.Input placeholder="Caja inicial (cambio)" />
+                      <NumberField.Input />
                       <NumberField.IncrementButton />
                     </NumberField.Group>
                   </NumberField>
+
+                  <TextField value={horaFinTurno} onChange={setHoraFinTurno}>
+                    <Label>Fin del turno</Label>
+                    <Input type="time" />
+                    <p className="text-xs text-muted/70 mt-1">El vendedor puede cerrar solo hasta 5 min antes; fuera de eso te pide aprobación.</p>
+                  </TextField>
 
                   <p className="text-xs font-bold uppercase tracking-wide text-muted mt-1">
                     Productos a despachar
