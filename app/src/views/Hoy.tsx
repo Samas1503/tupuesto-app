@@ -1,6 +1,6 @@
 import { AlertDialog, Button, Card, Chip, Disclosure, Input, Label, ListBox, Meter, NumberField, Select, Tabs, TextField } from '@heroui/react'
 import { db } from '../db'
-import { useDatos, useJornadasDe, useJornadasRango, useVentasDeJornadas } from '../lib/data'
+import { useDatos, useJornadasDe, useJornadasRango, useSolicitudesPendientes, useVentasDeJornadas } from '../lib/data'
 import { fmtDif, fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
 import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
 import { useState } from 'react'
@@ -67,6 +67,22 @@ export default function Hoy() {
   const [tab, setTab] = useState('turnos')
 
   const ventas = useVentasDeJornadas(jornadas.map(j => j.id!))
+  const solicitudes = useSolicitudesPendientes(usuarios)
+
+  // solicitud de cierre anticipado pendiente para esa jornada
+  const solCierreDe = (j: Jornada) =>
+    solicitudes.find(s => s.tipo === 'cierre-anticipado' && s.jornadaId === j.id)
+
+  async function resolverCierre(solId: number, aprobar: boolean, jornadaId?: number) {
+    if (aprobar && jornadaId != null) {
+      await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true })
+      void pushRow('jornadas', jornadaId)
+      await db.solicitudes.update(solId, { estado: 'aprobada', resueltaAt: Date.now() })
+    } else {
+      await db.solicitudes.update(solId, { estado: 'rechazada', resueltaAt: Date.now() })
+    }
+    void pushRow('solicitudes', solId)
+  }
 
   // productos del día: sobrante de ayer + despachado hoy (+repos) − vendido registrado
   const disponibleHoy = productos.filter(p => p.activo).map(p => {
@@ -267,6 +283,18 @@ export default function Hoy() {
               </div>
             </Card.Header>
             <Card.Content className="px-4 py-3">
+              {(() => { const sol = solCierreDe(j); return sol ? (
+                <div className="flex flex-col gap-2 bg-warning/8 border border-warning/30 rounded-xl px-3 py-2.5 mb-2">
+                  <p className="text-xs font-semibold text-warning">
+                    {nomV(sol.vendedorId)} pidió terminar antes de las {j.horaFin ?? '—'}
+                  </p>
+                  {sol.motivo && <p className="text-xs text-muted">"{sol.motivo}"</p>}
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="primary" className="flex-1" onPress={() => resolverCierre(sol.id!, true, j.id)}>Aprobar</Button>
+                    <Button size="sm" variant="danger-soft" className="flex-1" onPress={() => resolverCierre(sol.id!, false)}>Rechazar</Button>
+                  </div>
+                </div>
+              ) : null })()}
               {j.cierre ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between text-sm num">
