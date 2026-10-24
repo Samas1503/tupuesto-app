@@ -35,7 +35,11 @@ export default function App() {
       const idx = NAV_DUENIO.findIndex(x => x.id === vista)
       const el = navRef.current?.querySelectorAll('[role="tab"]')[idx] as HTMLElement | undefined
       // offsetLeft/Width no se ven afectados por el :active scale → medición exacta
-      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
+      if (el) {
+        // cuadrado con esquinas redondeadas, centrado — mismo en angosta y ancha
+        const W = Math.min(el.offsetWidth - 6, el.offsetHeight - 8)
+        setPill({ left: el.offsetLeft + (el.offsetWidth - W) / 2, width: W })
+      }
     }
     medir()
     const t1 = requestAnimationFrame(medir)
@@ -125,9 +129,9 @@ export default function App() {
           <div ref={navRef} className="relative max-w-2xl mx-auto bg-surface/90 backdrop-blur-md border border-border/60 rounded-full shadow-xl shadow-navy/10 px-1.5">
             {/* pill deslizante — se mueve al tab activo */}
             <div
-              className="absolute top-1 bottom-1 w-16 rounded-full bg-accent pointer-events-none z-0"
+              className="absolute top-1 bottom-1 w-[52px] rounded-2xl bg-accent pointer-events-none z-0"
               style={{
-                transform: `translateX(${pill.left}px) scaleX(${pill.width / 64})`,
+                transform: `translateX(${pill.left}px) scaleX(${pill.width / 52})`,
                 transformOrigin: 'left center',
                 opacity: pill.width ? 1 : 0,
                 willChange: 'transform',
@@ -144,7 +148,7 @@ export default function App() {
                     <Tabs.Tab
                       key={item.id}
                       id={item.id}
-                      className="relative z-10 flex-1 basis-0 !min-w-0 flex-col gap-0.5 !h-auto !py-2 !my-1 !rounded-full !bg-transparent text-[0.6rem] font-bold text-muted overflow-hidden whitespace-nowrap data-[selected]:!text-white"
+                      className="relative z-10 flex-1 basis-0 !min-w-0 flex-col gap-0.5 !h-auto !py-3.5 !my-1.5 !rounded-full !bg-transparent text-[0.6rem] font-bold text-muted overflow-hidden whitespace-nowrap data-[selected]:!text-white"
                     >
                       <Icon icon={item.icon} className="text-xl leading-none" />
                       {item.label}
