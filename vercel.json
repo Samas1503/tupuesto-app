@@ -2,9 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/app", "destination": "/landing/app/index.html" },
     { "source": "/app/assets/(.*)", "destination": "/landing/app/assets/$1" },
     { "source": "/app/(.*\\..*)", "destination": "/landing/app/$1" },
-    { "source": "/app/?", "destination": "/landing/app/index.html" },
+    { "source": "/app/(.*)", "destination": "/landing/app/index.html" },
     { "source": "/(.*)", "destination": "/landing/$1" }
   ],
   "cleanUrls": true
