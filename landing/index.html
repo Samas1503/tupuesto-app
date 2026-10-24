@@ -335,10 +335,10 @@
     /* ── Franja de pantallas de la app (multi-screen) ─────── */
     .screens {
       display: grid; grid-auto-flow: column; gap: 18px; overflow-x: auto;
-      padding: 10px 4px 26px; scrollbar-width: none; margin-top: 40px;
+      padding: 10px 24px 26px; scrollbar-width: none; margin: 40px -24px 0;
       scroll-snap-type: x mandatory;
     }
-    .scr-wrap { scroll-snap-align: start; }
+    .scr-wrap { scroll-snap-align: start; min-width: 0; }
     .screens::-webkit-scrollbar { display: none; }
     .mphone {
       flex: 0 0 220px; background: var(--navy); border-radius: 28px; padding: 8px;
@@ -347,7 +347,13 @@
     }
     .mphone:hover { transform: translateY(-6px) rotate(-1deg); }
     .mphone .screen { border-radius: 22px; font-size: 0.72rem; min-height: 300px; overflow: hidden; }
-    .mphone .row span, .mphone .top span { min-width: 0; overflow-wrap: break-word; }
+    .mphone .row span, .mphone .top span { min-width: 0; }
+    .mphone .top small, .mphone .row span:last-child { white-space: nowrap; }
+    .mphone .top span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mphone .top { gap: 6px; }
+    .mphone .row { gap: 6px; }
+    /* la fila de métodos de la boleta no se aplasta */
+    .mphone .row.mtd { flex-wrap: wrap; }
     .mphone .scr-head { padding: 10px 12px; }
     .mphone .puesto { padding: 9px 11px; }
     .mphone .top { font-size: 0.74rem; }
@@ -573,7 +579,7 @@
                 <div class="top"><span>Docena ×1</span><span class="mono"><b>$6.000</b></span></div>
               </div>
               <div class="puesto">
-                <div class="row"><span>○ Efectivo</span><span>● QR</span><span>○ Transf.</span></div>
+                <div class="row mtd" style="display:flex;gap:8px;"><span>○ Efec.</span><span>● QR</span><span>○ Transf.</span></div>
                 <span class="pill pill-ok">Total $9.300</span>
               </div>
             </div>
