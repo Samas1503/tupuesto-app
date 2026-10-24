@@ -80,8 +80,10 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
   /* ── primer ingreso: elegir PIN ──────────────────────────────────── */
   if (pendiente != null) {
     return (
-      <div className="flex flex-col gap-4">
-        <Card>
+      <div className="relative min-h-dvh flex flex-col items-center justify-center gap-6 px-4 overflow-hidden">
+        <Blobs />
+        <Marca />
+        <Card className="w-full max-w-[380px] !rounded-3xl !shadow-xl !shadow-navy/10 relative z-10">
           <Card.Header className="px-4 pt-4 pb-0">
             <Card.Title className="text-base">Elegí tu PIN</Card.Title>
             <Card.Description>Es tu primer ingreso — creá un PIN que solo vos sepas.</Card.Description>
@@ -101,13 +103,16 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Entrá a TuPuesto</h1>
-        <p className="text-sm text-muted">Un solo ingreso para dueños, vendedores y admin.</p>
-      </div>
+    <div className="relative min-h-dvh flex flex-col items-center justify-center gap-6 px-4 overflow-hidden">
+      <Blobs />
+      <Marca />
 
-      <Card>
+      <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 text-accent text-xs font-bold px-3.5 py-1.5 relative z-10">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        Tu negocio al día — sin planillas
+      </span>
+
+      <Card className="w-full max-w-[380px] !rounded-3xl !shadow-xl !shadow-navy/10 relative z-10">
         <Card.Header className="px-4 pt-4 pb-0">
           <Card.Title className="text-base">Ingreso</Card.Title>
           <Card.Description>Entrá con tu email y tu PIN.</Card.Description>
@@ -122,7 +127,8 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
             <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" />
           </TextField>
           {error && <p className="text-xs text-danger font-semibold">Email o PIN incorrecto.</p>}
-          <Button variant="primary" onPress={entrar} isDisabled={email.trim() === '' || pin.trim() === ''}>
+          <Button variant="primary" onPress={entrar} isDisabled={email.trim() === '' || pin.trim() === ''}
+            className="anim-shine !h-11">
             Entrar
           </Button>
 
@@ -157,7 +163,7 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
         </Card.Content>
       </Card>
 
-      <Card>
+      <Card className="w-full max-w-[380px] !rounded-3xl relative z-10 !bg-white/80 backdrop-blur">
         <Card.Content className="px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">Credenciales de la demo</p>
           <ul className="flex flex-col gap-1.5 text-xs num">
@@ -169,6 +175,27 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
           </ul>
         </Card.Content>
       </Card>
+    </div>
+  )
+}
+
+/* ── piezas de marca estilo landing ─────────────────────────────── */
+function Blobs() {
+  return (
+    <>
+      <div className="blob" style={{ width: 340, height: 340, top: '-8%', left: '-12%', background: 'radial-gradient(circle, rgba(99,91,255,.22), transparent 70%)' }} />
+      <div className="blob" style={{ width: 300, height: 300, bottom: '-10%', right: '-10%', background: 'radial-gradient(circle, rgba(11,165,236,.16), transparent 70%)', animationDelay: '-4s' }} />
+    </>
+  )
+}
+
+function Marca() {
+  return (
+    <div className="relative z-10 flex items-center gap-2.5 anim-floaty">
+      <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="TuPuesto" className="h-11 w-11" />
+      <span className="text-3xl font-extrabold tracking-tight text-navy">
+        Tu<span className="text-accent">P</span>uesto
+      </span>
     </div>
   )
 }
