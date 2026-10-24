@@ -137,13 +137,20 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-border">
         <div className="relative max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <img
-              src="/icon.svg"
-              alt=""
-              className="h-8 w-8 rounded-[9px] shrink-0"
+            {/* logo del tema: el icon.svg como máscara → silueta al accent */}
+            <div
+              className="h-8 w-8 rounded-[9px] shrink-0 bg-accent"
+              style={{
+                WebkitMaskImage: `url(${import.meta.env.BASE_URL}icon.svg)`,
+                maskImage: `url(${import.meta.env.BASE_URL}icon.svg)`,
+                WebkitMaskSize: 'contain', maskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center', maskPosition: 'center',
+              }}
+              role="img" aria-label="TuPuesto"
             />
             <span className="font-extrabold tracking-tight text-xl leading-none text-navy">
-              Tu<span className="text-blurple">Puesto</span>
+              Tu<span className="text-accent">Puesto</span>
             </span>
             <span className="hidden sm:inline text-[0.7rem] font-semibold tracking-[0.14em] uppercase text-muted/60">
               control de puestos
@@ -156,8 +163,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* strip degradado — firma de marca */}
-        <div className="absolute bottom-0 inset-x-0 h-[3px] bg-[linear-gradient(90deg,#a960ee,#635bff_30%,#00d4ff_55%,#25d366_80%,#ffcb57)]" />
+        {/* strip degradado — del accent del tema a un fade claro */}
+        <div className="absolute bottom-0 inset-x-0 h-[3px]"
+          style={{ background: 'linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 40%, white) 60%, transparent)' }} />
       </header>
 
       {/* contenido */}
