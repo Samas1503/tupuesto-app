@@ -412,23 +412,25 @@ export default function Despacho() {
         </AlertDialog.Backdrop>
       </AlertDialog>
 
+      {/* sin jornadas en la fecha → mensaje + ilustración */}
+      {jornadasEseDia.length === 0 && (
+        <Card>
+          <Card.Content className="p-2">
+            <EmptyState
+              titulo="Sin despachos este día"
+              descripcion="Aún no hay turnos activos para realizar despachos en esta fecha."
+              hint="Creá el despacho con el botón +"
+            />
+          </Card.Content>
+        </Card>
+      )}
+
       {/* jornadas existentes ese día */}
       {jornadasEseDia.length > 0 && (
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">
             Jornadas del {fmtFecha(fecha)}
           </p>
-          {jornadasEseDia.length === 0 && (
-            <Card>
-              <Card.Content className="p-2">
-                <EmptyState
-                  titulo="Sin turnos activos"
-                  descripcion="Aún no hay turnos activos para realizar despachos en esta fecha."
-                  hint="Creá el despacho con el botón +"
-                />
-              </Card.Content>
-            </Card>
-          )}
           <div className="flex flex-col gap-2">
             {jornadasEseDia.map(j => (
               <Card key={j.id}>
