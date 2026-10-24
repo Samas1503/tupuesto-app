@@ -59,3 +59,11 @@ el dueño confirma.
 - **Seed Neon**: `app/scripts/seed-neon.mjs` lee `tupuesto.sqlite` e inserta por conexión directa (`DATABASE_URL` del `.env` raíz) — idempotente (`ON CONFLICT`).
 - **Mapeo**: snake_case DB ↔ camelCase Dexie; `bigint` de Postgres vuelve como string → `syncPull` convierte timestamps a `Number`.
 - **Limitación**: no hay propagación de deletes remotos (solo upsert) ni auth server-side — pendiente.
+
+
+## Admin dashboard
+
+- `views/Admin.tsx`: gestión — dueños (categoría+tema), vendedores (por dueño), puestos, jornadas; ABM usuarios.
+- `views/AdminMoney.tsx` + `lib/admin-metrics.ts`: flujo de dinero ($ por día, por dueño/método/puesto, abiertas).
+- `views/AdminScores.tsx` + `lib/scoring.ts`: puntajes de TODOS los usuarios (vendedores y dueños) — solo admin.
+  Fórmula base 100: exactitud caja 40 · frecuencia 25 · merma 15 · volumen 20 · bonus +10 (ventana 14 días).
