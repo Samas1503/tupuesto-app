@@ -140,7 +140,7 @@
     .pill-ok   { background: #d8f5e3; color: var(--green); }
     .pill-warn { background: #ffe8d6; color: var(--warn); }
     .float-card {
-      position: absolute; right: -8px; bottom: 42px;
+      position: absolute; right: 0; bottom: 42px;
       background: #fff; border-radius: 12px; padding: 10px 14px;
       box-shadow: 0 14px 34px rgba(10,37,64,0.22);
       font-size: 0.78rem; font-weight: 600; color: var(--navy);
@@ -149,6 +149,7 @@
     }
     .float-card small { display: block; color: var(--warn); font-weight: 700; }
     @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @media (min-width: 1100px) { .float-card { right: -8px; } }
     @media (max-width: 899px) { .hero-visual { margin-top: 10px; } .float-card { right: 0; } }
 
     /* ── Banda diagonal separadora ────────────────────────── */
@@ -391,8 +392,8 @@
     <div class="wrap">
       <div>
         <p class="kicker" style="background:#eef0ff;padding:6px 14px;border-radius:999px;display:inline-block;">Para dueños con 2 o más puestos</p>
-        <h1>¿Cuánta plata entró hoy en <em>tus puestos?</em></h1>
-        <p class="sub">A la noche cada vendedor te rinde la caja desde su celu: qué quedó sin vender, cuánto efectivo hay, qué QR cobró. Vos ves al toque si cuadra o falta plata — sin llamar a nadie ni esperar al fin de semana.</p>
+        <h1>Cerró el día y ya sabés <em>cuánto entró en cada puesto.</em></h1>
+        <p class="sub">El vendedor cierra su turno y al instante lo tenés: cuánto vendió, qué sobró, cuánto te tiene que dar en efectivo y cuánto cayó por QR. Si falta plata te enterás esa noche misma, no el lunes.</p>
         <div class="cta-row">
           <a class="btn btn-dark" data-mp href="#">Reservar mi lugar <span class="arr">→</span></a>
           <a class="btn btn-wa" data-wa href="#">Consultar por WhatsApp</a>
