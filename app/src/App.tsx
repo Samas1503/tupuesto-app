@@ -58,12 +58,8 @@ export default function App() {
 
   return (
     <div className="min-h-dvh bg-paper text-navy flex flex-col">
-      {/* banda de marca */}
-      <header className="relative bg-navy text-white sticky top-0 z-40 overflow-hidden rounded-b-[28px] shadow-lg shadow-navy/20">
-        {/* glows de marca */}
-        <div className="absolute -top-24 -left-12 w-72 h-72 rounded-full bg-blurple/30 blur-3xl pointer-events-none" />
-        <div className="absolute -top-28 -right-16 w-64 h-64 rounded-full bg-[#00d4ff]/15 blur-3xl pointer-events-none" />
-
+      {/* navbar estilo landing: blanco translúcido, logo navy/blurple */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-border">
         <div className="relative max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <img
@@ -71,15 +67,15 @@ export default function App() {
               alt=""
               className="h-8 w-8 rounded-[9px] shrink-0"
             />
-            <span className="font-extrabold tracking-tight text-xl leading-none">
-              Tu<span className="text-[#8f8aff]">Puesto</span>
+            <span className="font-extrabold tracking-tight text-xl leading-none text-navy">
+              Tu<span className="text-blurple">Puesto</span>
             </span>
-            <span className="hidden sm:inline text-[0.7rem] font-semibold tracking-[0.14em] uppercase text-white/50">
+            <span className="hidden sm:inline text-[0.7rem] font-semibold tracking-[0.14em] uppercase text-muted/60">
               control de puestos
             </span>
           </div>
 
-          <div className="rounded-full bg-white/10 p-1 backdrop-blur-sm border border-white/10">
+          <div className="rounded-full bg-muted/10 p-1 border border-border/60">
             <ToggleButtonGroup
               selectionMode="single"
               selectedKeys={new Set([rol])}
