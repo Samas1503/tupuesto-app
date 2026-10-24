@@ -13,6 +13,7 @@ CREATE TABLE vendedores (id INTEGER PRIMARY KEY, nombre TEXT, puestoId INTEGER, 
 CREATE TABLE jornadas (id INTEGER PRIMARY KEY, puestoId INTEGER, vendedorId INTEGER, fecha TEXT, fondoCaja INTEGER, despacho TEXT, reposiciones TEXT, estado TEXT, cierre TEXT, confirmadaAt INTEGER, createdAt INTEGER);
 CREATE TABLE ventas (id INTEGER PRIMARY KEY, jornadaId INTEGER, items TEXT, total INTEGER, metodoPago TEXT, createdAt INTEGER);
 CREATE TABLE solicitudes (id INTEGER PRIMARY KEY, tipo TEXT, vendedorId INTEGER, solicitadoPor INTEGER, motivo TEXT, estado TEXT, createdAt INTEGER, resueltaAt INTEGER);
+CREATE TABLE duenios (id INTEGER PRIMARY KEY, nombre TEXT, email TEXT, pin TEXT, debeCambiarPin INTEGER, activo INTEGER, eliminado INTEGER);
 `)
 
 const img = (l) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%23635bff'/%3E%3Ctext x='32' y='42' font-size='32' fill='%23fff' text-anchor='middle' font-family='sans-serif'%3E${l}%3C/text%3E%3C/svg%3E`
@@ -85,6 +86,7 @@ const ventas = [
   [3, jHoyMarcos, JSON.stringify([L(0,6),L(5,2)]), 6900, 'efectivo', now - 4*3600e3],
 ]
 ins('ventas', ventas)
+ins('duenios', [[1, 'Patricio (demo)', 'duenio@demo.tupuesto', '0000', 0, 1, 0]])
 
 writeFileSync('public/tupuesto.sqlite', Buffer.from(db.export()))
 console.log('tupuesto.sqlite:', jornadas.length, 'jornadas,', ventas.length, 'ventas,', productos.length, 'productos')

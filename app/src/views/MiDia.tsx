@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Alert, AlertDialog, Button, Card, Chip, Disclosure, Input, Label, ListBox, NumberField, Select, TextField, ToggleButton, ToggleButtonGroup } from '@heroui/react'
+import { Alert, AlertDialog, Button, Card, Chip, Input, Label, NumberField, TextField, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 import { db } from '../db'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useDatos, useJornadaVendedor, useJornadasLibres, useVentasDe } from '../lib/data'
-import { cargado, despachoValor, repuestas, stockActual, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
+import { cargado, despachoValor, horasTurno, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
-import type { Cierre, MetodoPago, Producto } from '../types'
+import type { Cierre, Jornada, MetodoPago, Producto, Venta } from '../types'
 
 
 /** badge del método de cobro de una venta */
@@ -32,15 +33,29 @@ export default function MiDia() {
   const [pinError, setPinError] = useState(false)
   const [debeElegirPin, setDebeElegirPin] = useState<number | null>(null)
   const [pinNuevo, setPinNuevo] = useState('')
-  const [solTarget, setSolTarget] = useState<number | null>(null)
-  const [solMotivo, setSolMotivo] = useState('')
-  const [solEnviada, setSolEnviada] = useState(false)
   const [fondoTurno, setFondoTurno] = useState(0)
   const [solCierre, setSolCierre] = useState(false)
   const [motivoCierre, setMotivoCierre] = useState('')
   const [solCierreEnviada, setSolCierreEnviada] = useState(false)
   const libres = useJornadasLibres(hoy)
   const [listo, setListo] = useState(false)
+  const [verHistorial, setVerHistorial] = useState(false)
+
+  // historial propio: jornadas y ventas registradas — visible sin turno / toggle con turno
+  const misJornadas = useLiveQuery(
+    () => vendedorId == null ? [] : db.jornadas.where('vendedorId').equals(vendedorId).reverse().sortBy('fecha'),
+    [vendedorId],
+  ) ?? []
+  const misVentas = useLiveQuery(
+    () => db.ventas.filter(v => misJornadas.some(j => j.id === v.jornadaId)).toArray(),
+    [misJornadas.length],
+  ) ?? []
+  const stats = {
+    turnos: misJornadas.filter(j => j.cierre).length,
+    horas: misJornadas.reduce((a, j) => a + horasTurno(j), 0),
+    unidades: misJornadas.reduce((a, j) => a + productos.reduce((x, p) => x + (j.cierre ? vendidos(j, p.id!) : vendidosRegistrados(misVentas.filter(v => v.jornadaId === j.id), p.id!)), 0), 0),
+    vendido: misJornadas.reduce((a, j) => a + (j.cierre ? totalVentas(j, productos) : ventasTotal(misVentas.filter(v => v.jornadaId === j.id))), 0),
+  }
 
   // método de cobro por defecto de la venta en curso (persiste entre ventas)
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('efectivo')
@@ -88,18 +103,7 @@ export default function MiDia() {
     setFondoTurno(0)
   }
 
-  async function solicitarBaja() {
-    if (vendedorId == null || solTarget == null) return
-    await db.solicitudes.add({
-      tipo: 'eliminar-usuario',
-      vendedorId: solTarget,
-      solicitadoPor: vendedorId,
-      motivo: solMotivo.trim() || undefined,
-      estado: 'pendiente',
-      createdAt: Date.now(),
-    })
-    setSolTarget(null); setSolMotivo(''); setSolEnviada(true)
-  }
+
 
   async function elegirPin() {
     const p = pinNuevo.trim()
@@ -240,14 +244,22 @@ export default function MiDia() {
           <Alert>
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Hoy no tenés jornada</Alert.Title>
-              <Alert.Description>El dueño todavía no cargó ningún despacho del día.</Alert.Description>
+              <Alert.Title>{jornada?.estado === 'confirmada' ? 'Turno terminado' : 'Hoy no tenés jornada'}</Alert.Title>
+              <Alert.Description>
+                {jornada?.estado === 'confirmada'
+                  ? 'El dueño confirmó tu rendición. Podés tomar otro turno o volver mañana.'
+                  : 'El dueño todavía no cargó ningún despacho del día.'}
+              </Alert.Description>
             </Alert.Content>
           </Alert>
         )
       )}
 
-      {jornada && puesto && (
+      {vendedorId != null && (!jornada || jornada.estado === 'confirmada') && (
+        <MiHistorial misJornadas={misJornadas} misVentas={misVentas} stats={stats} productos={productos} puestos={puestos} />
+      )}
+
+      {jornada && puesto && jornada.estado !== 'confirmada' && (
         <>
           {/* ── VENDER: tus productos del día — tocá uno para anotar ── */}
           <Card>
@@ -329,6 +341,17 @@ export default function MiDia() {
             </Card.Content>
           </Card>
 
+          {/* historial propio — oculto tras botón durante el turno */}
+          <button
+            onClick={() => setVerHistorial(v => !v)}
+            className="text-xs text-muted/70 underline underline-offset-2 self-center"
+          >
+            {verHistorial ? 'Ocultar mi historial' : 'Ver mi historial'}
+          </button>
+          {verHistorial && (
+            <MiHistorial misJornadas={misJornadas} misVentas={misVentas} stats={stats} productos={productos} puestos={puestos} />
+          )}
+
           {jornada.estado === 'abierta' && !listo && (
             /* ── CIERRE automático: sobrantes = despacho − registrado,
                recaudado = Σ ventas por método ── */
@@ -363,7 +386,7 @@ export default function MiDia() {
             </Card>
           )}
 
-          {(jornada.estado === 'cerrada' || listo) && jornada.estado !== 'confirmada' && (
+          {(jornada.estado === 'cerrada' || listo) && (
             <Alert status="warning">
               <Alert.Indicator />
               <Alert.Content>
@@ -375,59 +398,9 @@ export default function MiDia() {
             </Alert>
           )}
 
-          {/* pedir baja de un usuario al admin */}
-          <Disclosure>
-            <Disclosure.Trigger className="w-full text-left">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted">Solicitar baja de usuario →</span>
-            </Disclosure.Trigger>
-            <Disclosure.Content>
-              <Card>
-                <Card.Content className="px-4 py-3 flex flex-col gap-3">
-                  {solEnviada ? (
-                    <p className="text-sm text-success">Solicitud enviada. El dueño la revisa.</p>
-                  ) : (
-                    <>
-                      <Select
-                        placeholder="¿A quién?"
-                        selectedKey={solTarget != null ? String(solTarget) : null}
-                        onSelectionChange={k => setSolTarget(k != null ? Number(k) : null)}
-                      >
-                        <Label>Usuario</Label>
-                        <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
-                        <Select.Popover>
-                          <ListBox>
-                            {vendedores.filter(v => v.id !== vendedorId).map(v => (
-                              <ListBox.Item key={v.id} id={String(v.id)} textValue={v.nombre}>
-                                {v.nombre}
-                                <ListBox.ItemIndicator />
-                              </ListBox.Item>
-                            ))}
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
-                      <TextField value={solMotivo} onChange={setSolMotivo}>
-                        <Label>Motivo (opcional)</Label>
-                        <Input placeholder="Ej: ya no trabaja acá" />
-                      </TextField>
-                      <Button variant="outline" onPress={solicitarBaja} isDisabled={solTarget == null}>
-                        Enviar solicitud
-                      </Button>
-                    </>
-                  )}
-                </Card.Content>
-              </Card>
-            </Disclosure.Content>
-          </Disclosure>
 
-          {jornada.estado === 'confirmada' && (
-            <Alert status="success">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>Rendición confirmada</Alert.Title>
-                <Alert.Description>El dueño ya vio tu rendición de hoy.</Alert.Description>
-              </Alert.Content>
-            </Alert>
-          )}
+
+
         </>
       )}
       {/* solicitud de cierre anticipado — va al dueño con motivo */}
@@ -553,5 +526,94 @@ function ProductoVenta({
         </AlertDialog.Container>
       </AlertDialog.Backdrop>
     </AlertDialog>
+  )
+}
+
+/** historial del vendedor: stats + jornadas agrupadas por fecha, productos por turno */
+function MiHistorial({
+  misJornadas, misVentas, stats, productos, puestos,
+}: {
+  misJornadas: Jornada[]
+  misVentas: Venta[]
+  stats: { turnos: number; horas: number; unidades: number; vendido: number }
+  productos: Producto[]
+  puestos: { id?: number; nombre: string }[]
+}) {
+  // agrupar por fecha desc
+  const porFecha = new Map<string, Jornada[]>()
+  for (const j of misJornadas) {
+    if (!porFecha.has(j.fecha)) porFecha.set(j.fecha, [])
+    porFecha.get(j.fecha)!.push(j)
+  }
+  const fechas = [...porFecha.keys()].sort().reverse().slice(0, 10)
+
+  const vendidoDe = (j: Jornada, pid: number) =>
+    j.cierre ? vendidos(j, pid) : vendidosRegistrados(misVentas.filter(v => v.jornadaId === j.id), pid)
+
+  return (
+    <Card>
+      <Card.Header className="px-4 pt-4 pb-0">
+        <Card.Title className="text-base">Mi historial</Card.Title>
+        <Card.Description>Tus números hasta la fecha — productos por turno.</Card.Description>
+      </Card.Header>
+      <Card.Content className="px-4 py-3 flex flex-col gap-3">
+        {/* resumen acumulado */}
+        <div className="grid grid-cols-4 gap-2 text-center">
+          <div><p className="text-base font-extrabold num">{stats.turnos}</p><p className="text-[0.6rem] text-muted uppercase font-bold">turnos</p></div>
+          <div><p className="text-base font-extrabold num">{stats.horas.toFixed(0)}h</p><p className="text-[0.6rem] text-muted uppercase font-bold">horas</p></div>
+          <div><p className="text-base font-extrabold num">{stats.unidades}</p><p className="text-[0.6rem] text-muted uppercase font-bold">unidades</p></div>
+          <div><p className="text-base font-extrabold num">{fmtMoney(stats.vendido)}</p><p className="text-[0.6rem] text-muted uppercase font-bold">vendido</p></div>
+        </div>
+
+        {/* por fecha → turnos → productos */}
+        {fechas.length === 0 && <p className="text-xs text-muted">Todavía no tenés jornadas registradas.</p>}
+        {fechas.map(fecha => {
+          const js = porFecha.get(fecha)!
+          const totalDia = js.reduce((a, j) => a + (j.cierre ? totalVentas(j, productos) : ventasTotal(misVentas.filter(v => v.jornadaId === j.id))), 0)
+          return (
+            <div key={fecha} className="border-t border-dashed border-border pt-2.5">
+              <div className="flex justify-between items-baseline mb-1.5">
+                <b className="text-xs uppercase tracking-wide capitalize">{fmtFecha(fecha)}</b>
+                <b className="text-sm num">{fmtMoney(totalDia)}</b>
+              </div>
+              {js.map((j, turno) => {
+                const p = puestos.find(x => x.id === j.puestoId)
+                const prods = productos
+                  .map(pp => ({ pp, u: vendidoDe(j, pp.id!) }))
+                  .filter(x => x.u > 0)
+                const total = j.cierre ? totalVentas(j, productos) : ventasTotal(misVentas.filter(v => v.jornadaId === j.id))
+                return (
+                  <div key={j.id} className="mb-2 rounded-lg bg-muted/5 border border-border/50 p-2.5">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-semibold">
+                        {p?.nombre ?? '—'}{js.length > 1 ? ` · turno ${turno + 1}` : ''}
+                      </span>
+                      <Chip size="sm" variant="soft" color={j.estado === 'confirmada' ? 'success' : j.estado === 'cerrada' ? 'warning' : 'default'}>
+                        {j.estado === 'confirmada' ? 'confirmada' : j.estado === 'cerrada' ? 'cerrada' : 'en curso'}
+                      </Chip>
+                    </div>
+                    {prods.length > 0 ? (
+                      <ul className="flex flex-col gap-0.5">
+                        {prods.map(({ pp, u }) => (
+                          <li key={pp.id} className="flex justify-between text-xs num">
+                            <span className="text-muted">{pp.nombre}</span>
+                            <span>{u}u · {fmtMoney(u * pp.precio)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[0.65rem] text-muted/60">sin ventas todavía</p>
+                    )}
+                    <div className="flex justify-end mt-1">
+                      <b className="text-xs num text-accent">{fmtMoney(total)}</b>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </Card.Content>
+    </Card>
   )
 }
