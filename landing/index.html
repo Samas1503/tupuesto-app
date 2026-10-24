@@ -383,14 +383,11 @@
       .hero { padding: 40px 0 96px; }
       .hero .wrap { gap: 26px; }
       .hero-visual { order: -1; justify-self: center; max-width: 290px; }
-      /* el mockup entero escala junto — mismas proporciones que en desktop */
-      .hero .phone { transform: rotate(-2deg) scale(0.78); transform-origin: top center; }
-      .hero-visual { margin-bottom: -110px; } /* el scale deja hueco, se compensa */
-      /* phone chico: abajo a la izquierda — no tapa el contenido principal */
-      .hero-duo .phone-small { width: 54%; top: auto; bottom: -4%; left: -10%; }
-      /* la float-card en mobile queda sobre el texto → oculta */
+      /* mobile: un solo phone limpio, escala uniforme, sin solapes */
+      .hero .phone { transform: rotate(-2deg) scale(0.8); transform-origin: top center; }
+      .hero-visual { margin-bottom: -90px; }
+      .hero-duo .phone-small { display: none; }
       .hero .float-card { display: none; }
-      /* el CTA no queda tapado por la barra sticky */
       .hero { padding-bottom: 150px; }
       .hero h1 { font-size: clamp(2rem, 9vw, 2.6rem); }
       .hero .sub { font-size: 1.1rem; }
