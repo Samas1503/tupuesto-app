@@ -379,8 +379,14 @@
     }
     @media (max-width: 899px) {
       section { padding: 56px 0; }
-      .hero { padding: 64px 0 110px; }
-      .hero .sub { font-size: 1.05rem; }
+      /* en celular: imagen primero y más chica, texto más grande */
+      .hero { padding: 40px 0 96px; }
+      .hero .wrap { gap: 26px; }
+      .hero-visual { order: -1; justify-self: center; max-width: 290px; }
+      .hero .phone { transform: rotate(-2deg) scale(0.94); transform-origin: top center; }
+      .hero-duo .phone-small { width: 58%; }
+      .hero h1 { font-size: clamp(2rem, 9vw, 2.6rem); }
+      .hero .sub { font-size: 1.1rem; }
       .cell { padding: 22px 20px; }
       .price-card { padding: 24px 22px; }
       .steps { margin-top: 26px; }
