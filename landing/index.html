@@ -359,6 +359,41 @@
     }
     .mininav b { color: var(--blurple); }
 
+    /* ── Responsive + armonía UX ──────────────────────────── */
+    html, body { overflow-x: hidden; }
+    img, svg { max-width: 100%; }
+    .rend-row { grid-template-columns: minmax(0,1fr) auto; }
+    .rend-row .pill { grid-column: 1 / -1; justify-self: start; }
+    @media (min-width: 560px) {
+      .rend-row { grid-template-columns: 1fr auto auto; }
+      .rend-row .pill { grid-column: auto; }
+    }
+    @media (max-width: 899px) {
+      section { padding: 56px 0; }
+      .hero { padding: 64px 0 110px; }
+      .hero .sub { font-size: 1.05rem; }
+      .cell { padding: 22px 20px; }
+      .price-card { padding: 24px 22px; }
+      .steps { margin-top: 26px; }
+      .step { gap: 14px; padding: 20px 0; }
+      .step .n { flex-basis: 32px; height: 32px; font-size: 0.85rem; }
+      .hero-duo .phone-small { left: -4%; width: 58%; }
+      .mphone { flex-basis: 190px; }
+      .bento { gap: 12px; }
+      .fit { padding: 20px; }
+      .cta-row .btn { width: 100%; }
+      .sticky .btn { font-size: 0.88rem; padding: 13px 6px; }
+      footer { padding-bottom: 110px; }
+    }
+    /* foco visible para teclado (UX/a11y) */
+    a:focus-visible, button:focus-visible, summary:focus-visible {
+      outline: 3px solid var(--blurple); outline-offset: 3px; border-radius: 8px;
+    }
+    /* textos que nunca rebalsan */
+    h1, h2, h3, p, li, summary { overflow-wrap: break-word; }
+    /* tap targets generosos en mobile */
+    @media (max-width: 899px) { .btn { min-height: 48px; } }
+
     /* ── Footer + CTA fijo ────────────────────────────────── */
     footer { background: var(--navy); color: #9fb3c8; padding: 44px 0 120px; font-size: 0.88rem; }
     footer .logo { color: #fff; font-size: 1.2rem; }
