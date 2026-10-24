@@ -52,8 +52,8 @@ python3 -m http.server 8765 --directory landing
 
 ## Demo
 
-Demo en vivo: **landing** [tupuesto-app.vercel.app](https://tupuesto-app.vercel.app) →
-botón "▶ Demo" → **app** [app-ten-tan-35.vercel.app](https://app-ten-tan-35.vercel.app)
+Demo en vivo: **landing** [tupuesto.vercel.app](https://tupuesto.vercel.app) →
+botón "▶ Demo" → **app** [tupuesto-demo.vercel.app](https://tupuesto-demo.vercel.app)
 (IndexedDB hidratada desde `tupuesto.sqlite` — sin backend).
 
 El seed trae el negocio de la landing: tres puestos — Marcos en Feria Central
