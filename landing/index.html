@@ -386,9 +386,14 @@
       /* mobile: un solo phone limpio, escala uniforme, sin solapes */
       .hero .phone { transform: rotate(-2deg) scale(0.8); transform-origin: top center; }
       .hero-visual { margin-bottom: -90px; }
-      .hero-duo .phone-small { display: none; }
+      /* phone chico: esquina inferior derecha del principal — no pisa el texto */
+      .hero-duo .phone-small {
+        display: block; width: 46%;
+        top: auto; bottom: 0; left: auto; right: -6%;
+        transform: rotate(3deg);
+      }
       /* float-card: dentro del phone, no colgando sobre el texto */
-      .hero .float-card { bottom: 8px; right: 0; font-size: 0.72rem; padding: 8px 11px; max-width: 190px; }
+      .hero .float-card { bottom: auto; top: -6px; right: -4px; font-size: 0.7rem; padding: 8px 11px; max-width: 185px; }
       .hero { padding-bottom: 150px; }
       .hero h1 { font-size: clamp(2rem, 9vw, 2.6rem); }
       .hero .sub { font-size: 1.1rem; }
