@@ -203,13 +203,15 @@
     .dark h2 { color: #fff; }
     .dark .lead { color: #9fb3c8; }
     .dark .wrap { position: relative; display: grid; gap: 44px; }
-    @media (min-width: 880px) { .dark .wrap { grid-template-columns: 1fr 420px; align-items: center; } }
+    .dark .wrap > * { min-width: 0; }
+    @media (min-width: 880px) { .dark .wrap { grid-template-columns: minmax(0,1fr) minmax(300px,420px); align-items: center; } }
     .price-card {
       background: #fff; color: var(--navy); border-radius: 26px; padding: 34px;
       box-shadow: 0 30px 70px rgba(0,0,0,0.35);
+      min-width: 0; overflow-wrap: break-word;
     }
     .price-card .tag { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blurple); }
-    .price { font-size: 2.6rem; font-weight: 800; letter-spacing: -0.03em; margin: 8px 0 0; }
+    .price { font-size: clamp(2rem, 7vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; margin: 8px 0 0; }
     .price small { font-size: 1rem; font-weight: 500; color: var(--muted); }
     .price-card .sub { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
     .price-card hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
@@ -220,9 +222,9 @@
     .price-card .btn { width: 100%; margin-top: 8px; }
     .price-card .btn-wa { margin-top: 10px; }
     .garantias { display: grid; gap: 18px; margin-top: 26px; }
-    .gar { display: flex; gap: 12px; align-items: flex-start; }
+    .gar { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
     .gar .ico { font-size: 1.2rem; }
-    .gar p { font-size: 0.95rem; color: #9fb3c8; }
+    .gar p { font-size: 0.95rem; color: #9fb3c8; min-width: 0; }
     .gar b { color: #fff; }
 
     /* ── Bento "Qué ves": superficies de producto ─────────── */
