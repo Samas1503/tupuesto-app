@@ -63,7 +63,7 @@ export default function App() {
         <div className="relative max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <img
-              src="/kioskpay-ios-light-512x512.svg"
+              src="/icon.svg"
               alt=""
               className="h-8 w-8 rounded-[9px] shrink-0"
             />
