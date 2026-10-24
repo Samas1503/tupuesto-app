@@ -334,9 +334,11 @@
 
     /* ── Franja de pantallas de la app (multi-screen) ─────── */
     .screens {
-      display: grid; grid-auto-flow: column; gap: 20px; overflow-x: auto;
+      display: grid; grid-auto-flow: column; gap: 18px; overflow-x: auto;
       padding: 10px 4px 26px; scrollbar-width: none; margin-top: 40px;
+      scroll-snap-type: x mandatory;
     }
+    .scr-wrap { scroll-snap-align: start; }
     .screens::-webkit-scrollbar { display: none; }
     .mphone {
       flex: 0 0 220px; background: var(--navy); border-radius: 28px; padding: 8px;
@@ -344,7 +346,8 @@
       transition: transform .25s ease;
     }
     .mphone:hover { transform: translateY(-6px) rotate(-1deg); }
-    .mphone .screen { border-radius: 22px; font-size: 0.72rem; min-height: 300px; }
+    .mphone .screen { border-radius: 22px; font-size: 0.72rem; min-height: 300px; overflow: hidden; }
+    .mphone .row span, .mphone .top span { min-width: 0; overflow-wrap: break-word; }
     .mphone .scr-head { padding: 10px 12px; }
     .mphone .puesto { padding: 9px 11px; }
     .mphone .top { font-size: 0.74rem; }
@@ -378,7 +381,10 @@
       .step { gap: 14px; padding: 20px 0; }
       .step .n { flex-basis: 32px; height: 32px; font-size: 0.85rem; }
       .hero-duo .phone-small { left: -4%; width: 58%; }
-      .mphone { flex-basis: 190px; }
+      .mphone { flex-basis: 210px; }
+      .mphone .screen { min-height: 250px; }
+      .screens { gap: 14px; padding-bottom: 18px; }
+      .scrlabel { font-size: 0.8rem; }
       .bento { gap: 12px; }
       .fit { padding: 20px; }
       .cta-row .btn { width: 100%; }
