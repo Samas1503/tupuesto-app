@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { seedIfEmpty } from './db'
-import { syncPull } from './lib/sync'
+import { startSyncLoop } from './lib/sync'
 import './index.css'
 import App from './App.tsx'
 
@@ -16,7 +16,7 @@ navigator.serviceWorker?.addEventListener('controllerchange', () => {
   location.reload()
 })
 
-seedIfEmpty().then(syncPull).then(() => {
+seedIfEmpty().then(startSyncLoop).then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

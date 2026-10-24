@@ -3,6 +3,7 @@ import { AlertDialog, Button, Card, Chip, Input, Label, Switch, TextField } from
 import { db } from '../db'
 import { totalVentas, vendidos, ventasTotal } from '../lib/arqueo'
 import { fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
+import { pushRow } from '../lib/snake'
 import { useDatos, useJornadasRango, useSolicitudesPendientes, useVentasDeJornadas } from '../lib/data'
 
 /** PIN aleatorio de 4 dígitos — el "link de acceso" local (con backend: email + token) */
@@ -56,7 +57,8 @@ export default function Vendedores() {
     if (!n) return
     const e = email.trim()
     const pin = pinAleatorio()
-    await db.vendedores.add({ nombre: n, email: e, pin, debeCambiarPin: true, activo: true })
+    const id = await db.vendedores.add({ nombre: n, email: e, pin, debeCambiarPin: true, activo: true })
+    void pushRow('vendedores', id)
     setNombre('')
     setEmail('')
     await enviarPin(n, pin, e) // al vendedor por email; solo se muestra si falla
@@ -65,12 +67,17 @@ export default function Vendedores() {
   async function resolver(solId: number, aprobar: boolean, vendedorId: number, tipo: string, jornadaId?: number) {
     if (!aprobar) {
       await db.solicitudes.update(solId, { estado: 'rechazada', resueltaAt: Date.now() })
+      void pushRow('solicitudes', solId)
       return
     }
     if (tipo === 'cierre-anticipado') {
       // aprobar = habilita el botón de cerrar del vendedor en esa jornada
-      if (jornadaId != null) await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true })
+      if (jornadaId != null) {
+        await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true })
+        void pushRow('jornadas', jornadaId)
+      }
       await db.solicitudes.update(solId, { estado: 'aprobada', resueltaAt: Date.now() })
+      void pushRow('solicitudes', solId)
       return
     }
     // eliminar-usuario: el delete real pasa por confirmarEliminar
@@ -80,14 +87,18 @@ export default function Vendedores() {
 
   async function restaurar(id: number) {
     await db.vendedores.update(id, { eliminado: false, activo: true })
+    void pushRow('vendedores', id)
   }
 
   async function confirmarEliminar() {
     if (!confirmElim) return
     // eliminación lógica — restaura desde la sección Eliminados
     await db.vendedores.update(confirmElim.id, { eliminado: true, activo: false })
-    if (confirmElim.solId != null)
+    void pushRow('vendedores', confirmElim.id)
+    if (confirmElim.solId != null) {
       await db.solicitudes.update(confirmElim.solId, { estado: 'aprobada', resueltaAt: Date.now() })
+      void pushRow('solicitudes', confirmElim.solId)
+    }
     setConfirmElim(null)
   }
 
@@ -95,7 +106,13 @@ export default function Vendedores() {
   async function resetear(nombre: string, id: number) {
     const pin = pinAleatorio()
     await db.vendedores.update(id, { pin, debeCambiarPin: true })
+    void pushRow('vendedores', id)
     await enviarPin(nombre, pin, vendedores.find(x => x.id === id)?.email)
+  }
+
+  async function toggleActivo(id: number, activo: boolean) {
+    await db.vendedores.update(id, { activo })
+    void pushRow('vendedores', id)
   }
 
   return (
@@ -171,7 +188,7 @@ export default function Vendedores() {
                 </Button>
                 <Switch
                   isSelected={v.activo}
-                  onChange={on => db.vendedores.update(v.id!, { activo: on })}
+                  onChange={on => void toggleActivo(v.id!, on)}
                   aria-label={`Activo ${v.nombre}`}
                 />
               </div>

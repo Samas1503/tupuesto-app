@@ -4,6 +4,7 @@ import { db } from '../db'
 import { useDatos, useJornadasDe } from '../lib/data'
 import { despachoValor } from '../lib/arqueo'
 import { fmtMoney, hoyISO } from '../lib/format'
+import { pushRow } from '../lib/snake'
 import type { DestinoQR, EstadoJornada } from '../types'
 
 const COLOR_ESTADO: Record<EstadoJornada, 'default' | 'warning' | 'success'> = {
@@ -20,20 +21,25 @@ export default function Puestos() {
 
   async function setQr(puestoId: number, keys: Set<string>) {
     const d = [...keys][0] as DestinoQR | undefined
-    if (d) await db.puestos.update(puestoId, { qrDestinoDefault: d })
+    if (d) {
+      await db.puestos.update(puestoId, { qrDestinoDefault: d })
+      void pushRow('puestos', puestoId)
+    }
   }
   async function setActivo(puestoId: number, activo: boolean) {
     await db.puestos.update(puestoId, { activo })
+    void pushRow('puestos', puestoId)
   }
   async function agregar() {
     const n = nombreP.trim()
     if (!n) return
-    await db.puestos.add({
+    const id = await db.puestos.add({
       nombre: n,
       ubicacion: ubicacion.trim(),
       qrDestinoDefault: 'negocio',
       activo: true,
     })
+    void pushRow('puestos', id)
     setNombreP('')
     setUbicacion('')
   }

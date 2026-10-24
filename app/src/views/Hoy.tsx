@@ -5,6 +5,7 @@ import { fmtDif, fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../li
 import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
 import { useState } from 'react'
 import EmptyState from '../components/EmptyState'
+import { pushRow } from '../lib/snake'
 import type { Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 function estadoChip(j: Jornada) {
@@ -110,13 +111,14 @@ export default function Hoy() {
   async function crearDespachoPuesto() {
     const p = puestos.find(x => x.id === puestoDesp)
     if (!p || lineasDesp.length === 0) return
-    await db.jornadas.add({
+    const jid = await db.jornadas.add({
       puestoId: p.id!,
       fecha: hoy,
       despacho: lineasDesp,
       estado: 'abierta',
       createdAt: Date.now(),
     })
+    void pushRow('jornadas', jid)
     setPuestoDesp(null); setLineasDesp([]); setProdDesp(null); setCantDesp(1)
   }
 
@@ -124,7 +126,7 @@ export default function Hoy() {
     const p = puestos.find(x => x.id === puestoDesp)
     const v = vendedores.find(x => x.id === vendTurno)
     if (!p || !v || fondoTurno <= 0 || lineasDesp.length === 0) return
-    await db.jornadas.add({
+    const jid = await db.jornadas.add({
       puestoId: p.id!,
       vendedorId: v.id!,
       fondoCaja: fondoTurno,
@@ -136,6 +138,7 @@ export default function Hoy() {
       estado: 'abierta',
       createdAt: Date.now(),
     })
+    void pushRow('jornadas', jid)
     setPuestoDesp(null); setVendTurno(null); setFondoTurno(0); setHoraFinTurno('')
     setLineasDesp([]); setProdDesp(null); setCantDesp(1)
   }
@@ -165,6 +168,7 @@ export default function Hoy() {
 
   async function confirmar(j: Jornada) {
     await db.jornadas.update(j.id!, { estado: 'confirmada', confirmadaAt: Date.now() })
+    void pushRow('jornadas', j.id!)
   }
 
   return (

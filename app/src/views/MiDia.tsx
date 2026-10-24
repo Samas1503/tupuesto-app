@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useDatos, useJornadaVendedor, useJornadasLibres, useVentasDe } from '../lib/data'
 import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
+import { pushRow } from '../lib/snake'
 import type { Cierre, Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 
@@ -84,7 +85,7 @@ export default function MiDia() {
 
   async function solicitarCierre() {
     if (vendedorId == null || jornada?.id == null || !motivoCierre.trim()) return
-    await db.solicitudes.add({
+    const solId = await db.solicitudes.add({
       tipo: 'cierre-anticipado',
       jornadaId: jornada.id,
       vendedorId,
@@ -93,6 +94,7 @@ export default function MiDia() {
       estado: 'pendiente',
       createdAt: Date.now(),
     })
+    void pushRow('solicitudes', solId)
     setSolCierreEnviada(true)
     setMotivoCierre('')
     setSolCierre(false)
@@ -100,6 +102,7 @@ export default function MiDia() {
 
   async function tomarTurno(jornadaId: number) {
     await db.jornadas.update(jornadaId, { vendedorId: vendedorId ?? undefined, fondoCaja: fondoTurno })
+    void pushRow('jornadas', jornadaId)
     setFondoTurno(0)
   }
 
@@ -109,6 +112,7 @@ export default function MiDia() {
     const p = pinNuevo.trim()
     if (debeElegirPin == null || p.length < 4) return
     await db.vendedores.update(debeElegirPin, { pin: p, debeCambiarPin: false })
+    void pushRow('vendedores', debeElegirPin)
     setDebeElegirPin(null)
     setVendedorId(debeElegirPin)
     localStorage.setItem('tp-vendedor', String(debeElegirPin))
@@ -148,13 +152,14 @@ export default function MiDia() {
   async function confirmarBoleta() {
     if (!jornada || boleta.length === 0) return
     const items = boleta.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
-    await db.ventas.add({
+    const ventaId = await db.ventas.add({
       jornadaId: jornada.id!,
       items,
       total: totalBoleta,
       metodoPago: metodoBoleta,
       createdAt: Date.now(),
     })
+    void pushRow('ventas', ventaId)
     setBoleta([]); setBoletaAbierta(false); setMetodoPago(metodoBoleta)
   }
 
@@ -175,6 +180,7 @@ export default function MiDia() {
       cerradaAt: Date.now(),
     }
     await db.jornadas.update(jornada.id!, { cierre, estado: 'cerrada' })
+    void pushRow('jornadas', jornada.id!)
     setListo(true)
   }
 

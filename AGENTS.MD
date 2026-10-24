@@ -73,3 +73,5 @@ no adelantarse.
 **Vistas:** MiDia = login PIN + "Turnos sin asignar" + Vender (modal por producto) + cierre con nota. Hoy = tabs Turnos/Productos + barra "Cobrado hoy" vs. meta + FAB nuevo turno. Despacho = FAB + calendario colapsable + comprobante. Equipo = ABM + stats (horas, unidades, $/h). Estadísticas (ex Historial) = matriz puesto×día + timeline horario + productividad + gastos vs. pérdidas.
 
 **Demo/deploy:** `scripts/gen-sqlite.mjs` genera `public/tupuesto.sqlite`; `cargarDesdeSqlite()` hidrata IndexedDB desde el archivo estático vía `sql.js` WASM → demo sin backend en Vercel. Dos proyectos: landing `tupuesto-app.vercel.app` (root, `vercel.json` → `landing/`, detecta `api/`) y app `app-ten-tan-35.vercel.app` (root dir `app/`). `DEMO_URL` en landing apunta a la app. Git connect pendiente en dashboard.
+
+**Backend**: Neon Postgres + `api/sync` (pull/upsert) — Dexie sincroniza con Neon cada 30s, todos los writes pushean. Seed Neon: `node app/scripts/seed-neon.mjs`.

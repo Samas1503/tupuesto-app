@@ -5,6 +5,7 @@ import { db } from '../db'
 import { useDatos, useJornadasDe } from '../lib/data'
 import { fmtFecha, fmtFechaCorta, fmtMoney, hoyISO } from '../lib/format'
 import { despachoValor } from '../lib/arqueo'
+import { pushRow } from '../lib/snake'
 import type { Jornada, Linea } from '../types'
 
 function chipEstado(j: Jornada) {
@@ -60,13 +61,14 @@ export default function Despacho() {
     if (!puestoSel || yaExiste) return
     const despacho = lineasDespacho()
     if (despacho.length === 0) return
-    await db.jornadas.add({
+    const jid = await db.jornadas.add({
       puestoId: puestoSel.id!,
       fecha,
       despacho,
       estado: 'abierta',
       createdAt: Date.now(),
     })
+    void pushRow('jornadas', jid)
     setLineas([])
     setFormAbierto(false)
     setComprobante({
@@ -93,6 +95,7 @@ export default function Despacho() {
     const despacho = lineasDespacho()
     if (despacho.length === 0) return
     await db.jornadas.update(editando.id!, { despacho })
+    void pushRow('jornadas', editando.id!)
     setEditingId(null)
     setLineas([])
     setFormAbierto(false)
@@ -104,6 +107,7 @@ export default function Despacho() {
     await db.jornadas.update(j.id!, {
       reposiciones: [...(j.reposiciones ?? []), { items: repoLineas, createdAt: Date.now() }],
     })
+    void pushRow('jornadas', j.id!)
     setComprobante({
       j: { puestoId: j.puestoId, fecha, despacho: repoLineas, estado: 'abierta', createdAt: Date.now() },
       esRepo: true,

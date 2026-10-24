@@ -3,6 +3,7 @@ import { useRef, useState, type ChangeEvent } from 'react'
 import { AlertDialog, Button, Card, Input, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { db } from '../db'
 import { useDatos } from '../lib/data'
+import { pushRow } from '../lib/snake'
 
 const EUROS = { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 } as const
 
@@ -16,13 +17,18 @@ export default function Catalogo() {
   const nuevoInput = useRef<HTMLInputElement | null>(null)
 
   async function setPrecio(id: number, precio: number) {
-    if (precio >= 0) await db.productos.update(id, { precio })
+    if (precio < 0) return
+    await db.productos.update(id, { precio })
+    void pushRow('productos', id)
   }
   async function setCosto(id: number, precioCosto: number) {
-    if (precioCosto >= 0) await db.productos.update(id, { precioCosto })
+    if (precioCosto < 0) return
+    await db.productos.update(id, { precioCosto })
+    void pushRow('productos', id)
   }
   async function setActivo(id: number, activo: boolean) {
     await db.productos.update(id, { activo })
+    void pushRow('productos', id)
   }
   function leerFoto(e: ChangeEvent<HTMLInputElement>, id?: number) {
     const f = e.target.files?.[0]
@@ -31,8 +37,12 @@ export default function Catalogo() {
     const r = new FileReader()
     r.onload = async () => {
       const imagen = String(r.result)
-      if (id != null) await db.productos.update(id, { imagen })
-      else setNuevaFoto(imagen)
+      if (id != null) {
+        await db.productos.update(id, { imagen })
+        void pushRow('productos', id)
+      } else {
+        setNuevaFoto(imagen)
+      }
     }
     r.readAsDataURL(f)
   }
@@ -40,7 +50,7 @@ export default function Catalogo() {
     const n = nombre.trim()
     if (!n || nuevoPrecio <= 0) return
     const orden = Math.max(0, ...productos.map(p => p.orden)) + 1
-    await db.productos.add({
+    const id = await db.productos.add({
       nombre: n,
       precio: nuevoPrecio,
       precioCosto: nuevoCosto || undefined,
@@ -48,6 +58,7 @@ export default function Catalogo() {
       activo: true,
       orden,
     })
+    void pushRow('productos', id)
     setNombre('')
     setNuevoCosto(0)
     setNuevoPrecio(0)

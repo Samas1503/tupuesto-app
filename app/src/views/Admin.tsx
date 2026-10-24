@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import { useDatos, useSolicitudesPendientes } from '../lib/data'
 import { hoyISO } from '../lib/format'
+import { pushRow } from '../lib/snake'
 
 function genPin() { return String(Math.floor(1000 + Math.random() * 9000)) }
 
@@ -29,7 +30,8 @@ export default function Admin() {
     const e = email.trim()
     if (!n || !e.includes('@')) return
     const pin = genPin()
-    await db.duenios.add({ nombre: n, email: e, pin, debeCambiarPin: true, activo: true })
+    const id = await db.duenios.add({ nombre: n, email: e, pin, debeCambiarPin: true, activo: true })
+    void pushRow('duenios', id)
     setNombre(''); setEmail('')
     try {
       await fetch('/api/send-pin', {
@@ -42,7 +44,18 @@ export default function Admin() {
   async function eliminarDuenio() {
     if (!confirmElim) return
     await db.duenios.update(confirmElim.id, { eliminado: true, activo: false })
+    void pushRow('duenios', confirmElim.id)
     setConfirmElim(null)
+  }
+
+  async function restaurarDuenio(id: number) {
+    await db.duenios.update(id, { eliminado: false, activo: true })
+    void pushRow('duenios', id)
+  }
+
+  async function restaurarVendedor(id: number) {
+    await db.vendedores.update(id, { eliminado: false, activo: true })
+    void pushRow('vendedores', id)
   }
 
   return (
@@ -128,13 +141,13 @@ export default function Admin() {
             {duenios.filter(d => d.eliminado).map(d => (
               <div key={`d${d.id}`} className="flex items-center justify-between text-sm">
                 <span className="text-muted line-through">{d.nombre} <i className="not-italic text-[0.65rem]">(dueño)</i></span>
-                <Button size="sm" variant="tertiary" onPress={() => db.duenios.update(d.id!, { eliminado: false, activo: true })}>Restaurar</Button>
+                <Button size="sm" variant="tertiary" onPress={() => restaurarDuenio(d.id!)}>Restaurar</Button>
               </div>
             ))}
             {vendedores.filter(v => v.eliminado).map(v => (
               <div key={`v${v.id}`} className="flex items-center justify-between text-sm">
                 <span className="text-muted line-through">{v.nombre} <i className="not-italic text-[0.65rem]">(vendedor)</i></span>
-                <Button size="sm" variant="tertiary" onPress={() => db.vendedores.update(v.id!, { eliminado: false, activo: true })}>Restaurar</Button>
+                <Button size="sm" variant="tertiary" onPress={() => restaurarVendedor(v.id!)}>Restaurar</Button>
               </div>
             ))}
           </Card.Content>

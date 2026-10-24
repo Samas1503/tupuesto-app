@@ -12,10 +12,15 @@ const MAP: Record<string, string> = {
   precio_costo: 'precioCosto', metodo_pago: 'metodoPago',
   debe_cambiar_pin: 'debeCambiarPin', saldo_inicial: 'saldoInicial',
 }
+// Postgres devuelve bigint como string — los timestamps de Dexie son number
+const NUM = new Set(['createdAt', 'confirmadaAt', 'resueltaAt', 'fondoCaja', 'precio', 'precioCosto', 'total', 'cantidad'])
 const camel = (r: Record<string, unknown>) =>
-  Object.fromEntries(Object.entries(r).map(([k, v]) => [MAP[k] ?? k, v]))
+  Object.fromEntries(Object.entries(r).map(([k, v]) => {
+    const key = MAP[k] ?? k
+    return [key, NUM.has(key) && typeof v === 'string' ? Number(v) : v]
+  }))
 
-/** pull remoto → si una tabla local está vacía la llena con Neon */
+/** pull remoto → merge real: upsert por id, la remota gana (last-write-wins) */
 export async function syncPull() {
   try {
     const res = await fetch(`${API}/api/sync`)
@@ -24,11 +29,15 @@ export async function syncPull() {
     for (const [tabla, rows] of Object.entries(data) as [string, Record<string, unknown>[]][]) {
       const t = (db as Record<string, any>)[tabla]
       if (!t) continue
-      if (await t.count() === 0 && rows.length) {
-        await t.bulkAdd(rows.map(camel))
-      }
+      for (const row of rows) await t.put(camel(row))
     }
   } catch { /* sin red → queda local */ }
+}
+
+/** pull inicial + refresco periódico cada 30 s */
+export function startSyncLoop() {
+  void syncPull()
+  setInterval(syncPull, 30_000)
 }
 
 /** push de una tabla hacia Neon (upsert por id) */
