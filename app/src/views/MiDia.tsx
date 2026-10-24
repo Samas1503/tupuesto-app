@@ -231,6 +231,19 @@ export default function MiDia() {
         </div>
       )}
 
+      {vendedorId == null && debeElegirPin == null && (
+        <Card>
+          <Card.Content className="px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">Credenciales de la demo</p>
+            <ul className="flex flex-col gap-1.5 text-xs num">
+              <li className="flex justify-between"><span className="text-muted">Marcos — cerró OK</span><b>marcos@demo.tupuesto · 1234</b></li>
+              <li className="flex justify-between"><span className="text-muted">Alejandra — faltante</span><b>alejandra@demo.tupuesto · 2345</b></li>
+              <li className="flex justify-between"><span className="text-muted">Diego — turno abierto</span><b>diego@demo.tupuesto · 3456</b></li>
+            </ul>
+          </Card.Content>
+        </Card>
+      )}
+
       {vendedorId != null && (!jornada || jornada.estado === 'confirmada') && (
         libres.length > 0 ? (
           <Card>
@@ -279,6 +292,19 @@ export default function MiDia() {
             </Alert.Content>
           </Alert>
         )
+      )}
+
+      {vendedorId == null && debeElegirPin == null && (
+        <Card>
+          <Card.Content className="px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">Credenciales de la demo</p>
+            <ul className="flex flex-col gap-1.5 text-xs num">
+              <li className="flex justify-between"><span className="text-muted">Marcos — cerró OK</span><b>marcos@demo.tupuesto · 1234</b></li>
+              <li className="flex justify-between"><span className="text-muted">Alejandra — faltante</span><b>alejandra@demo.tupuesto · 2345</b></li>
+              <li className="flex justify-between"><span className="text-muted">Diego — turno abierto</span><b>diego@demo.tupuesto · 3456</b></li>
+            </ul>
+          </Card.Content>
+        </Card>
       )}
 
       {vendedorId != null && (!jornada || jornada.estado === 'confirmada') && (
