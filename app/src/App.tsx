@@ -78,10 +78,14 @@ export default function App() {
     : !tablaCargada ? true
     : !!usuario && usuario.activo && !usuario.eliminado
 
-  // tema por categoría del dueño — vendedor/admin caen en 'otro' (blurple)
+  // tema por categoría — el vendedor hereda la de su dueño; admin → 'otro'
+  const duenioDelTema =
+    usuario?.rol === 'duenio' ? usuario
+    : usuario?.rol === 'vendedor' ? usuarios?.find(d => d.id === usuario.duenioId)
+    : undefined
   useEffect(() => {
-    document.documentElement.dataset.tema = usuario?.categoria ?? 'otro'
-  }, [usuario?.categoria])
+    document.documentElement.dataset.tema = duenioDelTema?.categoria ?? 'otro'
+  }, [duenioDelTema?.categoria])
 
   useEffect(() => {
     if (sesion && tablaCargada && !sesionValida) {
