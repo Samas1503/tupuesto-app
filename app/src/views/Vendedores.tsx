@@ -4,10 +4,15 @@ import { db } from '../db'
 import { totalVentas, vendidos, ventasTotal } from '../lib/arqueo'
 import { fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
 import { pushRow } from '../lib/snake'
+import { hashPin } from '../lib/pin'
 import { useDatos, useJornadasRango, useSolicitudesPendientes, useVentasDeJornadas } from '../lib/data'
 
 /** PIN aleatorio de 4 dígitos — el "link de acceso" local (con backend: email + token) */
 const pinAleatorio = () => String(Math.floor(1000 + Math.random() * 9000))
+
+/** dueño de la sesión — los vendedores creados quedan vinculados a su cuenta */
+const duenioSesion = () =>
+  localStorage.getItem('tp-rol') === 'duenio' ? Number(localStorage.getItem('tp-user-id')) : undefined
 
 export default function Vendedores() {
   const { vendedores, productos } = useDatos()
@@ -57,8 +62,11 @@ export default function Vendedores() {
     if (!n) return
     const e = email.trim()
     const pin = pinAleatorio()
-    const id = await db.vendedores.add({ nombre: n, email: e, pin, debeCambiarPin: true, activo: true })
-    void pushRow('vendedores', id)
+    const id = await db.usuarios.add({
+      rol: 'vendedor', nombre: n, email: e, duenioId: duenioSesion(),
+      pinHash: await hashPin(pin), debeCambiarPin: true, activo: true,
+    })
+    void pushRow('usuarios', id)
     setNombre('')
     setEmail('')
     await enviarPin(n, pin, e) // al vendedor por email; solo se muestra si falla
@@ -86,15 +94,15 @@ export default function Vendedores() {
   }
 
   async function restaurar(id: number) {
-    await db.vendedores.update(id, { eliminado: false, activo: true })
-    void pushRow('vendedores', id)
+    await db.usuarios.update(id, { eliminado: false, activo: true })
+    void pushRow('usuarios', id)
   }
 
   async function confirmarEliminar() {
     if (!confirmElim) return
     // eliminación lógica — restaura desde la sección Eliminados
-    await db.vendedores.update(confirmElim.id, { eliminado: true, activo: false })
-    void pushRow('vendedores', confirmElim.id)
+    await db.usuarios.update(confirmElim.id, { eliminado: true, activo: false })
+    void pushRow('usuarios', confirmElim.id)
     if (confirmElim.solId != null) {
       await db.solicitudes.update(confirmElim.solId, { estado: 'aprobada', resueltaAt: Date.now() })
       void pushRow('solicitudes', confirmElim.solId)
@@ -105,14 +113,14 @@ export default function Vendedores() {
 
   async function resetear(nombre: string, id: number) {
     const pin = pinAleatorio()
-    await db.vendedores.update(id, { pin, debeCambiarPin: true })
-    void pushRow('vendedores', id)
+    await db.usuarios.update(id, { pinHash: await hashPin(pin), debeCambiarPin: true })
+    void pushRow('usuarios', id)
     await enviarPin(nombre, pin, vendedores.find(x => x.id === id)?.email)
   }
 
   async function toggleActivo(id: number, activo: boolean) {
-    await db.vendedores.update(id, { activo })
-    void pushRow('vendedores', id)
+    await db.usuarios.update(id, { activo })
+    void pushRow('usuarios', id)
   }
 
   return (
@@ -164,7 +172,7 @@ export default function Vendedores() {
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{v.nombre}</p>
                   <p className="text-xs text-muted truncate">
-                    {v.email ?? 'sin email'} · {v.debeCambiarPin ? 'debe elegir su PIN' : v.pin ? 'PIN configurado' : 'sin acceso'}
+                    {v.email ?? 'sin email'} · {v.debeCambiarPin ? 'debe elegir su PIN' : v.pinHash ? 'PIN configurado' : 'sin acceso'}
                   </p>
                   {(() => {
                     const st = statsDe(v.id!)

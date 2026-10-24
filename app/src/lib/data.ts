@@ -5,7 +5,16 @@ import type { Jornada, Solicitud, Venta } from '../types'
 export function useDatos() {
   const productos = useLiveQuery(() => db.productos.orderBy('orden').toArray(), [])
   const puestos = useLiveQuery(() => db.puestos.orderBy('id').toArray(), [])
-  const vendedores = useLiveQuery(() => db.vendedores.orderBy('id').toArray(), [])
+  // vendedores del dueño de la sesión — el admin (sin duenioId) y los sueltos se ven siempre
+  const duenioId = localStorage.getItem('tp-rol') === 'duenio'
+    ? Number(localStorage.getItem('tp-user-id'))
+    : null
+  const vendedores = useLiveQuery(
+    () => db.usuarios.where('rol').equals('vendedor')
+      .filter(v => duenioId == null || v.duenioId == null || v.duenioId === duenioId)
+      .sortBy('id'),
+    [duenioId],
+  )
   return {
     productos: productos ?? [],
     puestos: puestos ?? [],

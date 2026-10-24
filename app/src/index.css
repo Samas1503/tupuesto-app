@@ -41,6 +41,14 @@
   --viz-track: #e8eef5;
 }
 
+/* ── Temas por categoría del dueño (data-tema en <html>) ────── */
+[data-tema='comida']      { --accent: #e07a2f; --accent-foreground: #fff; --link: #e07a2f; }
+[data-tema='postres']     { --accent: #e04f9f; --accent-foreground: #fff; --link: #e04f9f; }
+[data-tema='ropa']        { --accent: #8b5cf6; --accent-foreground: #fff; --link: #8b5cf6; }
+[data-tema='mercaderia']  { --accent: #0ea5e9; --accent-foreground: #fff; --link: #0ea5e9; }
+[data-tema='juguetes']    { --accent: #f59e0b; --accent-foreground: #fff; --link: #f59e0b; }
+[data-tema='otro']        { --accent: #635bff; --accent-foreground: #fff; --link: #635bff; }
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -3,6 +3,30 @@
 
 export type Rol = 'duenio' | 'vendedor' | 'admin'
 
+/** categoría del negocio del dueño — define el tema (accent) de la app */
+export type Categoria = 'comida' | 'postres' | 'ropa' | 'mercaderia' | 'juguetes' | 'otro'
+
+/** usuario unificado (Neon: tabla `usuarios`) — admin, dueños y vendedores en una sola tabla */
+export interface Usuario {
+  id?: number
+  rol: Rol
+  nombre: string
+  email?: string
+  /** hash SHA-256 (hex) del PIN — nunca se guarda el PIN en claro */
+  pinHash?: string
+  /** true si debe elegir PIN nuevo en su próximo ingreso (alta/reseteo) */
+  debeCambiarPin?: boolean
+  activo: boolean
+  /** eliminación lógica — el admin puede restaurar */
+  eliminado?: boolean
+  /** vendedor → el dueño de su cuenta (dueños/admin: undefined) */
+  duenioId?: number
+  /** solo dueños — 'otro' si no eligió (admin no tiene) */
+  categoria?: Categoria
+  /** compat con el modelo viejo: puesto habitual del vendedor (el vínculo real es la jornada) */
+  puestoId?: number
+}
+
 /** A qué cuenta cae el dinero digital. 'negocio' = alias del dueño (default). */
 export type DestinoQR = 'negocio' | 'vendedor'
 
@@ -42,21 +66,8 @@ export interface Puesto {
   activo: boolean
 }
 
-export interface Vendedor {
-  id?: number
-  nombre: string
-  /** eliminación lógica — el admin puede restaurar */
-  eliminado?: boolean
-  /** puesto habitual (opcional — el vínculo real es la jornada del día) */
-  puestoId?: number
-  /** correo del vendedor — destino del link de acceso/reseteo (con backend) */
-  email?: string
-  /** PIN de acceso (demo local — auth real espera backend). Nunca se muestra al dueño. */
-  pin?: string
-  /** true si debe elegir PIN nuevo en su próximo ingreso (alta/reseteo) */
-  debeCambiarPin?: boolean
-  activo: boolean
-}
+/** @deprecated usar Usuario (rol 'vendedor') — alias para compat */
+export type Vendedor = Usuario
 
 export interface Linea {
   productoId: number
@@ -126,13 +137,5 @@ export interface Jornada {
   createdAt: number
 }
 
-/** dueño de la cuenta — el admin del sistema los gestiona, no son usuarios de la operación diaria */
-export interface Duenio {
-  id?: number
-  nombre: string
-  email?: string
-  pin?: string
-  debeCambiarPin?: boolean
-  activo: boolean
-  eliminado?: boolean
-}
+/** @deprecated usar Usuario (rol 'duenio') — alias para compat */
+export type Duenio = Usuario

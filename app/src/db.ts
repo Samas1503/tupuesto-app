@@ -1,15 +1,19 @@
 import Dexie, { type Table } from 'dexie'
-import type { Duenio, Jornada, Linea, Producto, Puesto, Solicitud, Vendedor, Venta } from './types'
+import type { Jornada, Linea, Producto, Puesto, Solicitud, Usuario, Venta } from './types'
 import { hoyISO, isoMenosDias } from './lib/format'
+import { hashPin } from './lib/pin'
 
 export class TuPuestoDB extends Dexie {
   productos!: Table<Producto, number>
   puestos!: Table<Puesto, number>
-  vendedores!: Table<Vendedor, number>
+  /** @deprecated tabla legacy (≤v8) — se conserva para migrar DBs locales viejas */
+  vendedores!: Table<Usuario, number>
   jornadas!: Table<Jornada, number>
   ventas!: Table<Venta, number>
   solicitudes!: Table<Solicitud, number>
-  duenios!: Table<Duenio, number>
+  /** @deprecated tabla legacy (≤v8) — se conserva para migrar DBs locales viejas */
+  duenios!: Table<Usuario, number>
+  usuarios!: Table<Usuario, number>
 
   constructor() {
     super('tupuesto')
@@ -34,7 +38,11 @@ export class TuPuestoDB extends Dexie {
     this.version(5).stores({
       duenios: '++id, email',
     })
-
+    // v9: tabla unificada `usuarios` (espejo de Neon) — admin + dueños + vendedores.
+    // Las tablas duenios/vendedores quedan solo para migrar DBs locales viejas.
+    this.version(9).stores({
+      usuarios: '++id, rol, email, duenioId, activo',
+    })
   }
 }
 
@@ -80,14 +88,20 @@ async function backfillProductos() {
   if (updates.length) await db.productos.bulkPut(updates)
 }
 
-// backfill pins de vendedores en DBs viejas (match por nombre)
+// backfill pins de vendedores en DBs viejas (match por nombre) — ahora como hash
 const PINS_SEED: Record<string, string> = { Marcos: '1234', Alejandra: '2345', Diego: '3456' }
 async function backfillVendedores() {
-  const vs = await db.vendedores.toArray()
-  const faltan = vs.filter(v => !v.pin && PINS_SEED[v.nombre])
-    .map(v => ({ ...v, pin: PINS_SEED[v.nombre] }))
-  if (faltan.length) await db.vendedores.bulkPut(faltan)
+  const vs = await db.usuarios.where('rol').equals('vendedor').toArray()
+  const faltan: Usuario[] = []
+  for (const v of vs) {
+    if (!v.pinHash && PINS_SEED[v.nombre]) faltan.push({ ...v, pinHash: await hashPin(PINS_SEED[v.nombre]) })
+  }
+  if (faltan.length) await db.usuarios.bulkPut(faltan)
 }
+
+/** fila legacy (≤v8 / sqlite): tenía `pin` en claro en vez de `pinHash` */
+type LegacyUsuario = Usuario & { pin?: string }
+const aHash = (l: LegacyUsuario) => (l.pin ? hashPin(l.pin) : Promise.resolve(l.pinHash))
 
 /** hidrata la DB desde el archivo estático (demo Vercel) — devuelve false si no está */
 async function cargarDesdeSqlite(): Promise<boolean> {
@@ -103,10 +117,41 @@ async function cargarDesdeSqlite(): Promise<boolean> {
       return rs[0].values.map((row: unknown[]) => Object.fromEntries(rs[0].columns.map((c: string, i: number) => [c, row[i]])) as Record<string, unknown>).map(map)
     }
     const J = (v: unknown) => (v ? JSON.parse(v as string) : undefined)
-    await db.transaction('rw', [db.productos, db.puestos, db.vendedores, db.jornadas, db.ventas, db.solicitudes], async () => {
+    // pins del sqlite vienen en claro → hash ANTES de la transacción
+    // (crypto.subtle es un async nativo: dentro de una tx Dexie la mata)
+    const vendsSqlite = tablas('SELECT * FROM vendedores', r => r as unknown as LegacyUsuario)
+    const dueniosSqlite = tablas('SELECT * FROM duenios', r => r as unknown as LegacyUsuario)
+    const usuariosV: Usuario[] = []
+    for (const v of vendsSqlite) {
+      usuariosV.push({
+        id: v.id, rol: 'vendedor', nombre: v.nombre, puestoId: v.puestoId,
+        email: v.email, pinHash: await aHash(v),
+        debeCambiarPin: !!v.debeCambiarPin, activo: !!v.activo, eliminado: !!v.eliminado,
+      })
+    }
+    const usuariosD: Omit<Usuario, 'id'>[] = []
+    for (const d of dueniosSqlite) {
+      // los ids de duenios del sqlite chocan con los de vendedores en la tabla
+      // unificada → se insertan sin id (autoincrement) y se linkean por email
+      usuariosD.push({
+        rol: 'duenio', nombre: d.nombre, email: d.email, pinHash: await aHash(d),
+        debeCambiarPin: !!d.debeCambiarPin, activo: !!d.activo, eliminado: !!d.eliminado,
+        categoria: 'comida',
+      })
+    }
+    await db.transaction('rw', [db.productos, db.puestos, db.usuarios, db.jornadas, db.ventas, db.solicitudes], async () => {
       await db.productos.bulkPut(tablas('SELECT * FROM productos', r => ({ id: r.id as number, nombre: r.nombre as string, precio: r.precio as number, precioCosto: r.precioCosto as number ?? undefined, imagen: r.imagen as string ?? undefined, ingredientes: r.ingredientes as string ?? undefined, activo: !!r.activo, orden: r.orden as number })) as Producto[])
       await db.puestos.bulkPut(tablas('SELECT * FROM puestos', r => ({ id: r.id as number, nombre: r.nombre as string, ubicacion: r.ubicacion as string, qrDestinoDefault: r.qrDestinoDefault as Puesto['qrDestinoDefault'], activo: !!r.activo })) as Puesto[])
-      await db.vendedores.bulkPut(tablas('SELECT * FROM vendedores', r => ({ id: r.id as number, nombre: r.nombre as string, puestoId: r.puestoId as number ?? undefined, email: r.email as string ?? undefined, pin: r.pin as string ?? undefined, debeCambiarPin: !!r.debeCambiarPin, activo: !!r.activo })) as Vendedor[])
+      // vendedores conservan el id del sqlite — las jornadas los referencian por vendedorId
+      await db.usuarios.bulkPut(usuariosV)
+      let duenioId: number | undefined
+      for (const d of usuariosD) {
+        const ex = d.email ? await db.usuarios.where('email').equals(d.email).first() : undefined
+        duenioId = ex?.id ?? (await db.usuarios.add(d as Usuario))
+      }
+      if (duenioId != null) {
+        await db.usuarios.where('rol').equals('vendedor').filter(v => v.duenioId == null).modify({ duenioId })
+      }
       await db.jornadas.bulkPut(tablas('SELECT * FROM jornadas', r => ({ id: r.id as number, puestoId: r.puestoId as number, vendedorId: r.vendedorId as number ?? undefined, fecha: r.fecha as string, fondoCaja: r.fondoCaja as number ?? undefined, despacho: J(r.despacho), reposiciones: J(r.reposiciones), estado: r.estado as Jornada['estado'], cierre: J(r.cierre), confirmadaAt: r.confirmadaAt as number ?? undefined, createdAt: r.createdAt as number })) as Jornada[])
       await db.ventas.bulkPut(tablas('SELECT * FROM ventas', r => ({ id: r.id as number, jornadaId: r.jornadaId as number, items: J(r.items), total: r.total as number, metodoPago: r.metodoPago as Venta['metodoPago'], createdAt: r.createdAt as number })) as Venta[])
       await db.solicitudes.bulkPut(tablas('SELECT * FROM solicitudes', r => ({ id: r.id as number, tipo: r.tipo as 'eliminar-usuario', vendedorId: r.vendedorId as number, solicitadoPor: r.solicitadoPor as number, motivo: r.motivo as string ?? undefined, estado: r.estado as 'pendiente', createdAt: r.createdAt as number, resueltaAt: r.resueltaAt as number ?? undefined })))
@@ -118,20 +163,72 @@ async function cargarDesdeSqlite(): Promise<boolean> {
   }
 }
 
-const DUENIOS_SEED: Duenio[] = [
-  { nombre: 'Patricio (demo)', email: 'duenio@demo.tupuesto', pin: '0000', activo: true },
-]
+/** DB local de ≤v8: migra duenios+vendedores a `usuarios`.
+ *  Los ids de vendedores se conservan (las jornadas los referencian por vendedorId);
+ *  los de duenios chocan en la tabla unificada → se reinsertan con id nuevo. */
+async function migrarUsuariosLegacy() {
+  if ((await db.usuarios.count()) > 0) return
+  const vends = (await db.vendedores.toArray()) as LegacyUsuario[]
+  const duenios = (await db.duenios.toArray()) as LegacyUsuario[]
+  if (!vends.length && !duenios.length) return
+  const nuevosV: Usuario[] = []
+  for (const v of vends) {
+    nuevosV.push({
+      id: v.id, rol: 'vendedor', nombre: v.nombre, email: v.email, puestoId: v.puestoId,
+      pinHash: await aHash(v), debeCambiarPin: v.debeCambiarPin,
+      activo: v.activo, eliminado: v.eliminado,
+    })
+  }
+  await db.usuarios.bulkPut(nuevosV)
+  let primerDuenio: number | undefined
+  for (const d of duenios) {
+    const id = await db.usuarios.add({
+      rol: 'duenio', nombre: d.nombre, email: d.email, pinHash: await aHash(d),
+      debeCambiarPin: d.debeCambiarPin, activo: d.activo, eliminado: d.eliminado,
+      categoria: 'comida',
+    })
+    if (primerDuenio == null && !d.eliminado) primerDuenio = id
+  }
+  // mono-cuenta: los vendedores migrados cuelgan del primer dueño
+  if (primerDuenio != null) {
+    await db.usuarios.where('rol').equals('vendedor').filter(v => v.duenioId == null).modify({ duenioId: primerDuenio })
+  }
+}
+
+/** garantiza que existan el admin del sistema y el dueño demo (accesos de la demo) */
+async function ensureAccesos() {
+  if ((await db.usuarios.where('rol').equals('admin').count()) === 0) {
+    await db.usuarios.add({
+      rol: 'admin', nombre: 'Admin', email: 'admin@demo.tupuesto',
+      pinHash: await hashPin('0000'), activo: true,
+    })
+  }
+  if ((await db.usuarios.where('rol').equals('duenio').count()) === 0) {
+    const duenioId = await db.usuarios.add({
+      rol: 'duenio', nombre: 'Patricio (demo)', email: 'duenio@demo.tupuesto',
+      pinHash: await hashPin('0000'), activo: true, categoria: 'comida',
+    })
+    // vendedores sin dueño (seed/migración) cuelgan del dueño demo
+    await db.usuarios.where('rol').equals('vendedor').filter(v => v.duenioId == null).modify({ duenioId })
+  }
+}
 
 export async function seedIfEmpty() {
-  if ((await db.duenios.count()) === 0) await db.duenios.bulkPut(DUENIOS_SEED)
-  if (await db.puestos.count() === 0 && await cargarDesdeSqlite()) return
+  await migrarUsuariosLegacy()
+  if ((await db.puestos.count()) === 0 && await cargarDesdeSqlite()) {
+    await ensureAccesos()
+    return
+  }
   if ((await db.puestos.count()) > 0) {
     await backfillProductos()
     await backfillVendedores()
+    await ensureAccesos()
     return
   }
 
-  await db.transaction('rw', db.productos, db.puestos, db.vendedores, db.jornadas, db.ventas, async () => {
+  // hashes de los PIN demo ANTES de la transacción (crypto.subtle mata la tx de Dexie)
+  const [pinM, pinA, pinD] = await Promise.all([hashPin('1234'), hashPin('2345'), hashPin('3456')])
+  await db.transaction('rw', db.productos, db.puestos, db.usuarios, db.jornadas, db.ventas, async () => {
     await db.productos.bulkAdd(PRODUCTOS_SEED as Producto[])
     const prods = await db.productos.orderBy('orden').toArray()
     const pid = (i: number) => prods[i].id!
@@ -144,13 +241,15 @@ export async function seedIfEmpty() {
     await db.puestos.bulkAdd(puestos as Puesto[])
     const psts = await db.puestos.orderBy('id').toArray()
 
-    const vendedores: Omit<Vendedor, 'id'>[] = [
-      { nombre: 'Marcos', puestoId: psts[0].id!, email: 'marcos@demo.tupuesto', pin: '1234', activo: true },
-      { nombre: 'Alejandra', puestoId: psts[1].id!, email: 'alejandra@demo.tupuesto', pin: '2345', activo: true },
-      { nombre: 'Diego', puestoId: psts[2].id!, email: 'diego@demo.tupuesto', pin: '3456', activo: true },
+    const vendedores: Omit<Usuario, 'id'>[] = [
+      { rol: 'vendedor', nombre: 'Marcos', puestoId: psts[0].id!, email: 'marcos@demo.tupuesto', pinHash: pinM, activo: true },
+      { rol: 'vendedor', nombre: 'Alejandra', puestoId: psts[1].id!, email: 'alejandra@demo.tupuesto', pinHash: pinA, activo: true },
+      { rol: 'vendedor', nombre: 'Diego', puestoId: psts[2].id!, email: 'diego@demo.tupuesto', pinHash: pinD, activo: true },
     ]
-    await db.vendedores.bulkAdd(vendedores as Vendedor[])
-    const vends = await db.vendedores.orderBy('id').toArray()
+    if ((await db.usuarios.where('rol').equals('vendedor').count()) === 0) {
+      await db.usuarios.bulkAdd(vendedores as Usuario[])
+    }
+    const vends = await db.usuarios.where('rol').equals('vendedor').sortBy('id')
 
     const L = (i: number, cantidad: number): Linea => ({ productoId: pid(i), cantidad })
 
@@ -318,4 +417,6 @@ export async function seedIfEmpty() {
     ]
     await db.ventas.bulkAdd(ventasDemo as Venta[])
   })
+  // admin + dueño demo (fuera de la tx: hashea el PIN con Web Crypto)
+  await ensureAccesos()
 }

@@ -57,8 +57,7 @@ export default function App() {
   const navRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState({ left: 0, width: 0 })
 
-  const duenios = useLiveQuery(() => db.duenios.toArray(), [])
-  const vendedores = useLiveQuery(() => db.vendedores.toArray(), [])
+  const usuarios = useLiveQuery(() => db.usuarios.toArray(), [])
 
   // persiste la sesión (también materializa la migración de keys viejas)
   useEffect(() => {
@@ -68,24 +67,21 @@ export default function App() {
     }
   }, [sesion])
 
-  // validación contra la tabla del rol: el usuario debe seguir activo && !eliminado.
-  // Admin (id 0) no tiene tabla — siempre válido. Mientras Dexie carga se confía
-  // en lo persistido; si el usuario fue desactivado se limpia la sesión abajo.
-  const tablaCargada =
-    sesion?.rol === 'duenio' ? duenios !== undefined
-    : sesion?.rol === 'vendedor' ? vendedores !== undefined
-    : true
-
-  const usuario =
-    sesion?.rol === 'duenio' ? duenios?.find(d => d.id === sesion.id)
-    : sesion?.rol === 'vendedor' ? vendedores?.find(v => v.id === sesion.id)
-    : undefined
+  // validación contra `usuarios`: debe seguir activo && !eliminado.
+  // Mientras Dexie carga se confía en lo persistido; si el usuario fue
+  // desactivado se limpia la sesión abajo.
+  const tablaCargada = usuarios !== undefined
+  const usuario = usuarios?.find(u => u.id === sesion?.id)
 
   const sesionValida =
     sesion == null ? false
-    : sesion.rol === 'admin' ? true
     : !tablaCargada ? true
     : !!usuario && usuario.activo && !usuario.eliminado
+
+  // tema por categoría del dueño — vendedor/admin caen en 'otro' (blurple)
+  useEffect(() => {
+    document.documentElement.dataset.tema = usuario?.categoria ?? 'otro'
+  }, [usuario?.categoria])
 
   useEffect(() => {
     if (sesion && tablaCargada && !sesionValida) {
@@ -133,7 +129,7 @@ export default function App() {
   // gate unificado — toda la app detrás del login (sin navbar ni vistas)
   if (!sesionValida) return <Login onLogin={entrar} />
 
-  const nombreSesion = sesion!.rol === 'admin' ? 'Admin' : usuario?.nombre
+  const nombreSesion = usuario?.nombre ?? (sesion!.rol === 'admin' ? 'Admin' : undefined)
 
   return (
     <div className="min-h-dvh bg-paper text-navy flex flex-col">

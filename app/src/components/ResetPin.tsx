@@ -8,8 +8,8 @@ type Paso = 'email' | 'codigo' | 'listo'
 
 /** Reset de PIN por código de 6 dígitos mandado por email — inline (no modal).
  *  Paso 1: email → POST /api/request-reset. Paso 2: código + PIN nuevo → POST
- *  /api/verify-reset. Paso 3: listo. */
-export default function ResetPin({ entidad, onDone }: { entidad: 'vendedores' | 'duenios'; onDone?: () => void }) {
+ *  /api/verify-reset. Paso 3: listo. Una sola tabla `usuarios` — sin `entidad`. */
+export default function ResetPin({ onDone }: { onDone?: () => void }) {
   const [paso, setPaso] = useState<Paso>('email')
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
@@ -27,7 +27,7 @@ export default function ResetPin({ entidad, onDone }: { entidad: 'vendedores' | 
       await fetch(`${API}/api/request-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entidad, email: emailNorm }),
+        body: JSON.stringify({ email: emailNorm }),
       })
       setPaso('codigo')
     } catch {
@@ -44,7 +44,7 @@ export default function ResetPin({ entidad, onDone }: { entidad: 'vendedores' | 
       const r = await fetch(`${API}/api/verify-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entidad, email: emailNorm, codigo: codigo.trim(), nuevoPin: pinNuevo.trim() }),
+        body: JSON.stringify({ email: emailNorm, codigo: codigo.trim(), nuevoPin: pinNuevo.trim() }),
       })
       if (!r.ok) { setError('Código inválido o vencido'); return }
       setPaso('listo')

@@ -2,20 +2,10 @@ import { useState } from 'react'
 import { Button, Card, Input, Label, TextField } from '@heroui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
-import { pushRow, type TablaSync } from '../lib/snake'
-import type { Rol } from '../types'
+import { pushRow } from '../lib/snake'
+import { hashPin } from '../lib/pin'
+import type { Rol, Usuario } from '../types'
 import ResetPin from './ResetPin'
-
-type EntidadReset = 'duenios' | 'vendedores'
-
-/** usuario local que entró bien pero tiene que elegir PIN nuevo (primer ingreso / reseteo) */
-interface PendientePin {
-  rol: 'duenio' | 'vendedor'
-  tabla: EntidadReset & TablaSync
-  id: number
-}
-
-const ADMIN_DEMO = { email: 'admin@demo.tupuesto', pin: '0000' }
 
 const CREDENCIALES_DEMO: { quien: string; cred: string }[] = [
   { quien: 'Patricio — dueño demo', cred: 'duenio@demo.tupuesto · 0000' },
@@ -26,79 +16,61 @@ const CREDENCIALES_DEMO: { quien: string; cred: string }[] = [
 ]
 
 /** Login unificado — un solo form email + PIN para dueño, vendedor y admin.
- *  El rol se detecta por el email: primero db.duenios, después db.vendedores
- *  y por último el admin demo (sin tabla). Errores siempre genéricos. */
+ *  El rol lo trae la fila de `usuarios` (incluye al admin — ya no es hardcode).
+ *  El PIN se compara como hash: SHA-256(pin) vs usuario.pinHash. Errores genéricos. */
 export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => void }) {
-  const duenios = useLiveQuery(() => db.duenios.toArray(), []) ?? []
-  const vendedores = useLiveQuery(() => db.vendedores.toArray(), []) ?? []
+  const usuarios = useLiveQuery(() => db.usuarios.toArray(), []) ?? []
 
   const [email, setEmail] = useState('')
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
 
-  const [pendiente, setPendiente] = useState<PendientePin | null>(null)
+  const [pendiente, setPendiente] = useState<Usuario | null>(null)
   const [pinNuevo, setPinNuevo] = useState('')
 
-  // reset: null (oculto) | 'email' (hay que pedir el email porque no sabemos
-  // la entidad) | la entidad ya detectada → monta ResetPin
-  const [reset, setReset] = useState<null | 'email' | EntidadReset>(null)
+  // reset: null (oculto) | 'email' (hay que pedir el email porque todavía no
+  // sabemos si existe la cuenta) | 'ok' (email validado → monta ResetPin)
+  const [reset, setReset] = useState<null | 'email' | 'ok'>(null)
   const [resetEmail, setResetEmail] = useState('')
   const [resetError, setResetError] = useState(false)
 
-  /** a qué tabla pertenece un email — null si no existe (o está inactivo/eliminado) */
-  function entidadDe(e: string): EntidadReset | null {
+  /** usuario activo por email — null si no existe (o está inactivo/eliminado) */
+  function usuarioDe(e: string): Usuario | undefined {
     const n = e.trim().toLowerCase()
-    if (n === '') return null
-    if (duenios.some(d => d.activo && !d.eliminado && d.email?.trim().toLowerCase() === n)) return 'duenios'
-    if (vendedores.some(v => v.activo && !v.eliminado && v.email?.trim().toLowerCase() === n)) return 'vendedores'
-    return null
+    if (n === '') return undefined
+    return usuarios.find(u => u.activo && !u.eliminado && u.email?.trim().toLowerCase() === n)
   }
 
-  function entrar() {
+  async function entrar() {
     const e = email.trim().toLowerCase()
     const p = pin.trim()
-
-    // 1. dueños
-    const d = duenios.find(x => x.activo && !x.eliminado && x.email?.trim().toLowerCase() === e)
-    if (d) {
-      if (d.pin && d.pin !== p) { setError(true); return }
-      if (d.debeCambiarPin) { setPendiente({ rol: 'duenio', tabla: 'duenios', id: d.id! }); return }
-      onLogin('duenio', d.id!); return
+    const u = usuarioDe(e)
+    if (u) {
+      // sin pinHash todavía (alta vieja sin migrar) no bloquea el ingreso
+      if (u.pinHash && u.pinHash !== (await hashPin(p))) { setError(true); return }
+      if (u.debeCambiarPin) { setPendiente(u); return }
+      onLogin(u.rol, u.id!); return
     }
-
-    // 2. vendedores
-    const v = vendedores.find(x => x.activo && !x.eliminado && x.email?.trim().toLowerCase() === e)
-    if (v) {
-      if (v.pin && v.pin !== p) { setError(true); return }
-      if (v.debeCambiarPin) { setPendiente({ rol: 'vendedor', tabla: 'vendedores', id: v.id! }); return }
-      onLogin('vendedor', v.id!); return
-    }
-
-    // 3. admin demo — sin tabla, credenciales fijas
-    if (e === ADMIN_DEMO.email && p === ADMIN_DEMO.pin) { onLogin('admin', 0); return }
-
     setError(true)
   }
 
   async function elegirPin() {
     const p = pinNuevo.trim()
     if (pendiente == null || p.length < 4) return
-    await db[pendiente.tabla].update(pendiente.id, { pin: p, debeCambiarPin: false })
-    void pushRow(pendiente.tabla, pendiente.id)
-    onLogin(pendiente.rol, pendiente.id)
+    await db.usuarios.update(pendiente.id!, { pinHash: await hashPin(p), debeCambiarPin: false })
+    void pushRow('usuarios', pendiente.id!)
+    onLogin(pendiente.rol, pendiente.id!)
   }
 
   function toggleReset() {
     if (reset != null) { cerrarReset(); return }
-    const ent = entidadDe(email)
-    if (ent) setReset(ent)
+    if (usuarioDe(email)) setReset('ok')
     else { setResetEmail(email); setResetError(false); setReset('email') }
   }
 
   function confirmarResetEmail() {
-    const ent = entidadDe(resetEmail)
-    if (!ent) { setResetError(true); return }
-    setReset(ent)
+    if (!usuarioDe(resetEmail)) { setResetError(true); return }
+    setReset('ok')
   }
 
   function cerrarReset() {
@@ -177,9 +149,9 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
               </Button>
             </div>
           )}
-          {(reset === 'duenios' || reset === 'vendedores') && (
+          {reset === 'ok' && (
             <div className="border-t border-dashed border-border pt-3">
-              <ResetPin entidad={reset} onDone={cerrarReset} />
+              <ResetPin onDone={cerrarReset} />
             </div>
           )}
         </Card.Content>
