@@ -21,7 +21,16 @@ const LINEAS: { key: keyof Omit<BreakdownScore, 'bonus'>; label: string }[] = [
   { key: 'volumen', label: 'Volumen vendido' },
 ]
 
-/** Ranking de puntajes del equipo — SOLO ADMIN: los vendedores no ven esta vista */
+const CATEGORIAS: { id: string; label: string }[] = [
+  { id: 'comida', label: 'Comida' },
+  { id: 'postres', label: 'Postres' },
+  { id: 'ropa', label: 'Ropa' },
+  { id: 'mercaderia', label: 'Mercadería' },
+  { id: 'juguetes', label: 'Juguetes' },
+  { id: 'otro', label: 'Otro' },
+]
+
+/** Ranking de puntajes por rubro — SOLO ADMIN: los usuarios no ven esta vista */
 export default function AdminScores() {
   const { productos, cargando } = useDatos()
   const usuarios = useLiveQuery(() => db.usuarios.toArray(), []) ?? []
@@ -32,6 +41,14 @@ export default function AdminScores() {
 
   const scores = scoreTodos(usuarios, { jornadas, ventas, productos, solicitudes })
   const duenioDe = (id?: number) => usuarios.find(u => u.id === id)?.nombre ?? 'sin dueño'
+
+  // agrupado por rubro — el vendedor hereda la categoría de su dueño
+  const catDe = (u: (typeof scores)[number]['usuario']) =>
+    u.rol === 'duenio' ? (u.categoria ?? 'otro') : (usuarios.find(d => d.id === u.duenioId)?.categoria ?? 'otro')
+  const grupos = CATEGORIAS.map(c => ({
+    ...c,
+    items: scores.filter(s => catDe(s.usuario) === c.id),
+  })).filter(g => g.items.length > 0)
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,8 +72,17 @@ export default function AdminScores() {
         </Card>
       )}
 
-      <div className="flex flex-col gap-3">
-        {scores.map(({ usuario: u, total, breakdown }, i) => {
+      <div className="flex flex-col gap-5">
+        {grupos.map(g => (
+          <div key={g.id} className="flex flex-col gap-2.5">
+            {/* header del rubro — chip con el color del tema de esa categoría */}
+            <div className="flex items-center gap-2">
+              <span data-tema={g.id} className="inline-flex">
+                <Chip size="sm" className="!bg-accent !text-accent-foreground">{g.label}</Chip>
+              </span>
+              <span className="text-xs text-muted num">{g.items.length} usuario{g.items.length !== 1 ? 's' : ''}</span>
+            </div>
+            {g.items.map(({ usuario: u, total, breakdown }, i) => {
           const b = banda(total)
           return (
             <Card key={u.id}>
@@ -119,7 +145,9 @@ export default function AdminScores() {
               </Card.Content>
             </Card>
           )
-        })}
+            })}
+          </div>
+        ))}
       </div>
     </div>
   )
