@@ -7,6 +7,14 @@ import App from './App.tsx'
 
 registerSW({ immediate: true })
 
+// cuando el SW nuevo toma control → recargar una vez para mostrar la versión nueva
+let reloading = false
+navigator.serviceWorker?.addEventListener('controllerchange', () => {
+  if (reloading) return
+  reloading = true
+  location.reload()
+})
+
 seedIfEmpty().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
