@@ -605,9 +605,9 @@ export default function Hoy() {
                     ) : null
                   })}
                   {lineasDesp.length > 0 && (
-                    <div className="flex justify-between border-t border-dashed border-border pt-2 text-sm num">
-                      <span className="text-muted">Total despacho</span>
-                      <b>{fmtMoney(lineasDesp.reduce((a, l) => a + l.cantidad * (productos.find(p => p.id === l.productoId)?.precio ?? 0), 0))}</b>
+                    <div className="flex justify-between items-baseline bg-accent/8 rounded-xl px-3.5 py-2.5">
+                      <span className="text-xs font-bold uppercase tracking-wide text-muted">Total despacho</span>
+                      <b className="text-lg num text-accent">{fmtMoney(lineasDesp.reduce((a, l) => a + l.cantidad * (productos.find(p => p.id === l.productoId)?.precio ?? 0), 0))}</b>
                     </div>
                   )}
                 </div>

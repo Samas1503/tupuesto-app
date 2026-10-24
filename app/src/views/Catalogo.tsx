@@ -63,6 +63,17 @@ export default function Catalogo() {
       </div>
     )
 
+  const fotoBtn = (p: { id?: number; nombre: string; imagen?: string }) => (
+    <button
+      type="button"
+      onClick={() => inputs.current[p.id!]?.click()}
+      className="shrink-0 rounded overflow-hidden hover:opacity-80 transition-opacity"
+      aria-label={`Cambiar foto de ${p.nombre}`}
+    >
+      {foto(p)}
+    </button>
+  )
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -93,11 +104,18 @@ export default function Catalogo() {
               <AlertDialog.Body>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-3">
-                    {nuevaFoto ? (
-                      <img src={nuevaFoto} alt="" className="h-14 w-14 rounded object-cover shrink-0" />
-                    ) : (
-                      <div className="h-14 w-14 rounded bg-accent/20 flex items-center justify-center shrink-0" />
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => nuevoInput.current?.click()}
+                      className="h-14 w-14 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-accent/40 hover:border-accent hover:bg-accent/10 transition-colors flex items-center justify-center"
+                      aria-label="Elegir foto"
+                    >
+                      {nuevaFoto ? (
+                        <img src={nuevaFoto} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-accent text-2xl font-light">+</span>
+                      )}
+                    </button>
                     <TextField className="flex-1" value={nombre} onChange={setNombre}>
                       <Label>Nombre</Label>
                       <Input placeholder="Ej: Empanada" />
@@ -109,9 +127,6 @@ export default function Catalogo() {
                       className="hidden"
                       onChange={e => leerFoto(e)}
                     />
-                    <Button size="sm" variant="tertiary" onPress={() => nuevoInput.current?.click()}>
-                      Foto
-                    </Button>
                   </div>
                   <div className="flex gap-3">
                     <NumberField
@@ -170,7 +185,7 @@ export default function Catalogo() {
         {productos.map(p => (
           <Card key={p.id} className={p.activo ? '' : 'opacity-50'}>
             <Card.Content className="px-4 py-3 flex items-center gap-3 flex-wrap">
-              {foto(p)}
+              {fotoBtn(p)}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">{p.nombre}</p>
                 {(p.precioCosto ?? 0) > 0 && p.precio > 0 && (

@@ -5,7 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useDatos, useJornadaVendedor, useJornadasLibres, useVentasDe } from '../lib/data'
 import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
-import type { Cierre, Jornada, MetodoPago, Producto, Venta } from '../types'
+import type { Cierre, Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 
 /** badge del método de cobro de una venta */
@@ -121,17 +121,43 @@ export default function MiDia() {
   }
 
   // anota una venta de UN producto (desde el modal) — el cierre sigue siendo por conteo
-  async function registrarItem(p: Producto, cantidad: number, metodo: MetodoPago) {
-    if (!jornada || cantidad <= 0) return
+  // boleta: ítems en curso (1 venta = 1 boleta con varios productos)
+  const [boleta, setBoleta] = useState<Linea[]>([])
+  const [boletaAbierta, setBoletaAbierta] = useState(false)
+  const [metodoBoleta, setMetodoBoleta] = useState<MetodoPago>(metodoPago)
+  const totalBoleta = boleta.reduce((a, l) => a + l.cantidad * (productos.find(p => p.id === l.productoId)?.precio ?? 0), 0)
+
+  function ajustarBoleta(pid: number, delta: number) {
+    if (!jornada) return
+    // tope = stock real sin contar la boleta (vendidos ya registrados)
+    const max = stockActual(jornada, ventas, pid)
+    setBoleta(prev => prev
+      .map(l => l.productoId === pid ? { ...l, cantidad: Math.min(max, Math.max(0, l.cantidad + delta)) } : l)
+      .filter(l => l.cantidad > 0))
+  }
+
+  function agregarABoleta(p: Producto, cantidad: number) {
+    setBoleta(prev => {
+      const i = prev.findIndex(l => l.productoId === p.id)
+      const max = jornada ? stockActual(jornada, ventas, p.id!) : cantidad
+      if (i >= 0) { const n = [...prev]; n[i] = { ...n[i], cantidad: Math.min(max, n[i].cantidad + cantidad) }; return n }
+      return [...prev, { productoId: p.id!, cantidad: Math.min(max, cantidad) }]
+    })
+  }
+
+  async function confirmarBoleta() {
+    if (!jornada || boleta.length === 0) return
+    const items = boleta.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
     await db.ventas.add({
       jornadaId: jornada.id!,
-      items: [{ productoId: p.id!, cantidad }],
-      total: cantidad * p.precio,
-      metodoPago: metodo,
+      items,
+      total: totalBoleta,
+      metodoPago: metodoBoleta,
       createdAt: Date.now(),
     })
-    setMetodoPago(metodo)
+    setBoleta([]); setBoletaAbierta(false); setMetodoPago(metodoBoleta)
   }
+
 
   async function cerrarDia() {
     if (!jornada) return
@@ -274,7 +300,8 @@ export default function MiDia() {
                 {jornada.despacho.map(l => {
                   const p = productos.find(x => x.id === l.productoId)
                   if (!p) return null
-                  const stock = stockActual(jornada, ventas, p.id!)
+                  const stock = Math.max(0, stockActual(jornada, ventas, p.id!)
+                    - (boleta.find(b => b.productoId === p.id!)?.cantidad ?? 0))
                   return (
                     <ProductoVenta
                       key={p.id}
@@ -283,8 +310,7 @@ export default function MiDia() {
                       repuesto={repuestas(jornada, p.id!)}
                       stock={stock}
                       habilitado={jornada.estado === 'abierta' && !listo}
-                      metodoInicial={metodoPago}
-                      onVenta={registrarItem}
+                      onVenta={agregarABoleta}
                     />
                   )
                 })}
@@ -441,101 +467,86 @@ export default function MiDia() {
           </AlertDialog.Container>
         </AlertDialog.Backdrop>
       </AlertDialog>
+      {/* boleta flotante — si hay productos cargados */}
+      {boleta.length > 0 && (
+        <button
+          onClick={() => { setMetodoBoleta(metodoPago); setBoletaAbierta(true) }}
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40
+            bg-accent text-accent-foreground rounded-2xl px-5 py-4
+            shadow-xl shadow-accent/40 font-extrabold num
+            flex items-center justify-between gap-3
+            hover:scale-[1.02] active:scale-[0.98] transition-transform"
+        >
+          <span className="flex items-center gap-2.5">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <rect x="4" y="2" width="16" height="20" rx="3" stroke="currentColor" strokeWidth="2" />
+              <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="17" cy="18" r="4.5" fill="#00d4ff" />
+              <path d="M15.5 18l1 1 2-2" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+            <span className="text-sm font-bold">Boleta · {boleta.reduce((a, l) => a + l.cantidad, 0)} u.</span>
+          </span>
+          <b className="text-base">{fmtMoney(totalBoleta)}</b>
+        </button>
+      )}
+
+      {/* modal de la boleta: ítems + método + confirmar venta */}
+      <AlertDialog isOpen={boletaAbierta} onOpenChange={o => { if (!o) setBoletaAbierta(false) }}>
+        <AlertDialog.Backdrop>
+          <AlertDialog.Container>
+            <AlertDialog.Dialog className="sm:max-w-[380px] max-h-[85vh] overflow-y-auto">
+              <AlertDialog.CloseTrigger />
+              <AlertDialog.Header>
+                <AlertDialog.Heading>Boleta — {boleta.length} {boleta.length === 1 ? 'producto' : 'productos'}</AlertDialog.Heading>
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                <div className="flex flex-col gap-2.5">
+                  {boleta.map(l => {
+                    const p = productos.find(x => x.id === l.productoId)
+                    return p ? (
+                      <div key={l.productoId} className="flex justify-between items-center text-sm num gap-2">
+                        <span className="truncate flex-1">{p.nombre}</span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          <button onClick={() => ajustarBoleta(l.productoId, -1)} className="w-7 h-7 rounded-lg border border-border font-bold text-muted hover:bg-muted/10" aria-label="Menos">−</button>
+                          <b className="w-8 text-center">{l.cantidad}</b>
+                          <button onClick={() => ajustarBoleta(l.productoId, 1)} className="w-7 h-7 rounded-lg border border-border font-bold text-muted hover:bg-muted/10" aria-label="Más">+</button>
+                        </span>
+                        <span className="flex items-center gap-2 shrink-0">
+                          <b>{fmtMoney(l.cantidad * p.precio)}</b>
+                          <button onClick={() => setBoleta(prev => prev.filter(x => x.productoId !== l.productoId))} className="text-danger text-xs font-bold" aria-label={`Quitar ${p.nombre}`}>✕</button>
+                        </span>
+                      </div>
+                    ) : null
+                  })}
+                  <ToggleButtonGroup
+                    selectionMode="single"
+                    selectedKeys={new Set([metodoBoleta])}
+                    onSelectionChange={k => { const m = [...k][0] as MetodoPago | undefined; if (m) setMetodoBoleta(m) }}
+                    aria-label="Método de cobro"
+                  >
+                    <ToggleButton id="efectivo">Efectivo</ToggleButton>
+                    <ToggleButton id="qr">QR</ToggleButton>
+                    <ToggleButton id="transferencia">Transf.</ToggleButton>
+                  </ToggleButtonGroup>
+                  <div className="flex justify-between items-baseline bg-accent/8 rounded-xl px-3.5 py-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-muted">Total</span>
+                    <b className="text-lg num text-accent">{fmtMoney(totalBoleta)}</b>
+                  </div>
+                </div>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button slot="close" variant="tertiary">Seguir agregando</Button>
+                <Button slot="close" variant="primary" onPress={confirmarBoleta} isDisabled={boleta.length === 0}>
+                  Confirmar venta
+                </Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Dialog>
+          </AlertDialog.Container>
+        </AlertDialog.Backdrop>
+      </AlertDialog>
     </div>
   )
 }
-
-/** tarjeta de producto + modal de venta: cantidad + método → onVenta */
-function ProductoVenta({
-  p, despachado, repuesto, stock, habilitado, metodoInicial, onVenta,
-}: {
-  p: Producto
-  despachado: number
-  repuesto: number
-  stock: number
-  habilitado: boolean
-  metodoInicial: MetodoPago
-  onVenta: (p: Producto, cantidad: number, metodo: MetodoPago) => void
-}) {
-  const [abierto, setAbierto] = useState(false)
-  const [cant, setCant] = useState(1)
-  const [metodo, setMetodo] = useState<MetodoPago>(metodoInicial)
-  const agotado = stock <= 0
-
-  return (
-    <AlertDialog isOpen={abierto} onOpenChange={setAbierto}>
-      <Button
-        variant="ghost"
-        isDisabled={!habilitado || agotado}
-        className={`!block !h-auto !p-2.5 !text-left !rounded-xl border border-border !bg-surface ${agotado ? 'opacity-40' : ''}`}
-      >
-        {p.imagen ? (
-          <img src={p.imagen} alt="" className="w-full h-16 rounded-lg object-cover mb-1.5" />
-        ) : (
-          <div className="w-full h-16 rounded-lg bg-accent/15 flex items-center justify-center text-2xl font-extrabold text-accent mb-1.5">
-            {p.nombre.charAt(0)}
-          </div>
-        )}
-        <p className="text-sm font-bold leading-tight truncate">{p.nombre}</p>
-        {p.ingredientes && (
-          <p className="text-[0.6rem] text-muted/70 truncate">{p.ingredientes}</p>
-        )}
-        <p className="text-[0.65rem] num text-muted mt-0.5">
-          llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''} · quedan {stock}
-        </p>
-        <p className="text-xs num font-bold text-accent">{fmtMoney(p.precio)}</p>
-      </Button>
-      <AlertDialog.Backdrop>
-        <AlertDialog.Container>
-          <AlertDialog.Dialog className="sm:max-w-[360px]">
-            <AlertDialog.CloseTrigger />
-            <AlertDialog.Header>
-              <AlertDialog.Heading>{p.nombre}</AlertDialog.Heading>
-            </AlertDialog.Header>
-            <AlertDialog.Body>
-              <div className="flex flex-col gap-3">
-                <NumberField value={cant} onChange={v => setCant(Math.min(stock, Math.max(1, v ?? 1)))} minValue={1} maxValue={Math.max(1, stock)} aria-label="Cantidad">
-                  <Label>Cantidad</Label>
-                  <NumberField.Group>
-                    <NumberField.DecrementButton />
-                    <NumberField.Input />
-                    <NumberField.IncrementButton />
-                  </NumberField.Group>
-                </NumberField>
-                <ToggleButtonGroup
-                  selectionMode="single"
-                  selectedKeys={new Set([metodo])}
-                  onSelectionChange={k => { const m = [...k][0] as MetodoPago | undefined; if (m) setMetodo(m) }}
-                  aria-label="Método de cobro"
-                >
-                  <ToggleButton id="efectivo">Efectivo</ToggleButton>
-                  <ToggleButton id="qr">QR</ToggleButton>
-                  <ToggleButton id="transferencia">Transf.</ToggleButton>
-                </ToggleButtonGroup>
-                <div className="flex justify-between text-sm num">
-                  <span className="text-muted">Total</span>
-                  <b>{fmtMoney(cant * p.precio)}</b>
-                </div>
-              </div>
-            </AlertDialog.Body>
-            <AlertDialog.Footer>
-              <Button slot="close" variant="tertiary">Cancelar</Button>
-              <Button
-                slot="close"
-                variant="primary"
-                onPress={() => { onVenta(p, cant, metodo); setCant(1) }}
-                isDisabled={cant <= 0 || cant > stock}
-              >
-                Anotar venta
-              </Button>
-            </AlertDialog.Footer>
-          </AlertDialog.Dialog>
-        </AlertDialog.Container>
-      </AlertDialog.Backdrop>
-    </AlertDialog>
-  )
-}
-
 /** historial del vendedor: stats + jornadas agrupadas por fecha, productos por turno */
 function MiHistorial({
   misJornadas, misVentas, stats, productos, puestos,
@@ -546,7 +557,6 @@ function MiHistorial({
   productos: Producto[]
   puestos: { id?: number; nombre: string }[]
 }) {
-  // agrupar por fecha desc
   const porFecha = new Map<string, Jornada[]>()
   for (const j of misJornadas) {
     if (!porFecha.has(j.fecha)) porFecha.set(j.fecha, [])
@@ -564,15 +574,12 @@ function MiHistorial({
         <Card.Description>Tus números hasta la fecha — productos por turno.</Card.Description>
       </Card.Header>
       <Card.Content className="px-4 py-3 flex flex-col gap-3">
-        {/* resumen acumulado */}
         <div className="grid grid-cols-4 gap-2 text-center">
           <div><p className="text-base font-extrabold num">{stats.turnos}</p><p className="text-[0.6rem] text-muted uppercase font-bold">turnos</p></div>
           <div><p className="text-base font-extrabold num">{stats.horas.toFixed(0)}h</p><p className="text-[0.6rem] text-muted uppercase font-bold">horas</p></div>
           <div><p className="text-base font-extrabold num">{stats.unidades}</p><p className="text-[0.6rem] text-muted uppercase font-bold">unidades</p></div>
           <div><p className="text-base font-extrabold num">{fmtMoney(stats.vendido)}</p><p className="text-[0.6rem] text-muted uppercase font-bold">vendido</p></div>
         </div>
-
-        {/* por fecha → turnos → productos */}
         {fechas.length === 0 && <p className="text-xs text-muted">Todavía no tenés jornadas registradas.</p>}
         {fechas.map(fecha => {
           const js = porFecha.get(fecha)!
@@ -622,5 +629,95 @@ function MiHistorial({
         })}
       </Card.Content>
     </Card>
+  )
+}
+
+/** tarjeta de producto + modal: cantidad → agrega a la boleta */
+function ProductoVenta({
+  p, despachado, repuesto, stock, habilitado, onVenta,
+}: {
+  p: Producto
+  despachado: number
+  repuesto: number
+  stock: number
+  habilitado: boolean
+  onVenta: (p: Producto, cantidad: number) => void
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const [cant, setCant] = useState(1)
+  const agotado = stock <= 0
+
+  return (
+    <AlertDialog isOpen={abierto} onOpenChange={setAbierto}>
+      <Button
+        variant="ghost"
+        isDisabled={!habilitado || agotado}
+        className={`!block !h-auto !p-2.5 !text-left !rounded-xl border border-border !bg-surface ${agotado ? 'opacity-40' : ''}`}
+      >
+        {p.imagen ? (
+          <img src={p.imagen} alt="" className="w-full h-16 rounded-lg object-cover mb-1.5" />
+        ) : (
+          <div className="w-full h-16 rounded-lg bg-accent/15 flex items-center justify-center text-2xl font-extrabold text-accent mb-1.5">
+            {p.nombre.charAt(0)}
+          </div>
+        )}
+        <p className="text-sm font-bold leading-tight truncate">{p.nombre}</p>
+        {p.ingredientes && (
+          <p className="text-[0.6rem] text-muted/70 truncate">{p.ingredientes}</p>
+        )}
+        <p className="text-[0.65rem] num text-muted mt-0.5">
+          llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''} · quedan {stock}
+        </p>
+        <p className="text-xs num font-bold text-accent">{fmtMoney(p.precio)}</p>
+      </Button>
+      <AlertDialog.Backdrop>
+        <AlertDialog.Container>
+          <AlertDialog.Dialog className="sm:max-w-[360px]">
+            <AlertDialog.CloseTrigger />
+            <AlertDialog.Header>
+              <AlertDialog.Heading>{p.nombre}</AlertDialog.Heading>
+            </AlertDialog.Header>
+            <AlertDialog.Body>
+              <div className="flex flex-col gap-4">
+                {/* precio unitario + stock como contexto */}
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-bold uppercase tracking-wide text-muted">Precio</span>
+                  <span className="text-sm num">{fmtMoney(p.precio)} <i className="not-italic text-xs text-muted">/u.</i></span>
+                </div>
+                <div className="flex gap-2 items-end">
+                  <NumberField className="flex-1" value={cant} onChange={v => setCant(Math.min(stock, Math.max(1, v ?? 1)))} minValue={1} maxValue={Math.max(1, stock)} aria-label="Cantidad">
+                    <Label>Cantidad</Label>
+                    <NumberField.Group className="!h-11">
+                      <NumberField.DecrementButton />
+                      <NumberField.Input className="!text-base !font-bold num" />
+                      <NumberField.IncrementButton />
+                    </NumberField.Group>
+                  </NumberField>
+                  <Button size="sm" variant="outline" onPress={() => setCant(stock)} className="shrink-0 !h-11 !px-3">
+                    Todo <b className="num">{stock}</b>
+                  </Button>
+                </div>
+                {/* subtotal destacado */}
+                <div className="flex justify-between items-baseline bg-accent/8 rounded-xl px-3.5 py-2.5">
+                  <span className="text-xs font-bold uppercase tracking-wide text-muted">Subtotal</span>
+                  <b className="text-lg num text-accent">{fmtMoney(cant * p.precio)}</b>
+                </div>
+              </div>
+            </AlertDialog.Body>
+            <AlertDialog.Footer>
+              <Button slot="close" variant="tertiary">Cancelar</Button>
+              <Button
+                slot="close"
+                variant="primary"
+                onPress={() => { onVenta(p, cant); setCant(1) }}
+                isDisabled={cant <= 0 || cant > stock}
+              >
+                Agregar a la boleta
+              </Button>
+            </AlertDialog.Footer>
+          </AlertDialog.Dialog>
+        </AlertDialog.Container>
+      </AlertDialog.Backdrop>
+    </AlertDialog>
   )
 }
