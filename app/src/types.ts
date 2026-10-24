@@ -112,6 +112,10 @@ export interface Jornada {
   despacho: Linea[]
   /** reposiciones durante el turno — se venden igual, pero se registran aparte */
   reposiciones?: Reposicion[]
+  /** sobrante de ayer que entra a la venta de hoy */
+  saldoInicial?: Linea[]
+  /** sobrante de ayer descartado — pérdida para el negocio */
+  descarte?: Linea[]
   /** hora de fin del turno "HH:mm" — antes de horaFin−5' el cierre requiere aprobación */
   horaFin?: string
   /** el dueño aprobó un cierre anticipado */

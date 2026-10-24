@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import EmptyState from '../components/EmptyState'
 import { AlertDialog, Button, Card, Chip, Label, ListBox, NumberField, Select } from '@heroui/react'
 import { db } from '../db'
 import { useDatos, useJornadasDe } from '../lib/data'
@@ -417,6 +418,17 @@ export default function Despacho() {
           <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">
             Jornadas del {fmtFecha(fecha)}
           </p>
+          {jornadasEseDia.length === 0 && (
+            <Card>
+              <Card.Content className="p-2">
+                <EmptyState
+                  titulo="Sin turnos activos"
+                  descripcion="Aún no hay turnos activos para realizar despachos en esta fecha."
+                  hint="Creá el despacho con el botón +"
+                />
+              </Card.Content>
+            </Card>
+          )}
           <div className="flex flex-col gap-2">
             {jornadasEseDia.map(j => (
               <Card key={j.id}>

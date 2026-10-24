@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { AlertDialog, Button, Card, Input, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { db } from '../db'
@@ -155,6 +156,17 @@ export default function Catalogo() {
 
       {/* lista */}
       <div className="flex flex-col gap-2">
+        {productos.length === 0 && (
+          <Card>
+            <Card.Content className="p-2">
+              <EmptyState
+                titulo="Sin productos"
+                descripcion="Todavía no hay productos cargados en el catálogo — el primero ya define precio, costo y foto."
+                hint="Agregá el primero con el botón +"
+              />
+            </Card.Content>
+          </Card>
+        )}
         {productos.map(p => (
           <Card key={p.id} className={p.activo ? '' : 'opacity-50'}>
             <Card.Content className="px-4 py-3 flex items-center gap-3 flex-wrap">

@@ -3,7 +3,7 @@ import { Alert, AlertDialog, Button, Card, Chip, Input, Label, NumberField, Text
 import { db } from '../db'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useDatos, useJornadaVendedor, useJornadasLibres, useVentasDe } from '../lib/data'
-import { cargado, despachoValor, horasTurno, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
+import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
 import type { Cierre, Jornada, MetodoPago, Producto, Venta } from '../types'
 
@@ -296,7 +296,14 @@ export default function MiDia() {
           <Card>
             <Card.Header className="px-4 pt-4 pb-0">
               <Card.Title className="text-base">Mi turno</Card.Title>
-              <Card.Description>Lo que anotaste vendiendo hoy.</Card.Description>
+              <Card.Description>
+                Lo que anotaste vendiendo hoy.
+                {jornada.descarte && jornada.descarte.length > 0 && (
+                  <span className="block text-xs num text-danger font-semibold mt-1">
+                    Descarte de ayer: −{fmtMoney(perdidaDescarte(jornada, productos))}
+                  </span>
+                )}
+              </Card.Description>
             </Card.Header>
             <Card.Content className="px-4 py-3 flex flex-col gap-3">
               <div className="flex flex-col gap-1">

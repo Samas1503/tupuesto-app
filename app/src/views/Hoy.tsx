@@ -4,6 +4,7 @@ import { useDatos, useJornadasDe, useJornadasRango, useVentasDeJornadas } from '
 import { fmtDif, fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
 import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
 import { useState } from 'react'
+import EmptyState from '../components/EmptyState'
 import type { Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 function estadoChip(j: Jornada) {
@@ -89,6 +90,17 @@ export default function Hoy() {
   const [vendTurno, setVendTurno] = useState<number | null>(null)
   const [fondoTurno, setFondoTurno] = useState(0)
   const [horaFinTurno, setHoraFinTurno] = useState('')
+  // saldo inicial: cuánto sobrante de ayer entra a la venta (solo primer turno del día)
+  const [carryOver, setCarryOver] = useState<Record<number, number>>({})
+  const sobrantesAyer = productos.map(p => ({
+    p,
+    n: jornadasAyer.reduce((a, j) => a + (j.cierre?.remanente.find(l => l.productoId === p.id)?.cantidad ?? 0), 0),
+  })).filter(x => x.n > 0)
+  const esPrimerTurno = jornadas.length === 0
+  const carryDe = (pid: number) => carryOver[pid] ?? (sobrantesAyer.find(x => x.p.id === pid)?.n ?? 0)
+  const perdidaDescartes = sobrantesAyer.reduce((a, x) => a + (x.n - carryDe(x.p.id!)) * (x.p.precioCosto ?? 0), 0)
+  const saldoIni = sobrantesAyer.map(x => ({ productoId: x.p.id!, cantidad: carryDe(x.p.id!) })).filter(l => l.cantidad > 0)
+  const descarte = sobrantesAyer.map(x => ({ productoId: x.p.id!, cantidad: x.n - carryDe(x.p.id!) })).filter(l => l.cantidad > 0)
   const [lineasDesp, setLineasDesp] = useState<Linea[]>([])
   const [prodDesp, setProdDesp] = useState<number | null>(null)
   const [cantDesp, setCantDesp] = useState(1)
@@ -117,6 +129,8 @@ export default function Hoy() {
       vendedorId: v.id!,
       fondoCaja: fondoTurno,
       horaFin: horaFinTurno || undefined,
+      saldoInicial: esPrimerTurno && saldoIni.length ? saldoIni : undefined,
+      descarte: esPrimerTurno && descarte.length ? descarte : undefined,
       fecha: hoy,
       despacho: lineasDesp,
       estado: 'abierta',
@@ -201,6 +215,18 @@ export default function Hoy() {
         </Tabs.ListContainer>
 
         <Tabs.Panel id="turnos" className="flex flex-col gap-4">
+      {jornadas.length === 0 && (
+        <Card>
+          <Card.Content className="p-2">
+            <EmptyState
+              titulo="Sin turnos hoy"
+              descripcion="Todavía no creaste ningún turno — cada puesto necesita su vendedor, caja y despacho para arrancar."
+              hint="Creá el primero con el botón +"
+            />
+          </Card.Content>
+        </Card>
+      )}
+
       {/* una tarjeta por jornada */}
       {jornadas.map(j => {
         const puesto = puestos.find(p => p.id === j.puestoId)
@@ -384,7 +410,11 @@ export default function Hoy() {
             </Card.Header>
             <Card.Content className="px-4 py-3 flex flex-col gap-3">
               {disponibleHoy.length === 0 && (
-                <p className="text-sm text-muted">Sin despachos hoy ni sobrantes de ayer.</p>
+                <EmptyState
+                  titulo="Sin productos para hoy"
+                  descripcion="No hay despachos cargados ni sobrantes de ayer — cargá mercadería para que los puestos tengan qué vender."
+                  hint="Cargá productos con el botón +"
+                />
               )}
               {disponibleHoy.map(({ p, sobranteAyer, despachado, vendido, disponible }) => {
                 const total = sobranteAyer + despachado
@@ -496,6 +526,34 @@ export default function Hoy() {
                     <Input type="time" />
                     <p className="text-xs text-muted/70 mt-1">El vendedor puede cerrar solo hasta 5 min antes; fuera de eso te pide aprobación.</p>
                   </TextField>
+
+                  {esPrimerTurno && sobrantesAyer.length > 0 && (
+                    <div className="border border-dashed border-warning/50 rounded-xl p-3 flex flex-col gap-2">
+                      <p className="text-xs font-bold uppercase tracking-wide text-muted">Sobrantes de ayer</p>
+                      {sobrantesAyer.map(({ p, n }) => (
+                        <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="truncate">{p.nombre} <i className="not-italic text-xs text-muted num">×{n}</i></span>
+                          <NumberField
+                            className="w-28 shrink-0"
+                            value={carryDe(p.id!)}
+                            onChange={v => setCarryOver(prev => ({ ...prev, [p.id!]: Math.min(n, Math.max(0, v ?? 0)) }))}
+                            minValue={0} maxValue={n} aria-label={`Usar ${p.nombre}`}
+                          >
+                            <NumberField.Group>
+                              <NumberField.DecrementButton />
+                              <NumberField.Input />
+                              <NumberField.IncrementButton />
+                            </NumberField.Group>
+                          </NumberField>
+                        </div>
+                      ))}
+                      {perdidaDescartes > 0 && (
+                        <p className="text-xs num text-danger font-semibold">
+                          Descarte: −{fmtMoney(perdidaDescartes)} de costo perdido
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <p className="text-xs font-bold uppercase tracking-wide text-muted mt-1">
                     Productos a despachar

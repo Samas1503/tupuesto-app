@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Card, Chip, Label, Meter, Tabs } from '@heroui/react'
 import { useDatos, useJornadasRango, useVentasDeJornadas } from '../lib/data'
-import { costoVentas, despachoValor, diferencia, horasTurno, mermaValor, totalVentas, vendidos, ventasTotal } from '../lib/arqueo'
+import { costoVentas, despachoValor, diferencia, horasTurno, mermaValor, perdidaDescarte, totalVentas, vendidos, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
 
 const METODOS = { efectivo: 'Efectivo', qr: 'QR', transferencia: 'Transf.' } as const
@@ -69,7 +69,10 @@ export default function Historial() {
   const totFalt = jsConCierre.reduce((a, j) => a + Math.min(0, diferencia(j, productos)), 0)
   const totSob = jsConCierre.reduce((a, j) => a + Math.max(0, diferencia(j, productos)), 0)
   const margen = totVentas - totCosto
-  const perdidas = totMerma + Math.abs(totFalt)
+  const totDescarte = jornadas.reduce((a, j) => a + perdidaDescarte(j, productos), 0)
+  const totSaldo = jornadas.reduce((a, j) =>
+    a + (j.saldoInicial ?? []).reduce((x, l) => x + l.cantidad * (productos.find(p => p.id === l.productoId)?.precioCosto ?? 0), 0), 0)
+  const perdidas = totMerma + Math.abs(totFalt) + totDescarte
 
   // diferencias acumuladas por puesto
   const difPor = puestos.map(p => ({
@@ -250,6 +253,12 @@ export default function Historial() {
                 <div className="flex justify-between"><span className="text-muted">Costo producción</span><b className="text-muted">−{fmtMoney(totCosto)}</b></div>
                 <div className="flex justify-between"><span className="text-muted">Merma declarada</span><b className="text-danger">−{fmtMoney(totMerma)}</b></div>
                 <div className="flex justify-between"><span className="text-muted">Faltantes de caja</span><b className="text-danger">−{fmtMoney(Math.abs(totFalt))}</b></div>
+                {totDescarte > 0 && (
+                  <div className="flex justify-between"><span className="text-muted">Descartes de sobrantes</span><b className="text-danger">−{fmtMoney(totDescarte)}</b></div>
+                )}
+                {totSaldo > 0 && (
+                  <div className="flex justify-between"><span className="text-muted">Sobrantes reutilizados</span><b className="text-success">+{fmtMoney(totSaldo)}</b></div>
+                )}
                 {totSob > 0 && (
                   <div className="flex justify-between"><span className="text-muted">Sobrantes</span><b className="text-success">+{fmtMoney(totSob)}</b></div>
                 )}

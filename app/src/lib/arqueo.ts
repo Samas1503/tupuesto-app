@@ -6,9 +6,18 @@ function qty(lineas: Linea[] | undefined, productoId: number): number {
 }
 
 /** total cargado de un producto: despacho inicial + todas las reposiciones */
+/** total cargado de un producto: despacho inicial + saldo de ayer + reposiciones */
 export function cargado(j: Jornada, productoId: number): number {
   const repos = (j.reposiciones ?? []).reduce((a, r) => a + qty(r.items, productoId), 0)
-  return qty(j.despacho, productoId) + repos
+  return qty(j.despacho, productoId) + qty(j.saldoInicial, productoId) + repos
+}
+
+/** $ perdido por sobrante descartado (a precioCosto) */
+export function perdidaDescarte(j: Jornada, productos: Producto[]): number {
+  return (j.descarte ?? []).reduce(
+    (a, l) => a + l.cantidad * (productos.find(p => p.id === l.productoId)?.precioCosto ?? 0),
+    0,
+  )
 }
 
 /** unidades vendidas inferidas por producto: cargado − remanente − merma (nunca negativo) */
