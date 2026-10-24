@@ -141,7 +141,7 @@ export default function Historial() {
                                 <div
                                   className="rounded-md py-1.5 text-[0.65rem] font-semibold"
                                   style={{
-                                    background: v > 0 ? `rgba(99,91,255,${intensidad})` : 'transparent',
+                                    background: v > 0 ? `color-mix(in srgb, var(--accent) ${Math.round(intensidad * 100)}%, transparent)` : 'transparent',
                                     color: intensidad > 0.45 ? '#fff' : 'inherit',
                                   }}
                                   title={`${p.nombre} · ${fmtFecha(d)} · ${v > 0 ? fmtMoney(v) : 'sin datos'}`}
@@ -346,7 +346,7 @@ export default function Historial() {
                   <div key={p.id} className="flex items-center gap-3">
                     <Meter aria-label={p.nombre} className="flex-1" value={(total / maxPuesto) * 100}>
                       <Label className="text-sm font-semibold w-28 truncate">{p.nombre}</Label>
-                      <Meter.Track><Meter.Fill className="!bg-[#00d4ff]" /></Meter.Track>
+                      <Meter.Track><Meter.Fill className="!bg-accent" /></Meter.Track>
                     </Meter>
                     <b className="text-sm num w-24 text-right">{fmtMoney(total)}</b>
                   </div>
