@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Tabs } from '@heroui/react'
-import { Icon } from '@iconify/react'
+import { IHoy, IDespacho, IPrecios, IPuestos, IEquipo, IStats } from './components/icons'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { Rol } from './types'
 import { db } from './db'
@@ -16,13 +16,13 @@ import Admin from './views/Admin'
 
 type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'vendedores' | 'historial'
 
-const NAV_DUENIO: { id: Vista; label: string; icon: string }[] = [
-  { id: 'hoy', label: 'Hoy', icon: 'tabler:clipboard-check' },
-  { id: 'despacho', label: 'Despacho', icon: 'tabler:package' },
-  { id: 'catalogo', label: 'Precios', icon: 'tabler:tag' },
-  { id: 'puestos', label: 'Puestos', icon: 'tabler:building-store' },
-  { id: 'vendedores', label: 'Equipo', icon: 'tabler:users' },
-  { id: 'historial', label: 'Stats', icon: 'tabler:chart-bar' },
+const NAV_DUENIO: { id: Vista; label: string; Icon: (p: { className?: string }) => React.ReactNode }[] = [
+  { id: 'hoy', label: 'Hoy', Icon: IHoy },
+  { id: 'despacho', label: 'Despacho', Icon: IDespacho },
+  { id: 'catalogo', label: 'Precios', Icon: IPrecios },
+  { id: 'puestos', label: 'Puestos', Icon: IPuestos },
+  { id: 'vendedores', label: 'Equipo', Icon: IEquipo },
+  { id: 'historial', label: 'Stats', Icon: IStats },
 ]
 
 type Sesion = { rol: Rol; id: number }
@@ -205,7 +205,7 @@ export default function App() {
                       id={item.id}
                       className="relative z-10 flex-1 basis-0 !min-w-0 flex-col gap-0.5 !h-auto !py-3.5 !my-1.5 !rounded-full !bg-transparent text-[0.6rem] font-bold text-muted overflow-hidden whitespace-nowrap data-[selected]:!text-white"
                     >
-                      <Icon icon={item.icon} className="text-xl leading-none" />
+                      <item.Icon />
                       {item.label}
                       <Tabs.Indicator className="!hidden" />
                     </Tabs.Tab>
