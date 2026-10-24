@@ -419,7 +419,7 @@ export default function MiDia() {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
               <rect x="4" y="2" width="16" height="20" rx="3" stroke="currentColor" strokeWidth="2" />
               <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <circle cx="17" cy="18" r="4.5" fill="#00d4ff" />
+              <circle cx="17" cy="18" r="4.5" fill="var(--accent)" />
               <path d="M15.5 18l1 1 2-2" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
             <span className="text-sm font-bold">Boleta · {boleta.reduce((a, l) => a + l.cantidad, 0)} u.</span>
