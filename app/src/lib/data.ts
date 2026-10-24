@@ -2,36 +2,63 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Jornada, Solicitud, Venta } from '../types'
 
+/** dueño efectivo de la sesión para scoping de datos:
+ *  duenio → su id · vendedor → su duenioId · admin → null (ve todo) */
+export function scopeDuenio(usuarios?: { id?: number; rol?: string; duenioId?: number }[]): number | null {
+  const rol = localStorage.getItem('tp-rol')
+  const id = Number(localStorage.getItem('tp-user-id'))
+  if (rol === 'duenio') return id
+  if (rol === 'vendedor' && usuarios) return usuarios.find(u => u.id === id)?.duenioId ?? null
+  return null
+}
+
+const deDuenio = <T extends { duenioId?: number }>(rows: T[], scope: number | null): T[] =>
+  scope == null ? rows : rows.filter(r => r.duenioId == null || r.duenioId === scope)
+
 export function useDatos() {
+  const usuarios = useLiveQuery(() => db.usuarios.toArray(), [])
+  const scope = scopeDuenio(usuarios ?? undefined)
+
   const productos = useLiveQuery(() => db.productos.orderBy('orden').toArray(), [])
   const puestos = useLiveQuery(() => db.puestos.orderBy('id').toArray(), [])
-  // vendedores del dueño de la sesión — el admin (sin duenioId) y los sueltos se ven siempre
-  const duenioId = localStorage.getItem('tp-rol') === 'duenio'
-    ? Number(localStorage.getItem('tp-user-id'))
-    : null
   const vendedores = useLiveQuery(
-    () => db.usuarios.where('rol').equals('vendedor')
-      .filter(v => duenioId == null || v.duenioId == null || v.duenioId === duenioId)
-      .sortBy('id'),
-    [duenioId],
+    () => db.usuarios.where('rol').equals('vendedor').sortBy('id'),
+    [],
   )
   return {
-    productos: productos ?? [],
-    puestos: puestos ?? [],
-    vendedores: vendedores ?? [],
-    cargando: !productos || !puestos || !vendedores,
+    productos: deDuenio(productos ?? [], scope),
+    puestos: deDuenio(puestos ?? [], scope),
+    vendedores: vendedores == null ? [] : deDuenio(vendedores, scope),
+    usuarios: usuarios ?? [],
+    scope,
+    cargando: !productos || !puestos || !vendedores || !usuarios,
   }
 }
 
-export function useJornadasDe(fecha: string): Jornada[] {
-  return useLiveQuery(() => db.jornadas.where('fecha').equals(fecha).sortBy('puestoId'), [fecha]) ?? []
+/** jornadas del dueño de sesión: por j.duenioId o por el vendedor (su duenioId) */
+const jornadaDeScope = (j: Jornada, scope: number | null, usuarios: { id?: number; duenioId?: number }[]): boolean => {
+  if (scope == null) return true
+  if (j.duenioId === scope) return true
+  const v = usuarios.find(u => u.id === j.vendedorId)
+  return v?.duenioId === scope || j.duenioId == null && v == null
 }
 
-export function useJornadasRango(desde: string, hasta: string): Jornada[] {
+export function useJornadasDe(fecha: string, usuarios: { id?: number; duenioId?: number }[] = []): Jornada[] {
+  const scope = scopeDuenio(usuarios)
+  return useLiveQuery(
+    () => db.jornadas.where('fecha').equals(fecha).sortBy('puestoId')
+      .then(js => js.filter(j => jornadaDeScope(j, scope, usuarios))),
+    [fecha, scope],
+  ) ?? []
+}
+
+export function useJornadasRango(desde: string, hasta: string, usuarios: { id?: number; duenioId?: number }[] = []): Jornada[] {
+  const scope = scopeDuenio(usuarios)
   return (
     useLiveQuery(
-      () => db.jornadas.where('fecha').between(desde, hasta, true, true).sortBy('fecha'),
-      [desde, hasta],
+      () => db.jornadas.where('fecha').between(desde, hasta, true, true).sortBy('fecha')
+        .then(js => js.filter(j => jornadaDeScope(j, scope, usuarios))),
+      [desde, hasta, scope],
     ) ?? []
   )
 }
@@ -62,13 +89,23 @@ export function useVentasDeJornadas(jornadaIds: number[]): Venta[] {
   ) ?? []
 }
 
-export function useSolicitudesPendientes(): Solicitud[] {
-  return useLiveQuery(() => db.solicitudes.where('estado').equals('pendiente').toArray(), []) ?? []
+export function useSolicitudesPendientes(usuarios: { id?: number; duenioId?: number }[] = []): Solicitud[] {
+  const scope = scopeDuenio(usuarios)
+  return useLiveQuery(
+    () => db.solicitudes.where('estado').equals('pendiente').toArray()
+      .then(ss => scope == null ? ss : ss.filter(s => {
+        const v = usuarios.find(u => u.id === s.vendedorId)
+        return v?.duenioId === scope
+      })),
+    [scope],
+  ) ?? []
 }
 
-export function useJornadasLibres(fecha: string): Jornada[] {
+export function useJornadasLibres(fecha: string, usuarios: { id?: number; duenioId?: number }[] = []): Jornada[] {
+  const scope = scopeDuenio(usuarios)
   return useLiveQuery(
-    () => db.jornadas.where('fecha').equals(fecha).filter(j => j.vendedorId == null).toArray(),
-    [fecha],
+    () => db.jornadas.where('fecha').equals(fecha)
+      .filter(j => j.vendedorId == null && jornadaDeScope(j, scope, usuarios)).toArray(),
+    [fecha, scope],
   ) ?? []
 }

@@ -15,8 +15,8 @@ const duenioSesion = () =>
   localStorage.getItem('tp-rol') === 'duenio' ? Number(localStorage.getItem('tp-user-id')) : undefined
 
 export default function Vendedores() {
-  const { vendedores, productos } = useDatos()
-  const solicitudes = useSolicitudesPendientes()
+  const { vendedores, productos , usuarios} = useDatos()
+  const solicitudes = useSolicitudesPendientes(usuarios)
   // stats por vendedor — jornadas de los últimos 365 días + ventas registradas
   const jornadas = useJornadasRango(isoMenosDias(365), hoyISO())
   const ventas = useVentasDeJornadas(jornadas.map(j => j.id!))

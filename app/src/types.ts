@@ -33,6 +33,8 @@ export type DestinoQR = 'negocio' | 'vendedor'
 export type MetodoPago = 'efectivo' | 'qr' | 'transferencia'
 
 export interface Producto {
+  /** dueño de la cuenta — scoping multi-tenant (Neon: duenio_id) */
+  duenioId?: number
   id?: number
   nombre: string
   /** precio de venta al público */
@@ -59,6 +61,8 @@ export interface Venta {
 }
 
 export interface Puesto {
+  /** dueño de la cuenta — scoping multi-tenant (Neon: duenio_id) */
+  duenioId?: number
   id?: number
   nombre: string
   ubicacion: string
@@ -111,6 +115,8 @@ export interface Solicitud {
 export type EstadoJornada = 'abierta' | 'cerrada' | 'confirmada'
 
 export interface Jornada {
+  /** dueño de la cuenta — scoping multi-tenant (Neon: duenio_id) */
+  duenioId?: number
   id?: number
   puestoId: number
   /** se asigna cuando el vendedor inicia su turno — null mientras el despacho está libre */

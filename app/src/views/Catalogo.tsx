@@ -52,6 +52,7 @@ export default function Catalogo() {
     if (!n || nuevoPrecio <= 0) return
     const orden = Math.max(0, ...productos.map(p => p.orden)) + 1
     const id = await db.productos.add({
+        duenioId: scope,
       nombre: n,
       precio: nuevoPrecio,
       precioCosto: nuevoCosto || undefined,

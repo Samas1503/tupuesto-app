@@ -14,8 +14,8 @@ const COLOR_ESTADO: Record<EstadoJornada, 'default' | 'warning' | 'success'> = {
 }
 
 export default function Puestos() {
-  const { productos, puestos, vendedores } = useDatos()
-  const jornadasHoy = useJornadasDe(hoyISO())
+  const { productos, puestos, vendedores , usuarios} = useDatos()
+  const jornadasHoy = useJornadasDe(hoyISO(), usuarios)
   const [nombreP, setNombreP] = useState('')
   const [ubicacion, setUbicacion] = useState('')
 
@@ -34,6 +34,7 @@ export default function Puestos() {
     const n = nombreP.trim()
     if (!n) return
     const id = await db.puestos.add({
+        duenioId: scope,
       nombre: n,
       ubicacion: ubicacion.trim(),
       qrDestinoDefault: 'negocio',

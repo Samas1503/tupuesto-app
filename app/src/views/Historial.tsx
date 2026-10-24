@@ -7,8 +7,8 @@ import { fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../lib/format
 const METODOS = { efectivo: 'Efectivo', qr: 'QR', transferencia: 'Transf.' } as const
 
 export default function Historial() {
-  const { productos, puestos, vendedores } = useDatos()
-  const jornadas = useJornadasRango(isoMenosDias(28), isoMenosDias(0))
+  const { productos, puestos, vendedores , usuarios} = useDatos()
+  const jornadas = useJornadasRango(isoMenosDias(28), isoMenosDias(0), usuarios)
   const ventas = useVentasDeJornadas(jornadas.map(j => j.id!))
   const hoy = hoyISO()
   const jornadasHoy = jornadas.filter(j => j.fecha === hoy)
