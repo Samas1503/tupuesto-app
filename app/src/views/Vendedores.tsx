@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState'
 import { useState } from 'react'
 import { AlertDialog, Button, Card, Chip, Input, Label, Switch, TextField } from '@heroui/react'
 import { db } from '../db'
@@ -165,6 +166,17 @@ export default function Vendedores() {
       )}
 
       <div className="flex flex-col gap-3">
+        {vendedores.filter(v => !v.eliminado).length === 0 && (
+          <Card>
+            <Card.Content className="p-2">
+              <EmptyState
+                titulo="Sin vendedores"
+                descripcion="Tu equipo todavía está vacío — los vendedores que des cargan su turno y su rendición desde su celu."
+                hint="Sumá el primero con el botón +"
+              />
+            </Card.Content>
+          </Card>
+        )}
         {vendedores.filter(v => !v.eliminado).map(v => (
           <Card key={v.id}>
             <Card.Content className="px-4 py-3 flex items-center justify-between gap-3">

@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState'
 import { useState } from 'react'
 import { Alert, AlertDialog, Button, Card, Chip, Input, Label, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 import { db } from '../db'
@@ -54,6 +55,17 @@ export default function Puestos() {
         </p>
       </div>
 
+      {puestos.length === 0 && (
+        <Card>
+          <Card.Content className="p-2">
+            <EmptyState
+              titulo="Sin puestos"
+              descripcion="Todavía no registraste ningún punto de venta — cada uno define dónde se vende y cuánta caja se espera."
+              hint="Creá el primero con el botón +"
+            />
+          </Card.Content>
+        </Card>
+      )}
       {puestos.map(p => {
         const j = jornadasHoy.find(x => x.puestoId === p.id)
         const v = j ? vendedores.find(x => x.id === j.vendedorId) : undefined
