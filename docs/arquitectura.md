@@ -1,6 +1,6 @@
 **TuPuesto** · Arquitectura
 
-PWA **local-first**. Los datos viven en IndexedDB del dispositivo (Dexie);
+PWA con datos en IndexedDB del dispositivo (Dexie) — demo local hoy; el producto requiere internet (el dueño ve la rendición en tiempo real).
 no hay backend de datos todavía — solo `api/` serverless para cobros MP y
 emails (Resend). El modelo coopera con sync futura: entidades autónomas,
 mapeo 1:1 + auth por rol.

@@ -14,7 +14,7 @@
 
 ## En 5 líneas
 
-PWA local-first para dueños de venta ambulante multi-puesto (Argentina).
+PWA para dueños de venta ambulante multi-puesto (Argentina) — hoy IndexedDB local, camino a backend con rendición en tiempo real (el vendedor requiere internet).
 El dueño despacha al puesto y arma el turno (vendedor+fondo); el vendedor
 registra cada venta con método y cierra con un tap — la app calcula
 remanente, cobrado y diferencia. Anti-faltante, no POS.

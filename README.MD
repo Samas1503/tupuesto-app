@@ -5,7 +5,7 @@
 **El dueño despacha a la mañana. El vendedor anota cada venta y cierra con un tap.**
 La diferencia se ve el mismo día — no a fin de mes.
 
-`control de puestos` `venta ambulante` `Argentina` `PWA offline-first`
+`control de puestos` `venta ambulante` `Argentina` `PWA` `tiempo real`
 
 ![status](https://img.shields.io/badge/estado-pre--MVP-orange)
 ![stack](https://img.shields.io/badge/stack-vite%20%C2%B7%20react%2019%20%C2%B7%20heroui%20v3%20%C2%B7%20dexie-635bff)
@@ -34,7 +34,7 @@ python3 -m http.server 8765 --directory landing
 
 | Dónde | Qué |
 |---|---|
-| `app/` | La app — PWA local-first, IndexedDB + hidratación sqlite |
+| `app/` | La app — PWA, IndexedDB local (demo) → backend tiempo real próximo |
 | `api/` | Serverless Vercel: `mp-preference`, `mp-webhook`, `send-pin` (Resend) |
 | `docs/` | Documentación técnica dividida por tema |
 | `landing/` | Landing de preventa estática (estilo Stripe) |
