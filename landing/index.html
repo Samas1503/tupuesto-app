@@ -44,7 +44,7 @@
       background: var(--paper);
       color: var(--navy);
       line-height: 1.6;
-      font-size: 17px;
+      font-size: 18px;
       -webkit-font-smoothing: antialiased;
     }
     .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
@@ -100,7 +100,7 @@
       letter-spacing: -0.035em; font-weight: 800; color: var(--navy);
     }
     .hero h1 em { font-style: normal; color: var(--blurple); }
-    .hero .sub { margin-top: 22px; font-size: 1.15rem; color: var(--muted); max-width: 46ch; }
+    .hero .sub { margin-top: 22px; font-size: 1.2rem; color: var(--muted); max-width: 46ch; }
     .cta-row { display: flex; gap: 14px; margin-top: 30px; flex-wrap: wrap; }
     .btn {
       display: inline-flex; align-items: center; gap: 8px; justify-content: center;
@@ -164,14 +164,14 @@
     /* ── Secciones genéricas ──────────────────────────────── */
     section { padding: 80px 0; }
     h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); line-height: 1.15; letter-spacing: -0.03em; font-weight: 800; margin-bottom: 14px; }
-    .lead { color: var(--muted); max-width: 52ch; font-size: 1.05rem; }
+    .lead { color: var(--muted); max-width: 52ch; font-size: 1.15rem; }
 
     /* grid de tarjetas tipo Stripe */
     .grid { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: 36px; }
     @media (min-width: 700px) { .grid.g3 { grid-template-columns: repeat(3,1fr); } .grid.g2 { grid-template-columns: repeat(2,1fr); } }
     .cell { background: var(--white); padding: 28px 26px; }
     .cell h3 { font-size: 1.02rem; margin-bottom: 8px; letter-spacing: -0.01em; }
-    .cell p { color: var(--muted); font-size: 0.95rem; }
+    .cell p { color: var(--muted); font-size: 1rem; }
     .cell .ico { font-size: 1.3rem; margin-bottom: 12px; display: inline-block; }
 
     /* pasos numerados */
@@ -182,7 +182,7 @@
       color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
     }
     .step h3 { font-size: 1.05rem; margin-bottom: 4px; }
-    .step p { color: var(--muted); font-size: 0.97rem; }
+    .step p { color: var(--muted); font-size: 1.03rem; }
     .callout {
       margin-top: 34px; border: 1px solid var(--line); border-left: 4px solid var(--cyan);
       border-radius: 10px; background: var(--white); padding: 18px 22px; color: var(--muted); font-size: 0.97rem;
@@ -216,7 +216,7 @@
     .price-card .sub { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
     .price-card hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
     .ticks { list-style: none; }
-    .ticks li { padding: 7px 0 7px 28px; position: relative; font-size: 0.95rem; color: var(--muted); }
+    .ticks li { padding: 7px 0 7px 28px; position: relative; font-size: 1rem; color: var(--muted); }
     .ticks li::before { content: "✓"; position: absolute; left: 2px; color: var(--green); font-weight: 800; }
     .cupo { font-weight: 700; color: var(--warn); font-size: 0.92rem; margin: 14px 0 10px; }
     .price-card .btn { width: 100%; margin-top: 8px; }
@@ -224,7 +224,7 @@
     .garantias { display: grid; gap: 18px; margin-top: 26px; }
     .gar { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
     .gar .ico { font-size: 1.2rem; }
-    .gar p { font-size: 0.95rem; color: #9fb3c8; min-width: 0; }
+    .gar p { font-size: 1rem; color: #9fb3c8; min-width: 0; }
     .gar b { color: #fff; }
 
     /* ── Bento "Qué ves": superficies de producto ─────────── */
@@ -320,17 +320,17 @@
     .fit.yes { background: #eafaf0; border-color: #b8e6c8; }
     .fit.no  { background: #fdf0ec; border-color: #f0cfc0; }
     .fit h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
-    .fit ul { list-style: none; font-size: 0.97rem; }
+    .fit ul { list-style: none; font-size: 1.02rem; }
     .fit li { padding: 5px 0; color: var(--muted); }
     .fit.yes li::before { content: "✓  "; color: var(--green); font-weight: 800; }
     .fit.no  li::before { content: "✕  "; color: #b33030; font-weight: 800; }
 
     /* ── FAQ ──────────────────────────────────────────────── */
     details { border-bottom: 1px solid var(--line); padding: 20px 0; }
-    summary { font-weight: 700; cursor: pointer; font-size: 1.02rem; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    summary { font-weight: 700; cursor: pointer; font-size: 1.1rem; list-style: none; display: flex; justify-content: space-between; align-items: center; }
     summary::after { content: "+"; color: var(--blurple); font-size: 1.4rem; font-weight: 400; transition: transform .2s; }
     details[open] summary::after { transform: rotate(45deg); }
-    details p { margin-top: 12px; color: var(--muted); font-size: 0.97rem; max-width: 60ch; }
+    details p { margin-top: 12px; color: var(--muted); font-size: 1.03rem; max-width: 60ch; }
 
     /* ── Franja de pantallas de la app (multi-screen) ─────── */
     .screens {
@@ -763,7 +763,7 @@
       <p class="kicker">Lo que viene</p>
       <h2>El grupo de fundadores decide el orden</h2>
       <p class="lead">Lo que ya está en camino — y tu voto define qué llega primero.</p>
-      <div class="grid g3">
+      <div class="grid g2">
         <div class="cell">
           <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M7 15h4"/></svg></span>
           <h3>Cobros QR integrados — gratis</h3>
