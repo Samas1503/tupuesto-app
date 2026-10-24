@@ -386,7 +386,12 @@
       /* el mockup entero escala junto — mismas proporciones que en desktop */
       .hero .phone { transform: rotate(-2deg) scale(0.78); transform-origin: top center; }
       .hero-visual { margin-bottom: -110px; } /* el scale deja hueco, se compensa */
-      .hero-duo .phone-small { width: 58%; }
+      /* phone chico: abajo a la izquierda — no tapa el contenido principal */
+      .hero-duo .phone-small { width: 54%; top: auto; bottom: -4%; left: -10%; }
+      /* la float-card en mobile queda sobre el texto → oculta */
+      .hero .float-card { display: none; }
+      /* el CTA no queda tapado por la barra sticky */
+      .hero { padding-bottom: 150px; }
       .hero h1 { font-size: clamp(2rem, 9vw, 2.6rem); }
       .hero .sub { font-size: 1.1rem; }
       .cell { padding: 22px 20px; }
