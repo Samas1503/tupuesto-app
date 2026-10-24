@@ -107,13 +107,13 @@ export default function Catalogo() {
                     <button
                       type="button"
                       onClick={() => nuevoInput.current?.click()}
-                      className="h-14 w-14 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-accent/40 hover:border-accent hover:bg-accent/10 transition-colors flex items-center justify-center"
+                      className="h-20 w-20 rounded-2xl overflow-hidden shrink-0 border-2 border-dashed border-accent/40 hover:border-accent hover:bg-accent/10 transition-colors flex items-center justify-center"
                       aria-label="Elegir foto"
                     >
                       {nuevaFoto ? (
                         <img src={nuevaFoto} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-accent text-2xl font-light">+</span>
+                        <span className="text-accent text-3xl font-light">+</span>
                       )}
                     </button>
                     <TextField className="flex-1" value={nombre} onChange={setNombre}>
@@ -156,6 +156,16 @@ export default function Catalogo() {
                       </NumberField.Group>
                     </NumberField>
                   </div>
+                  {nuevoPrecio > 0 && (
+                    <div className="flex justify-between items-baseline bg-accent/8 rounded-xl px-3.5 py-2.5">
+                      <span className="text-xs font-bold uppercase tracking-wide text-muted">Margen</span>
+                      <b className="text-lg num text-accent">
+                        {nuevoCosto > 0 && nuevoCosto < nuevoPrecio
+                          ? `${Math.round(((nuevoPrecio - nuevoCosto) / nuevoPrecio) * 100)}%`
+                          : '—'}
+                      </b>
+                    </div>
+                  )}
                 </div>
               </AlertDialog.Body>
               <AlertDialog.Footer>
@@ -184,64 +194,62 @@ export default function Catalogo() {
         )}
         {productos.map(p => (
           <Card key={p.id} className={p.activo ? '' : 'opacity-50'}>
-            <Card.Content className="px-4 py-3 flex items-center gap-3 flex-wrap">
-              {fotoBtn(p)}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{p.nombre}</p>
-                {(p.precioCosto ?? 0) > 0 && p.precio > 0 && (
-                  <p className="text-xs text-muted num">
-                    margen {Math.round(((p.precio - (p.precioCosto ?? 0)) / p.precio) * 100)}%
-                  </p>
-                )}
+            <Card.Content className="px-4 py-3.5 flex flex-col gap-3">
+              {/* fila 1: foto + nombre + margen + switch */}
+              <div className="flex items-center gap-3">
+                {fotoBtn(p)}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{p.nombre}</p>
+                  {(p.precioCosto ?? 0) > 0 && p.precio > 0 && (
+                    <span className="inline-block mt-0.5 text-[0.68rem] num font-bold text-success bg-success/10 rounded-full px-2 py-0.5">
+                      {Math.round(((p.precio - (p.precioCosto ?? 0)) / p.precio) * 100)}% margen
+                    </span>
+                  )}
+                </div>
+                <Switch
+                  isSelected={p.activo}
+                  onChange={v => setActivo(p.id!, v)}
+                  aria-label={`Activo ${p.nombre}`}
+                />
+                <input
+                  ref={el => {
+                    inputs.current[p.id!] = el
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => leerFoto(e, p.id!)}
+                />
               </div>
-              <NumberField
-                className="w-28"
-                value={p.precioCosto ?? 0}
-                onChange={v => setCosto(p.id!, v ?? 0)}
-                minValue={0}
-                step={50}
-                formatOptions={EUROS}
-              >
-                <Label>Costo</Label>
-                <NumberField.Group>
-                  <NumberField.Input />
-                </NumberField.Group>
-              </NumberField>
-              <NumberField
-                className="w-28"
-                value={p.precio}
-                onChange={v => setPrecio(p.id!, v ?? 0)}
-                minValue={0}
-                step={50}
-                formatOptions={EUROS}
-              >
-                <Label>Venta</Label>
-                <NumberField.Group>
-                  <NumberField.Input />
-                </NumberField.Group>
-              </NumberField>
-              <input
-                ref={el => {
-                  inputs.current[p.id!] = el
-                }}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => leerFoto(e, p.id!)}
-              />
-              <Button
-                size="sm"
-                variant="tertiary"
-                aria-label={`Foto de ${p.nombre}`}
-                onPress={() => inputs.current[p.id!]?.click()}
-              >
-                Foto
-              </Button>
-              <Switch
-                isSelected={p.activo}
-                onChange={v => setActivo(p.id!, v)}
-                aria-label={`Activo ${p.nombre}`}
-              />
+              {/* fila 2: costo + venta lado a lado */}
+              <div className="flex gap-3">
+                <NumberField
+                  className="flex-1"
+                  value={p.precioCosto ?? 0}
+                  onChange={v => setCosto(p.id!, v ?? 0)}
+                  minValue={0}
+                  step={50}
+                  formatOptions={EUROS}
+                >
+                  <Label>Costo</Label>
+                  <NumberField.Group>
+                    <NumberField.Input />
+                  </NumberField.Group>
+                </NumberField>
+                <NumberField
+                  className="flex-1"
+                  value={p.precio}
+                  onChange={v => setPrecio(p.id!, v ?? 0)}
+                  minValue={0}
+                  step={50}
+                  formatOptions={EUROS}
+                >
+                  <Label>Venta</Label>
+                  <NumberField.Group>
+                    <NumberField.Input />
+                  </NumberField.Group>
+                </NumberField>
+              </div>
             </Card.Content>
           </Card>
         ))}
