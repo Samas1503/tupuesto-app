@@ -15,7 +15,7 @@ function chipEstado(j: Jornada) {
 }
 
 export default function Despacho() {
-  const { productos, puestos, vendedores , usuarios} = useDatos()
+  const { productos, puestos, vendedores , usuarios, scope } = useDatos()
   const [fecha, setFecha] = useState(hoyISO())
   const [mesVis, setMesVis] = useState(() => hoyISO().slice(0, 7)) // YYYY-MM
   const [calAbierto, setCalAbierto] = useState(false)
@@ -62,7 +62,7 @@ export default function Despacho() {
     const despacho = lineasDespacho()
     if (despacho.length === 0) return
     const jid = await db.jornadas.add({
-        duenioId: scope,
+        duenioId: scope ?? undefined,
       puestoId: puestoSel.id!,
       fecha,
       despacho,

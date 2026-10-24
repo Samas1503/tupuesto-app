@@ -59,7 +59,7 @@ function VentasDelTurno({ ventas, productos }: { ventas: Venta[]; productos: Pro
 }
 
 export default function Hoy() {
-  const { productos, puestos, vendedores , usuarios} = useDatos()
+  const { productos, puestos, vendedores , usuarios, scope } = useDatos()
   const hoy = hoyISO()
   const jornadas = useJornadasDe(hoy, usuarios)
   const ayer = isoMenosDias(1)
@@ -112,7 +112,7 @@ export default function Hoy() {
     const p = puestos.find(x => x.id === puestoDesp)
     if (!p || lineasDesp.length === 0) return
     const jid = await db.jornadas.add({
-        duenioId: scope,
+        duenioId: scope ?? undefined,
       puestoId: p.id!,
       fecha: hoy,
       despacho: lineasDesp,
@@ -128,7 +128,7 @@ export default function Hoy() {
     const v = vendedores.find(x => x.id === vendTurno)
     if (!p || !v || fondoTurno <= 0 || lineasDesp.length === 0) return
     const jid = await db.jornadas.add({
-        duenioId: scope,
+        duenioId: scope ?? undefined,
       puestoId: p.id!,
       vendedorId: v.id!,
       fondoCaja: fondoTurno,

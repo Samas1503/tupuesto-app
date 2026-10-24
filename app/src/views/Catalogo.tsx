@@ -9,7 +9,7 @@ import { pushRow } from '../lib/snake'
 const EUROS = { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 } as const
 
 export default function Catalogo() {
-  const { productos } = useDatos()
+  const { productos , scope } = useDatos()
   const [nombre, setNombre] = useState('')
   const [nuevoCosto, setNuevoCosto] = useState(0)
   const [nuevoPrecio, setNuevoPrecio] = useState(0)
@@ -52,7 +52,7 @@ export default function Catalogo() {
     if (!n || nuevoPrecio <= 0) return
     const orden = Math.max(0, ...productos.map(p => p.orden)) + 1
     const id = await db.productos.add({
-        duenioId: scope,
+        duenioId: scope ?? undefined,
       nombre: n,
       precio: nuevoPrecio,
       precioCosto: nuevoCosto || undefined,
