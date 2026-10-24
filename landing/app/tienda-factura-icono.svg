@@ -1,0 +1,90 @@
+<?xml version="1.0" standalone="no"?>
+<svg id="masterSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="220" height="220" class="drop-shadow-sm select-none" fill="none">
+              <!-- Definitions / Clips / Gradients if needed -->
+              <defs>
+                <clipPath id="awningClip">
+                  <path d="M 125,145 L 387,145 L 382,90 Q 256,76 130,90 Z"/>
+                </clipPath>
+              </defs>
+
+              <!-- SHOP ROOF / AWNING BASE & STRIPES -->
+              <!-- Outer awning path -->
+              <path d="M 124,148 L 388,148 L 383,88 Q 256,74 129,88 Z" fill="#62C738"/>
+
+              <!-- Stripes inside Awning (White/Light & Green) -->
+              <g clip-path="url(#awningClip)">
+                <!-- Stripe 1 (Green) L:125-162 -->
+                <polygon points="120,70 162,70 162,150 120,150" fill="#62C738"/>
+                <!-- Stripe 2 (White) L:162-200 -->
+                <polygon points="162,70 200,70 200,150 162,150" fill="#EDF1F4"/>
+                <!-- Stripe 3 (Green) L:200-237 -->
+                <polygon points="200,70 237,70 237,150 200,150" fill="#62C738"/>
+                <!-- Stripe 4 (White) L:237-275 -->
+                <polygon points="237,70 275,70 275,150 237,150" fill="#EDF1F4"/>
+                <!-- Stripe 5 (Green) L:275-312 -->
+                <polygon points="275,70 312,70 312,150 275,150" fill="#62C738"/>
+                <!-- Stripe 6 (White) L:312-350 -->
+                <polygon points="312,70 350,70 350,150 312,150" fill="#EDF1F4"/>
+                <!-- Stripe 7 (Green) L:350-392 -->
+                <polygon points="350,70 392,70 392,150 350,150" fill="#62C738"/>
+              </g>
+
+              <!-- AWNING SCALLOPS / WAVY VALANCE -->
+              <!-- Dark outline scalloped lower border -->
+              <path d="&#xA;                M 122,142 &#xA;                C 122,142 120,172 138,172 &#xA;                C 156,172 156,145 174,145 &#xA;                C 192,145 192,172 210,172 &#xA;                C 228,172 228,145 246,145 &#xA;                C 264,145 264,172 282,172 &#xA;                C 300,172 300,145 318,145 &#xA;                C 336,145 336,172 354,172 &#xA;                C 372,172 372,145 390,145&#xA;                L 390,138 &#xA;                L 122,138 Z" fill="#2A323D"/>
+
+              <!-- Scallop green & light fillings with outline stroke -->
+              <path d="M 125,138 C 125,138 123,166 138,166 C 153,166 153,138 153,138 Z" fill="#62C738" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M 153,138 C 153,138 153,166 174,166 C 195,166 195,138 195,138 Z" fill="#EDF1F4" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M 195,138 C 195,138 195,166 216,166 C 237,166 237,138 237,138 Z" fill="#62C738" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M 237,138 C 237,138 237,166 258,166 C 279,166 279,138 279,138 Z" fill="#EDF1F4" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M 279,138 C 279,138 279,166 300,166 C 321,166 321,138 321,138 Z" fill="#62C738" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M 321,138 C 321,138 321,166 342,166 C 363,166 363,138 363,138 Z" fill="#EDF1F4" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M 363,138 C 363,138 363,166 381,166 C 396,166 388,138 388,138 Z" fill="#62C738" stroke="#2A323D" stroke-width="7" stroke-linejoin="round"/>
+
+              <!-- Awning Top Outline Border -->
+              <path d="M 125,142 L 129,88 Q 256,74 383,88 L 387,142" fill="none" stroke="#2A323D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+              <!-- SUPPORT PILLARS / POLES -->
+              <!-- Left pillar -->
+              <line x1="172" y1="166" x2="172" y2="280" stroke="#2A323D" stroke-width="9" stroke-linecap="round"/>
+              <!-- Right pillar -->
+              <line x1="346" y1="166" x2="346" y2="340" stroke="#2A323D" stroke-width="9" stroke-linecap="round"/>
+
+              <!-- RIGHT PILLAR FOOT / BASE -->
+              <path d="M 346,330 L 346,355 L 386,355" fill="none" stroke="#2A323D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+              <!-- SHOP COUNTER / DESK -->
+              <!-- Top Register / Small block on counter -->
+              <rect x="272" y="222" width="50" height="24" rx="7" fill="#62C738" stroke="#2A323D" stroke-width="8" stroke-linejoin="round"/>
+              <!-- Main Counter Body -->
+              <rect x="230" y="246" width="130" height="66" rx="10" fill="#71D641" stroke="#2A323D" stroke-width="9" stroke-linejoin="round"/>
+              <!-- Bottom shadow line on counter -->
+              <path d="M 230,302 L 350,302" stroke="#5AB830" stroke-width="8" stroke-linecap="round"/>
+
+              <!-- GROUND DETAIL LINES -->
+              <line x1="258" y1="355" x2="318" y2="355" stroke="#2A323D" stroke-width="9" stroke-linecap="round"/>
+
+              <!-- INVOICE / RECEIPT BILL CARD (Foreground Left) -->
+              <!-- White card body with dark thick border -->
+              <!-- Top cutout notch effect as present in original icon -->
+              <g id="receiptCard">
+                <path d="&#xA;                  M 148,242 &#xA;                  L 204,242 &#xA;                  C 204,242 208,252 216,252 &#xA;                  C 224,252 227,242 236,242 &#xA;                  L 236,400 &#xA;                  C 236,406 231,411 225,411 &#xA;                  L 148,411 &#xA;                  C 142,411 137,406 137,400 &#xA;                  L 137,253 &#xA;                  C 137,247 142,242 148,242 Z" fill="#FFFFFF" stroke="#2A323D" stroke-width="9" stroke-linejoin="round"/>
+
+                <!-- Receipt Notch Accent line top -->
+                <path d="M 221,242 L 235,242" stroke="#2A323D" stroke-width="9" stroke-linecap="round"/>
+
+                <!-- Receipt item text line (Top) -->
+                <line x1="162" y1="282" x2="210" y2="282" stroke="#2A323D" stroke-width="8" stroke-linecap="round"/>
+
+                <!-- GREEN CHECKMARK (Verified / Visto Bueno) -->
+                <path d="M 164,324 L 180,342 L 210,310" fill="none" stroke="#42A925" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- Receipt Bottom details (Two dash lines) -->
+                <line x1="162" y1="368" x2="175" y2="368" stroke="#2A323D" stroke-width="8" stroke-linecap="round"/>
+                <line x1="189" y1="368" x2="211" y2="368" stroke="#2A323D" stroke-width="8" stroke-linecap="round"/>
+                
+                <line x1="162" y1="384" x2="175" y2="384" stroke="#2A323D" stroke-width="8" stroke-linecap="round"/>
+                <line x1="189" y1="384" x2="204" y2="384" stroke="#2A323D" stroke-width="8" stroke-linecap="round"/>
+              </g>
+            </svg>
