@@ -6,6 +6,7 @@ import { useDatos, useJornadaVendedor, useJornadasLibres, useVentasDe } from '..
 import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
 import { pushRow } from '../lib/snake'
+import ProdIcon from '../components/ProdIcon'
 import type { Cierre, Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 
@@ -595,8 +596,8 @@ function ProductoVenta({
         {p.imagen ? (
           <img src={p.imagen} alt="" className="w-full h-16 rounded-lg object-cover mb-1.5" />
         ) : (
-          <div className="w-full h-16 rounded-lg bg-accent/15 flex items-center justify-center text-2xl font-extrabold text-accent mb-1.5">
-            {p.nombre.charAt(0)}
+          <div className="w-full h-16 rounded-lg bg-accent/15 flex items-center justify-center mb-1.5">
+            <ProdIcon nombre={p.nombre} />
           </div>
         )}
         <p className="text-sm font-bold leading-tight truncate">{p.nombre}</p>
