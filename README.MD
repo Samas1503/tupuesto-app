@@ -34,10 +34,10 @@ python3 -m http.server 8765 --directory landing
 
 | Dónde | Qué |
 |---|---|
-| `app/` | La app — PWA, IndexedDB local (demo) → backend tiempo real próximo |
-| `api/` | Serverless Vercel: `mp-preference`, `mp-webhook`, `send-pin` (Resend) |
+| `app/` | La app — PWA, Dexie (cache) ↔ Neon Postgres tiempo real |
+| `api/` | Serverless Vercel: `sync` (pull/push), `request-reset`/`verify-reset` (código por email), `send-pin`, `mp-preference`, `mp-webhook` |
 | `docs/` | Documentación técnica dividida por tema |
-| `landing/` | Landing de preventa estática (estilo Stripe) |
+| `landing/` | Landing de preventa estática |
 | `preventa/` | Guion de contacto + criterios del Gate 0 |
 | `decisions.md` | ADR-001 — decisión de negocio lockeada |
 
@@ -45,7 +45,7 @@ python3 -m http.server 8765 --directory landing
 
 - **RULES.MD** → lo que no se negocia. Leer antes de proponer nada.
 - **GLOSARY.MD** → el vocabulario del dominio (arqueo, despacho, merma, faltante).
-- **docs/** → arquitectura, modelo de datos, arqueo, vistas, desarrollo (`docs/README.md`).
+- **docs/** → arquitectura, modelo de datos, arqueo, vistas, desarrollo, usuarios (roles/temas), backend Neon, admin (`docs/README.md`).
 - **AGENTS.MD** → instrucciones para agentes que trabajen acá.
 - `docs/integracion-mercado-pago.md` → roadmap D post-piloto (QR verificado).
 - `preventa/mercado-pago.md` → cobro de señas con MP (link + API).
@@ -54,12 +54,20 @@ python3 -m http.server 8765 --directory landing
 
 Demo en vivo: **landing** [tupuesto.vercel.app](https://tupuesto.vercel.app) →
 botón "▶ Demo" → **app** [tupuesto-demo.vercel.app](https://tupuesto-demo.vercel.app)
-(IndexedDB hidratada desde `tupuesto.sqlite` — sin backend).
+(Dexie ↔ Neon Postgres — sync tiempo real cada 30s + push en cada write).
+
+**Login unificado** (un solo form detecta el rol por email):
+
+| Rol | Credencial |
+|---|---|
+| Dueño | `duenio@demo.tupuesto` / `0000` |
+| Vendedor | `marcos@demo.tupuesto` / `1234`, `alejandra@demo.tupuesto` / `2345`, `diego@demo.tupuesto` / `3456` |
+| Admin | `admin@demo.tupuesto` / `0000` |
 
 El seed trae el negocio de la landing: tres puestos — Marcos en Feria Central
 (cerrado OK), Alejandra en Plaza Italia (faltante $16.400 + merma), Diego en
-Costanera (abierto con reposición y ventas). Vendedor entra con email + PIN
-(`marcos@demo.tupuesto` / `1234`); el toggle Dueño/Vendedor recorre ambos flujos.
+Costanera (abierto con reposición y ventas). El dueño tiene categoría `comida`
+(tema naranja); los vendedores acceden a su turno desde el mismo login.
 
 <div align="center">
 <sub>TuPuesto · pre-MVP · validado por gates, no por entusiasmo</sub>
