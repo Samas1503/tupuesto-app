@@ -117,3 +117,30 @@ main [style*="width"] { transform-origin: left; }
   }
   main .flex.flex-col > *:hover { transform: none; }
 }
+
+/* ── Nav inferior flotante — animaciones ────────────────── */
+nav [data-selected] svg,
+nav [data-selected] .text-xl {
+  animation: iconPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+nav [role="tab"] {
+  transition: color 0.22s ease, transform 0.12s ease;
+}
+nav [role="tab"]:active {
+  transform: scale(0.92);
+}
+nav [role="tab"]:hover:not([data-selected]) {
+  color: var(--navy);
+}
+
+@keyframes iconPop {
+  0%   { transform: scale(0.6); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  nav [data-selected] svg { animation: none; }
+  nav [role="tab"] { transition: none; }
+  nav [role="tab"]:active { transform: none; }
+}

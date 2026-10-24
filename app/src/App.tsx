@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Tabs, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 import { Icon } from '@iconify/react'
 import type { Rol } from './types'
@@ -25,6 +25,25 @@ const NAV_DUENIO: { id: Vista; label: string; icon: string }[] = [
 export default function App() {
   const [rol, setRol] = useState<Rol>(() => (localStorage.getItem('tp-rol') as Rol) ?? 'duenio')
   const [vista, setVista] = useState<Vista>('hoy')
+  const navRef = useRef<HTMLDivElement>(null)
+  const [pill, setPill] = useState({ left: 0, width: 0 })
+
+  // la pill accent se desplaza midiendo el tab seleccionado — robusto a
+  // scroll interno y cambios de tamaño del contenedor (pantallas angostas)
+  useEffect(() => {
+    const medir = () => {
+      const idx = NAV_DUENIO.findIndex(x => x.id === vista)
+      const el = navRef.current?.querySelectorAll('[role="tab"]')[idx] as HTMLElement | undefined
+      // offsetLeft/Width no se ven afectados por el :active scale → medición exacta
+      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
+    }
+    medir()
+    const t1 = requestAnimationFrame(medir)
+    const t2 = setTimeout(medir, 150) // tras fuentes/transición de entrada
+    const ro = new ResizeObserver(medir)
+    if (navRef.current) ro.observe(navRef.current)
+    return () => { cancelAnimationFrame(t1); clearTimeout(t2); ro.disconnect() }
+  }, [vista, rol])
 
   function cambiarRol(keys: Set<string>) {
     const r = [...keys][0] as Rol | undefined
@@ -36,7 +55,7 @@ export default function App() {
   return (
     <div className="min-h-dvh bg-paper text-navy flex flex-col">
       {/* banda de marca */}
-      <header className="relative bg-navy text-white sticky top-0 z-40 overflow-hidden">
+      <header className="relative bg-navy text-white sticky top-0 z-40 overflow-hidden rounded-b-[28px] shadow-lg shadow-navy/20">
         {/* glows de marca */}
         <div className="absolute -top-24 -left-12 w-72 h-72 rounded-full bg-blurple/30 blur-3xl pointer-events-none" />
         <div className="absolute -top-28 -right-16 w-64 h-64 rounded-full bg-[#00d4ff]/15 blur-3xl pointer-events-none" />
@@ -100,30 +119,42 @@ export default function App() {
         )}
       </main>
 
-      {/* navegación inferior — solo dueño */}
+      {/* navegación inferior flotante — píldora elevada, solo dueño */}
       {rol === 'duenio' && (
-        <nav className="fixed bottom-0 inset-x-0 z-50 bg-surface/95 backdrop-blur border-t border-border">
-          <Tabs
-            selectedKey={vista}
-            onSelectionChange={k => setVista(k as Vista)}
-            className="max-w-3xl mx-auto"
-          >
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Secciones" className="w-full !bg-transparent !shadow-none !p-0 !rounded-none">
-                {NAV_DUENIO.map(item => (
-                  <Tabs.Tab
-                    key={item.id}
-                    id={item.id}
-                    className="flex-1 flex-col gap-0.5 !h-auto py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-[0.68rem] font-semibold"
-                  >
-                    <Icon icon={item.icon} className="text-xl leading-none" />
-                    {item.label}
-                    <Tabs.Indicator className="!rounded-none !h-0.5 !bottom-0 !top-auto" />
-                  </Tabs.Tab>
-                ))}
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
+        <nav className="fixed bottom-3 inset-x-3 z-50">
+          <div ref={navRef} className="relative max-w-2xl mx-auto bg-surface/90 backdrop-blur-md border border-border/60 rounded-full shadow-xl shadow-navy/10 px-1.5">
+            {/* pill deslizante — se mueve al tab activo */}
+            <div
+              className="absolute top-1 bottom-1 w-16 rounded-full bg-accent pointer-events-none z-0"
+              style={{
+                transform: `translateX(${pill.left}px) scaleX(${pill.width / 64})`,
+                transformOrigin: 'left center',
+                opacity: pill.width ? 1 : 0,
+                willChange: 'transform',
+                transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+              }}
+            />
+            <Tabs
+              selectedKey={vista}
+              onSelectionChange={k => setVista(k as Vista)}
+            >
+              <Tabs.ListContainer className="!bg-transparent relative">
+                <Tabs.List aria-label="Secciones" className="w-full !bg-transparent !shadow-none !p-0 !rounded-full !overflow-visible">
+                  {NAV_DUENIO.map(item => (
+                    <Tabs.Tab
+                      key={item.id}
+                      id={item.id}
+                      className="relative z-10 flex-1 basis-0 !min-w-0 flex-col gap-0.5 !h-auto !py-2 !my-1 !rounded-full !bg-transparent text-[0.6rem] font-bold text-muted overflow-hidden whitespace-nowrap data-[selected]:!text-white"
+                    >
+                      <Icon icon={item.icon} className="text-xl leading-none" />
+                      {item.label}
+                      <Tabs.Indicator className="!hidden" />
+                    </Tabs.Tab>
+                  ))}
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </Tabs>
+          </div>
         </nav>
       )}
     </div>

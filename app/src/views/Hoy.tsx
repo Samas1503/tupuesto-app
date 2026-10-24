@@ -451,7 +451,7 @@ export default function Hoy() {
       <AlertDialog>
         <Button
           aria-label="Nuevo turno"
-          className="!fixed right-4 !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !z-40
+          className="!fixed right-4 !bottom-[calc(5.5rem+env(safe-area-inset-bottom))] !z-40
             !h-14 !w-14 !min-w-0 !rounded-full !p-0 !bg-accent !text-accent-foreground
             !shadow-xl !shadow-accent/30 !text-3xl !font-light !leading-none
             hover:!scale-105 active:!scale-95"
@@ -626,7 +626,7 @@ export default function Hoy() {
         <AlertDialog>
           <Button
             aria-label="Agregar productos al día"
-            className="!fixed right-4 !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !z-40
+            className="!fixed right-4 !bottom-[calc(5.5rem+env(safe-area-inset-bottom))] !z-40
               !h-14 !w-14 !min-w-0 !rounded-full !p-0 !bg-accent !text-accent-foreground
               !shadow-xl !shadow-accent/30 !text-3xl !font-light !leading-none
               hover:!scale-105 active:!scale-95"

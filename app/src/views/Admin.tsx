@@ -92,7 +92,7 @@ export default function Admin() {
 
       {/* FAB alta dueño */}
       <AlertDialog>
-        <Button aria-label="Nuevo dueño" className="!fixed right-4 !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !z-40 !h-14 !w-14 !min-w-0 !rounded-full !p-0 !bg-accent !text-accent-foreground !shadow-xl !shadow-accent/30 !text-3xl !font-light !leading-none hover:!scale-105 active:!scale-95">+</Button>
+        <Button aria-label="Nuevo dueño" className="!fixed right-4 !bottom-[calc(5.5rem+env(safe-area-inset-bottom))] !z-40 !h-14 !w-14 !min-w-0 !rounded-full !p-0 !bg-accent !text-accent-foreground !shadow-xl !shadow-accent/30 !text-3xl !font-light !leading-none hover:!scale-105 active:!scale-95">+</Button>
         <AlertDialog.Backdrop>
           <AlertDialog.Container>
             <AlertDialog.Dialog className="sm:max-w-[400px]">
