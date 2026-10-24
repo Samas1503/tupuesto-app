@@ -334,7 +334,7 @@
 
     /* ── Franja de pantallas de la app (multi-screen) ─────── */
     .screens {
-      display: grid; grid-auto-flow: column; gap: 18px; overflow-x: auto;
+      display: flex; gap: 26px; overflow-x: auto;
       padding: 10px 24px 26px; scrollbar-width: none; margin: 40px -24px 0;
       scroll-snap-type: x mandatory;
     }
@@ -359,7 +359,7 @@
     .mphone .top { font-size: 0.82rem; }
     .mphone .row { font-size: 0.76rem; }
     .scrlabel { text-align: center; font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-top: 10px; }
-    .scr-wrap { display: flex; flex-direction: column; }
+    .scr-wrap { display: flex; flex-direction: column; flex-shrink: 0; }
     /* mini nav pill dentro del mockup */
     .mininav {
       display: flex; justify-content: space-around; align-items: center;
