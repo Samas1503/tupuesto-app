@@ -17,11 +17,12 @@ function chipMetodo(m: MetodoPago) {
 }
 
 export default function MiDia() {
-  const { productos, puestos, vendedores } = useDatos()
-  const [vendedorId, setVendedorId] = useState<number | null>(() => {
-    const v = localStorage.getItem('tp-vendedor')
+  const { productos, puestos } = useDatos()
+  // sesión unificada — el login de App ya dejó el id en 'tp-user-id'; MiDia solo lo lee
+  const vendedorId = (() => {
+    const v = localStorage.getItem('tp-user-id')
     return v ? Number(v) : null
-  })
+  })()
   const hoy = hoyISO()
   const jornada = useJornadaVendedor(vendedorId, hoy)
   const ventas = useVentasDe(jornada?.id)
@@ -29,11 +30,6 @@ export default function MiDia() {
 
   // estado del formulario de cierre
   const [nota, setNota] = useState('')
-  const [emailLogin, setEmailLogin] = useState('')
-  const [pin, setPin] = useState('')
-  const [pinError, setPinError] = useState(false)
-  const [debeElegirPin, setDebeElegirPin] = useState<number | null>(null)
-  const [pinNuevo, setPinNuevo] = useState('')
   const [fondoTurno, setFondoTurno] = useState(0)
   const [solCierre, setSolCierre] = useState(false)
   const [motivoCierre, setMotivoCierre] = useState('')
@@ -67,14 +63,6 @@ export default function MiDia() {
     setListo(false)
   }, [jornada?.id])
 
-  function entrar() {
-    const v = vendedores.find(x => x.activo && x.email?.toLowerCase() === emailLogin.trim().toLowerCase())
-    if (!v || (v.pin && v.pin !== pin.trim())) { setPinError(true); return }
-    if (v.debeCambiarPin) { setDebeElegirPin(v.id!); return }
-    setVendedorId(v.id!)
-    localStorage.setItem('tp-vendedor', String(v.id))
-  }
-
   // ventana de cierre normal: [horaFin − 5 min, en adelante] o si el dueño aprobó uno anticipado
   const puedeCerrar = (() => {
     if (!jornada?.horaFin || jornada.cierreAnticipadoOk) return true
@@ -104,24 +92,6 @@ export default function MiDia() {
     await db.jornadas.update(jornadaId, { vendedorId: vendedorId ?? undefined, fondoCaja: fondoTurno })
     void pushRow('jornadas', jornadaId)
     setFondoTurno(0)
-  }
-
-
-
-  async function elegirPin() {
-    const p = pinNuevo.trim()
-    if (debeElegirPin == null || p.length < 4) return
-    await db.vendedores.update(debeElegirPin, { pin: p, debeCambiarPin: false })
-    void pushRow('vendedores', debeElegirPin)
-    setDebeElegirPin(null)
-    setVendedorId(debeElegirPin)
-    localStorage.setItem('tp-vendedor', String(debeElegirPin))
-  }
-
-  function salir() {
-    setVendedorId(null)
-    setPin(''); setEmailLogin(''); setPinError(false)
-    localStorage.removeItem('tp-vendedor')
   }
 
   // anota una venta de UN producto (desde el modal) — el cierre sigue siendo por conteo
@@ -191,63 +161,15 @@ export default function MiDia() {
         <p className="text-sm text-muted capitalize">{fmtFecha(hoy)}</p>
       </div>
 
-      {debeElegirPin != null && (
-        <Card>
-          <Card.Header className="px-4 pt-4 pb-0">
-            <Card.Title className="text-base">Elegí tu PIN</Card.Title>
-            <Card.Description>Es tu primer ingreso — creá un PIN que solo vos sepas.</Card.Description>
-          </Card.Header>
-          <Card.Content className="px-4 py-3 flex flex-col gap-3">
-            <TextField value={pinNuevo} onChange={v => setPinNuevo(v.replace(/\D/g, '').slice(0, 4))}>
-              <Label>PIN nuevo (4 dígitos)</Label>
-              <Input type="password" inputMode="numeric" placeholder="••••" />
-            </TextField>
-            <Button variant="primary" onPress={elegirPin} isDisabled={pinNuevo.trim().length < 4}>
-              Guardar y entrar
-            </Button>
-          </Card.Content>
-        </Card>
-      )}
-
-      {vendedorId == null && debeElegirPin == null ? (
-        <Card>
-          <Card.Header className="px-4 pt-4 pb-0">
-            <Card.Title className="text-base">¿Quién sos?</Card.Title>
-            <Card.Description>Entrá con tu email y el PIN que te mandamos.</Card.Description>
-          </Card.Header>
-          <Card.Content className="px-4 py-3 flex flex-col gap-3">
-            <TextField value={emailLogin} onChange={v => { setEmailLogin(v); setPinError(false) }}>
-              <Label>Email</Label>
-              <Input type="email" placeholder="tu@correo.com" autoComplete="email" />
-            </TextField>
-            <TextField value={pin} onChange={v => { setPin(v); setPinError(false) }}>
-              <Label>PIN</Label>
-              <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" />
-            </TextField>
-            {pinError && <p className="text-xs text-danger font-semibold">Email o PIN incorrecto.</p>}
-            <Button variant="primary" onPress={entrar} isDisabled={emailLogin.trim() === '' || pin.trim() === ''}>
-              Entrar
-            </Button>
-          </Card.Content>
-        </Card>
-      ) : (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted">Vendés como <b className="text-foreground">{vendedores.find(v => v.id === vendedorId)?.nombre}</b></span>
-          <Button size="sm" variant="tertiary" onPress={salir}>Salir</Button>
-        </div>
-      )}
-
-      {vendedorId == null && debeElegirPin == null && (
-        <Card>
-          <Card.Content className="px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">Credenciales de la demo</p>
-            <ul className="flex flex-col gap-1.5 text-xs num">
-              <li className="flex justify-between"><span className="text-muted">Marcos — cerró OK</span><b>marcos@demo.tupuesto · 1234</b></li>
-              <li className="flex justify-between"><span className="text-muted">Alejandra — faltante</span><b>alejandra@demo.tupuesto · 2345</b></li>
-              <li className="flex justify-between"><span className="text-muted">Diego — turno abierto</span><b>diego@demo.tupuesto · 3456</b></li>
-            </ul>
-          </Card.Content>
-        </Card>
+      {/* fallback — App ya autenticó antes de montar MiDia; esto solo se ve si falta la sesión */}
+      {vendedorId == null && (
+        <Alert>
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Sin sesión</Alert.Title>
+            <Alert.Description>Iniciá sesión desde el menú principal.</Alert.Description>
+          </Alert.Content>
+        </Alert>
       )}
 
       {vendedorId != null && (!jornada || jornada.estado === 'confirmada') && (
@@ -298,19 +220,6 @@ export default function MiDia() {
             </Alert.Content>
           </Alert>
         )
-      )}
-
-      {vendedorId == null && debeElegirPin == null && (
-        <Card>
-          <Card.Content className="px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">Credenciales de la demo</p>
-            <ul className="flex flex-col gap-1.5 text-xs num">
-              <li className="flex justify-between"><span className="text-muted">Marcos — cerró OK</span><b>marcos@demo.tupuesto · 1234</b></li>
-              <li className="flex justify-between"><span className="text-muted">Alejandra — faltante</span><b>alejandra@demo.tupuesto · 2345</b></li>
-              <li className="flex justify-between"><span className="text-muted">Diego — turno abierto</span><b>diego@demo.tupuesto · 3456</b></li>
-            </ul>
-          </Card.Content>
-        </Card>
       )}
 
       {vendedorId != null && (!jornada || jornada.estado === 'confirmada') && (
@@ -462,9 +371,6 @@ export default function MiDia() {
               </Alert.Content>
             </Alert>
           )}
-
-
-
 
         </>
       )}

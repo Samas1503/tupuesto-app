@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Tabs, ToggleButton, ToggleButtonGroup } from '@heroui/react'
+import { Button, Tabs } from '@heroui/react'
 import { Icon } from '@iconify/react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import type { Rol } from './types'
+import { db } from './db'
+import Login from './components/Login'
 import Hoy from './views/Hoy'
 import Despacho from './views/Despacho'
 import Catalogo from './views/Catalogo'
@@ -22,11 +25,74 @@ const NAV_DUENIO: { id: Vista; label: string; icon: string }[] = [
   { id: 'historial', label: 'Stats', icon: 'tabler:chart-bar' },
 ]
 
+type Sesion = { rol: Rol; id: number }
+
+// sesión unificada: tp-rol + tp-user-id. Migración de keys viejas:
+// 'tp-duenio-id' → rol duenio con ese id; 'tp-vendedor' → rol vendedor
+function leerSesionLS(): Sesion | null {
+  const rol = localStorage.getItem('tp-rol')
+  const id = localStorage.getItem('tp-user-id')
+  if ((rol === 'duenio' || rol === 'vendedor' || rol === 'admin') && id != null && id !== '') {
+    return { rol, id: Number(id) }
+  }
+  const duenioId = localStorage.getItem('tp-duenio-id')
+  if (duenioId) return { rol: 'duenio', id: Number(duenioId) }
+  const vendedorId = localStorage.getItem('tp-vendedor')
+  if (vendedorId) return { rol: 'vendedor', id: Number(vendedorId) }
+  return null
+}
+
+function limpiarSesionLS() {
+  localStorage.removeItem('tp-rol')
+  localStorage.removeItem('tp-user-id')
+  // keys viejas — por si quedaron de la sesión anterior
+  localStorage.removeItem('tp-duenio-id')
+  localStorage.removeItem('tp-vendedor')
+  localStorage.removeItem('tp-vendedor-id')
+}
+
 export default function App() {
-  const [rol, setRol] = useState<Rol>(() => (localStorage.getItem('tp-rol') as Rol) ?? 'duenio')
+  const [sesion, setSesion] = useState<Sesion | null>(leerSesionLS)
   const [vista, setVista] = useState<Vista>('hoy')
   const navRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState({ left: 0, width: 0 })
+
+  const duenios = useLiveQuery(() => db.duenios.toArray(), [])
+  const vendedores = useLiveQuery(() => db.vendedores.toArray(), [])
+
+  // persiste la sesión (también materializa la migración de keys viejas)
+  useEffect(() => {
+    if (sesion) {
+      localStorage.setItem('tp-rol', sesion.rol)
+      localStorage.setItem('tp-user-id', String(sesion.id))
+    }
+  }, [sesion])
+
+  // validación contra la tabla del rol: el usuario debe seguir activo && !eliminado.
+  // Admin (id 0) no tiene tabla — siempre válido. Mientras Dexie carga se confía
+  // en lo persistido; si el usuario fue desactivado se limpia la sesión abajo.
+  const tablaCargada =
+    sesion?.rol === 'duenio' ? duenios !== undefined
+    : sesion?.rol === 'vendedor' ? vendedores !== undefined
+    : true
+
+  const usuario =
+    sesion?.rol === 'duenio' ? duenios?.find(d => d.id === sesion.id)
+    : sesion?.rol === 'vendedor' ? vendedores?.find(v => v.id === sesion.id)
+    : undefined
+
+  const sesionValida =
+    sesion == null ? false
+    : sesion.rol === 'admin' ? true
+    : !tablaCargada ? true
+    : !!usuario && usuario.activo && !usuario.eliminado
+
+  useEffect(() => {
+    if (sesion && tablaCargada && !sesionValida) {
+      limpiarSesionLS()
+      setSesion(null)
+    }
+  }, [sesion, tablaCargada, sesionValida])
 
   // la pill accent se desplaza midiendo el tab seleccionado — robusto a
   // scroll interno y cambios de tamaño del contenedor (pantallas angostas)
@@ -47,14 +113,27 @@ export default function App() {
     const ro = new ResizeObserver(medir)
     if (navRef.current) ro.observe(navRef.current)
     return () => { cancelAnimationFrame(t1); clearTimeout(t2); ro.disconnect() }
-  }, [vista, rol])
+  }, [vista, sesion?.rol])
 
-  function cambiarRol(keys: Set<string>) {
-    const r = [...keys][0] as Rol | undefined
-    if (!r) return
-    setRol(r)
-    localStorage.setItem('tp-rol', r)
+  function entrar(rol: Rol, id: number) {
+    limpiarSesionLS() // descarta keys viejas antes de escribir las nuevas
+    localStorage.setItem('tp-rol', rol)
+    localStorage.setItem('tp-user-id', String(id))
+    setSesion({ rol, id })
+    setVista('hoy')
   }
+
+  // limpia la sesión y vuelve al Login
+  function salir() {
+    limpiarSesionLS()
+    setSesion(null)
+    setVista('hoy')
+  }
+
+  // gate unificado — toda la app detrás del login (sin navbar ni vistas)
+  if (!sesionValida) return <Login onLogin={entrar} />
+
+  const nombreSesion = sesion!.rol === 'admin' ? 'Admin' : usuario?.nombre
 
   return (
     <div className="min-h-dvh bg-paper text-navy flex flex-col">
@@ -75,25 +154,9 @@ export default function App() {
             </span>
           </div>
 
-          <div className="rounded-full bg-muted/10 p-1 border border-border/60">
-            <ToggleButtonGroup
-              selectionMode="single"
-              selectedKeys={new Set([rol])}
-              onSelectionChange={k => cambiarRol(k as Set<string>)}
-              aria-label="Rol"
-              size="sm"
-              className="!gap-0"
-            >
-              <ToggleButton id="duenio" className="!rounded-full data-[selected]:!bg-white data-[selected]:!text-navy data-[selected]:!shadow-md !text-white/70 !bg-transparent !border-0 !shadow-none !px-3.5">
-                Dueño
-              </ToggleButton>
-              <ToggleButton id="vendedor" className="!rounded-full data-[selected]:!bg-white data-[selected]:!text-navy data-[selected]:!shadow-md !text-white/70 !bg-transparent !border-0 !shadow-none !px-3.5">
-                Vendedor
-              </ToggleButton>
-              <ToggleButton id="admin" className="!rounded-full data-[selected]:!bg-white data-[selected]:!text-navy data-[selected]:!shadow-md !text-white/70 !bg-transparent !border-0 !shadow-none !px-3.5">
-                Admin
-              </ToggleButton>
-            </ToggleButtonGroup>
+          <div className="flex items-center gap-2 min-w-0 shrink-0">
+            <span className="text-sm font-semibold truncate max-w-36">{nombreSesion ?? '…'}</span>
+            <Button size="sm" variant="tertiary" onPress={salir}>Salir</Button>
           </div>
         </div>
 
@@ -103,9 +166,11 @@ export default function App() {
 
       {/* contenido */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-5 pb-28">
-        {rol === 'admin' ? (
+        {sesion!.rol === 'admin' ? (
           <Admin />
-        ) : rol === 'duenio' ? (
+        ) : sesion!.rol === 'vendedor' ? (
+          <MiDia />
+        ) : (
           <>
             {vista === 'hoy' && <Hoy />}
             {vista === 'despacho' && <Despacho />}
@@ -114,13 +179,11 @@ export default function App() {
             {vista === 'vendedores' && <Vendedores />}
             {vista === 'historial' && <Historial />}
           </>
-        ) : (
-          <MiDia />
         )}
       </main>
 
       {/* navegación inferior flotante — píldora elevada, solo dueño */}
-      {rol === 'duenio' && (
+      {sesion!.rol === 'duenio' && (
         <nav className="fixed bottom-3 inset-x-3 z-50">
           <div ref={navRef} className="relative max-w-2xl mx-auto bg-surface/90 backdrop-blur-md border border-border/60 rounded-full shadow-xl shadow-navy/10 px-1.5">
             {/* pill deslizante — se mueve al tab activo */}
