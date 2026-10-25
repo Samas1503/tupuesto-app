@@ -28,7 +28,7 @@ export const PROVEEDOR = {
   razonSocial: 'Samuel Paredes',
   cuit: '20-44706400-7',
   domicilio: 'Av. Puerto Argentino Nro. 676, Barrio Malvinas Argentinas, San Salvador de Jujuy, Jujuy, Argentina',
-  email: 'soporte@tupuesto.app',
+  email: 'soporte@samas-server.com',
 }
 
 export const CAMPOS_REQUERIDOS = [
