@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState'
 import { Avatar, Button, Card, Chip, Disclosure, Meter } from '@heroui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -72,6 +73,11 @@ export default function AdminScores() {
         </Card>
       )}
 
+      {grupos.length === 0 && (
+        <Card><Card.Content className="p-2">
+          <EmptyState titulo="Sin puntajes" descripcion="No hay usuarios con jornadas cerradas en el período — el scoring se genera cuando hay turnos confirmados." hint="Los puntajes se calculan solo para el admin"/>
+        </Card.Content></Card>
+      )}
       <div className="flex flex-col gap-5">
         {grupos.map(g => (
           <div key={g.id} className="flex flex-col gap-2.5">

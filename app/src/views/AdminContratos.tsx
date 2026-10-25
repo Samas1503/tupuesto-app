@@ -39,6 +39,9 @@ export default function AdminContratos() {
   const [domicilio, setDomicilio] = useState('')
   const [plan, setPlan] = useState('Fundador — $12.900/mes')
   const [precio, setPrecio] = useState('12900')
+  const [tipoContrato, setTipoContrato] = useState<'prueba15'|'mensual'>('mensual')
+  const [plazoMeses, setPlazoMeses] = useState('')
+  const [esFundador, setEsFundador] = useState(false)
   const [crearDuenio, setCrearDuenio] = useState(false)
   const [duenioId, setDuenioId] = useState<number | null>(null)
   const [creando, setCreando] = useState(false)
@@ -92,6 +95,9 @@ export default function AdminContratos() {
 
   async function crear() {
     const nuevo: NuevoContrato = {
+      tipo: tipoContrato,
+      ...(tipoContrato === 'mensual' && plazoMeses ? { plazoMeses: Number(plazoMeses) } : {}),
+      esFundador,
       razonSocial: razonSocial.trim(),
       cuit: cuit.trim(),
       email: email.trim().toLowerCase(),
@@ -262,6 +268,23 @@ export default function AdminContratos() {
                       </ListBox>
                     </Select.Popover>
                   </Select>
+                  <Select selectedKey={tipoContrato} onSelectionChange={k => setTipoContrato(k as 'prueba15'|'mensual')}>
+                    <Label>Tipo de contrato</Label>
+                    <Select.Trigger><Select.Value /><Select.Indicator /></Select.Trigger>
+                    <Select.Popover><ListBox>
+                      <ListBox.Item id="mensual" textValue="Suscripción mensual">Suscripción mensual<ListBox.ItemIndicator /></ListBox.Item>
+                      <ListBox.Item id="prueba15" textValue="Prueba — 15 días gratis">Prueba — 15 días gratis<ListBox.ItemIndicator /></ListBox.Item>
+                    </ListBox></Select.Popover>
+                  </Select>
+                  {tipoContrato === 'mensual' && (
+                    <TextField value={plazoMeses} onChange={v => setPlazoMeses(v.replace(/\D/g, ''))}>
+                      <Label>Duración (meses)</Label><Input inputMode="numeric" placeholder="12" />
+                    </TextField>
+                  )}
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={esFundador} onChange={e => setEsFundador(e.target.checked)} className="accent-accent h-4 w-4" />
+                    Plan Fundador (precio fundador + participación en features)
+                  </label>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={crearDuenio} onChange={e => setCrearDuenio(e.target.checked)} className="accent-accent h-4 w-4" />
                     Crear cuenta de dueño con este email (accede con PIN por correo)

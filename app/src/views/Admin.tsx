@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState'
 import { useState } from 'react'
 import { AlertDialog, Button, Card, Chip, Input, Label, ListBox, Select, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 import AdminMoney from './AdminMoney'
@@ -184,7 +185,9 @@ export default function Admin() {
             )
           })}
           {duenios.filter(d => !d.eliminado).length === 0 && (
-            <p className="text-sm text-muted">Sin dueños activos — creá el primero con el botón +.</p>
+            <Card><Card.Content className="p-2">
+              <EmptyState titulo="Sin dueños" descripcion="Todavía no hay cuentas de dueño registradas." hint="Creá el primero con el botón +"/>
+            </Card.Content></Card>
           )}
         </Card.Content>
       </Card>
@@ -223,7 +226,9 @@ export default function Admin() {
             </div>
           ))}
           {vendedores.filter(v => !v.eliminado).length === 0 && (
-            <p className="text-sm text-muted">Sin vendedores — los crea cada dueño desde Equipo.</p>
+            <Card><Card.Content className="p-2">
+              <EmptyState titulo="Sin vendedores" descripcion="No hay vendedores registrados — los crea cada dueño desde Equipo." hint="Los vendedores dependen del dueño"/>
+            </Card.Content></Card>
           )}
         </Card.Content>
       </Card>
@@ -248,7 +253,11 @@ export default function Admin() {
               </Chip>
             </div>
           ))}
-          {puestos.length === 0 && <p className="text-sm text-muted">Sin puestos cargados.</p>}
+          {puestos.length === 0 && (
+              <Card><Card.Content className="p-2">
+                <EmptyState titulo="Sin puestos" descripcion="No hay puntos de venta cargados en el sistema." hint="Los puestos se crean desde la vista del dueño"/>
+              </Card.Content></Card>
+            )}
         </Card.Content>
       </Card>
 
@@ -274,7 +283,11 @@ export default function Admin() {
               </Chip>
             </div>
           ))}
-          {jornadas.length === 0 && <p className="text-sm text-muted">Todavía no hay jornadas.</p>}
+          {jornadas.length === 0 && (
+              <Card><Card.Content className="p-2">
+                <EmptyState titulo="Sin jornadas" descripcion="No hay turnos registrados todavía." hint="Cuando los vendedores empiecen a trabajar aparecen acá"/>
+              </Card.Content></Card>
+            )}
         </Card.Content>
       </Card>
 

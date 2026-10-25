@@ -1,3 +1,4 @@
+import EmptyState from '../components/EmptyState'
 import { Card, Chip, Label, Meter } from '@heroui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
@@ -48,6 +49,11 @@ export default function AdminMoney() {
         <p className="text-sm text-muted">Flujo de toda la plataforma — sin filtrar por dueño.</p>
       </div>
 
+      {totalMovido <= 0 && (
+        <Card><Card.Content className="p-2">
+          <EmptyState titulo="Sin flujo de dinero" descripcion="No hay ventas registradas en el período — el dinero movido aparece cuando los vendedores empiecen a vender." hint="Los turnos activos cargan datos automáticamente"/>
+        </Card.Content></Card>
+      )}
       {/* $ total movido + sparkline últimos 14 días */}
       <Card>
         <Card.Content className="p-4">

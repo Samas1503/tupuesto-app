@@ -1,5 +1,5 @@
 /** Planes de suscripción — límites, precios y beneficios por tier */
-export type PlanId = 'basico' | 'estandar' | 'premium'
+export type PlanId = 'basico' | 'estandar' | 'premium' | 'fundador'
 
 export interface Plan {
   id: PlanId
@@ -21,6 +21,11 @@ export const PLANES: Record<PlanId, Plan> = {
     id: 'estandar', nombre: 'Estándar', precioMensual: 25000,
     maxVendedores: 5, maxPuestos: 5, maxProductos: 100,
     beneficios: ['Hasta 5 puestos', 'Hasta 5 vendedores', 'Todo del Básico', 'Contratos digitales', 'Soporte prioritario'],
+  },
+  fundador: {
+    id: 'fundador', nombre: 'Fundador', precioMensual: 15000,
+    maxVendedores: 5, maxPuestos: 5, maxProductos: 100,
+    beneficios: ['Hasta 5 puestos', 'Hasta 5 vendedores', 'Precio fundador de por vida', 'Participación en nuevas features', 'Badge fundador', 'Soporte prioritario'],
   },
   premium: {
     id: 'premium', nombre: 'Premium', precioMensual: 45000,

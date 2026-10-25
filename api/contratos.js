@@ -123,11 +123,18 @@ export default async function handler(req, res) {
   const duenioId = req.body?.duenio_id ?? req.body?.duenioId ?? null
   const plantillaVersion = req.body?.plantilla_version ?? req.body?.plantillaVersion ?? 'contrato-v1'
 
+  const tipo = req.body?.tipo === 'prueba15' ? 'prueba15' : 'mensual'
+  const plazoMeses = tipo === 'mensual' ? Number(req.body?.plazoMeses ?? req.body?.plazo_meses) || null : null
+  const esFundador = req.body?.esFundador === true || req.body?.es_fundador === true
+  datos.tipo = tipo
+  if (plazoMeses) datos.plazoMeses = plazoMeses
+  if (esFundador) datos.esFundador = true
+
   const ahora = Date.now()
   const inserted = await sql.query(
-    `INSERT INTO contratos (duenio_id, plantilla_version, datos, estado, created_at, enviado_at)
-     VALUES ($1, $2, $3::jsonb, 'borrador', $4, $4) RETURNING id, token`,
-    [duenioId, plantillaVersion, JSON.stringify(datos), ahora],
+    `INSERT INTO contratos (tipo, plazo_meses, es_fundador, duenio_id, plantilla_version, datos, estado, created_at, enviado_at)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'borrador', $7, $7) RETURNING id, token`,
+    [tipo, plazoMeses, esFundador, duenioId, plantillaVersion, JSON.stringify(datos), ahora],
   )
   const contrato = inserted[0]
   await appendEvento(sql, contrato.id, 'solicitud', {

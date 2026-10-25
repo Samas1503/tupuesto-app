@@ -8,6 +8,9 @@ export interface Contrato {
   token?: string
   /** link de firma que devuelve la API (si lo trae) — preferido sobre el armado local */
   link?: string
+  tipo?: 'prueba15' | 'mensual'
+  plazoMeses?: number
+  esFundador?: boolean
   razonSocial: string
   cuit: string
   email: string
@@ -24,12 +27,15 @@ export interface Contrato {
 }
 
 export interface NuevoContrato {
+  tipo?: 'prueba15' | 'mensual'
+  plazoMeses?: number
+  esFundador?: boolean
   razonSocial: string
   cuit: string
   email: string
+  domicilio?: string
   plan: string
   precio: number
-  domicilio?: string
   duenioId?: number
 }
 
@@ -80,6 +86,7 @@ export function normContrato(raw: unknown): Contrato {
     id: (pick(m, 'id', 'contrato_id', 'contratoId') ?? '') as number | string,
     token: pick(m, 'token', 'firma_token', 'token_firma', 'signing_token') as string | undefined,
     link: pick(m, 'link', 'link_firma', 'url_firma') as string | undefined,
+    tipo: 'mensual' as const,
     razonSocial: String(pick(m, 'razonSocial', 'razon_social', 'razon', 'suscriptor') ?? ''),
     cuit: String(pick(m, 'cuit', 'CUIT') ?? ''),
     email: String(pick(m, 'email', 'mail', 'correo') ?? ''),
@@ -133,6 +140,7 @@ export async function listarContratos(): Promise<Contrato[]> {
 export async function crearContrato(nuevo: NuevoContrato): Promise<{ contrato: Contrato; emailFallo: string | null }> {
   const datos: Record<string, unknown> = {
     razon_social: nuevo.razonSocial,
+    tipo: 'mensual' as const,
     razonSocial: nuevo.razonSocial, // la plantilla {{razonSocial}} es camel
     cuit: nuevo.cuit,
     email: nuevo.email,
@@ -148,7 +156,8 @@ export async function crearContrato(nuevo: NuevoContrato): Promise<{ contrato: C
       duenio_id: nuevo.duenioId ?? null,
       duenioId: nuevo.duenioId ?? undefined, // compat con el contrato del ticket
       // claves planas — por si el endpoint toma la shape original del ticket
-      razonSocial: nuevo.razonSocial,
+      tipo: 'mensual' as const,
+    razonSocial: nuevo.razonSocial,
       cuit: nuevo.cuit,
       email: nuevo.email,
       plan: nuevo.plan,
