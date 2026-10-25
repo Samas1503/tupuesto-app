@@ -89,9 +89,9 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
             <Card.Description>Es tu primer ingreso — creá un PIN que solo vos sepas.</Card.Description>
           </Card.Header>
           <Card.Content className="px-4 py-3 flex flex-col gap-3">
-            <TextField value={pinNuevo} onChange={v => setPinNuevo(v.replace(/\D/g, '').slice(0, 4))}>
+            <TextField value={pinNuevo} onChange={v => setPinNuevo(v.replace(/\D/g, '').slice(0, 8))}>
               <Label>PIN nuevo (4 dígitos)</Label>
-              <Input type="password" inputMode="numeric" placeholder="••••" />
+              <Input type="password" inputMode="numeric" placeholder="PIN de 4 a 8 dígitos" />
             </TextField>
             <Button variant="primary" onPress={elegirPin} isDisabled={pinNuevo.trim().length < 4}>
               Guardar y entrar
@@ -124,7 +124,7 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
           </TextField>
           <TextField value={pin} onChange={v => { setPin(v); setError(false) }}>
             <Label>PIN</Label>
-            <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" />
+            <Input type="password" inputMode="numeric" maxLength={8} placeholder="PIN de 4 a 8 dígitos" />
           </TextField>
           {error && <p className="text-xs text-danger font-semibold">Email o PIN incorrecto.</p>}
           <Button variant="primary" onPress={entrar} isDisabled={email.trim() === '' || pin.trim() === ''}

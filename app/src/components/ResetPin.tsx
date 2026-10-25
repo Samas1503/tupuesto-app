@@ -38,7 +38,7 @@ export default function ResetPin({ onDone }: { onDone?: () => void }) {
   }
 
   async function verificar() {
-    if (codigo.trim().length !== 6 || pinNuevo.trim().length !== 4 || cargando) return
+    if (codigo.trim().length !== 6 || pinNuevo.trim().length < 4 || pinNuevo.trim().length > 8 || cargando) return
     setCargando(true); setError('')
     try {
       const r = await fetch(`${API}/api/verify-reset`, {
@@ -81,12 +81,12 @@ export default function ResetPin({ onDone }: { onDone?: () => void }) {
           <Label>Código (6 dígitos)</Label>
           <Input inputMode="numeric" maxLength={6} placeholder="••••••" autoComplete="one-time-code" />
         </TextField>
-        <TextField value={pinNuevo} onChange={v => { setPinNuevo(v.replace(/\D/g, '').slice(0, 4)); setError('') }}>
+        <TextField value={pinNuevo} onChange={v => { setPinNuevo(v.replace(/\D/g, '').slice(0, 8)); setError('') }}>
           <Label>PIN nuevo (4 dígitos)</Label>
-          <Input type="password" inputMode="numeric" maxLength={4} placeholder="••••" />
+          <Input type="password" inputMode="numeric" maxLength={8} placeholder="••••" />
         </TextField>
         {error !== '' && <p className="text-xs text-danger font-semibold">{error}.</p>}
-        <Button variant="primary" size="sm" onPress={verificar} isDisabled={cargando || codigo.trim().length !== 6 || pinNuevo.trim().length !== 4}>
+        <Button variant="primary" size="sm" onPress={verificar} isDisabled={cargando || codigo.trim().length !== 6 || pinNuevo.trim().length < 4 || pinNuevo.trim().length > 8}>
           {cargando ? 'Verificando…' : 'Cambiar PIN'}
         </Button>
         <button
