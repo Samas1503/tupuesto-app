@@ -451,7 +451,11 @@
       animation: shine 3.6s ease-in-out infinite;
     }
     @keyframes shine { 0%,55% { left: -80%; } 90%,100% { left: 130%; } }
-  </style>
+    .footer-main { padding: 34px 0 20px; }
+  .footer-main a { font-size: 1rem; color: var(--navy); font-weight: 600; line-height: 1.9; }
+  .footer-main a:hover { color: var(--blurple); }
+  .footer-main p { font-size: .95rem; line-height: 1.7; }
+</style>
 </head>
 <body>
 
@@ -912,7 +916,7 @@
     </div>
   </section>
 
-  <footer>
+  <footer class="footer-main">
     <div class="wrap">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:28px;text-align:left;">
         <div>
