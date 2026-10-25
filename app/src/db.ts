@@ -195,6 +195,24 @@ async function migrarUsuariosLegacy() {
   }
 }
 
+/** re-seedea los accesos demo si algún email @demo.tupuesto falta —
+ *  la demo vive solo en IndexedDB (Neon está limpio para datos reales) */
+export async function seedDemoAccesos() {
+  const [pinD, pinM, pinA, pinDg] = await Promise.all([
+    hashPin('0000'), hashPin('1234'), hashPin('2345'), hashPin('3456'),
+  ])
+  const emails: [string, Omit<Usuario, 'id'>][] = [
+    ['duenio@demo.tupuesto', { rol: 'duenio', nombre: 'Patricio (demo)', email: 'duenio@demo.tupuesto', pinHash: pinD, activo: true, categoria: 'comida' }],
+    ['marcos@demo.tupuesto', { rol: 'vendedor', nombre: 'Marcos', email: 'marcos@demo.tupuesto', pinHash: pinM, activo: true }],
+    ['alejandra@demo.tupuesto', { rol: 'vendedor', nombre: 'Alejandra', email: 'alejandra@demo.tupuesto', pinHash: pinA, activo: true }],
+    ['diego@demo.tupuesto', { rol: 'vendedor', nombre: 'Diego', email: 'diego@demo.tupuesto', pinHash: pinDg, activo: true }],
+    ['admin@demo.tupuesto', { rol: 'admin', nombre: 'Admin', email: 'admin@demo.tupuesto', pinHash: pinD, activo: true }],
+  ]
+  for (const [email, u] of emails) {
+    if (!(await db.usuarios.where('email').equals(email).first())) await db.usuarios.add(u)
+  }
+}
+
 /** garantiza que existan el admin del sistema y el dueño demo (accesos de la demo) */
 async function ensureAccesos() {
   if ((await db.usuarios.where('rol').equals('admin').count()) === 0) {

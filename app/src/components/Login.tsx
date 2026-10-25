@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Card, Input, Label, TextField } from '@heroui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
+import { seedDemoAccesos } from '../db'
 import { pushRow } from '../lib/snake'
 import { hashPin } from '../lib/pin'
 import type { Rol, Usuario } from '../types'
@@ -44,7 +45,12 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
   async function entrar() {
     const e = email.trim().toLowerCase()
     const p = pin.trim()
-    const u = usuarioDe(e)
+    // la demo vive solo en IndexedDB — re-siembra los accesos demo si el pull los borró
+    let u = usuarioDe(e)
+    if (!u && e.endsWith('@demo.tupuesto')) {
+      await seedDemoAccesos()
+      u = await db.usuarios.where('email').equals(e).first()
+    }
     if (u) {
       // sin pinHash todavía (alta vieja sin migrar) no bloquea el ingreso
       if (u.pinHash && u.pinHash !== (await hashPin(p))) { setError(true); return }
