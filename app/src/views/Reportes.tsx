@@ -15,7 +15,7 @@ export default function Reportes() {
   if (cargando) return <p className="text-sm text-muted py-8 text-center">Cargando…</p>
 
   // solo premium
-  if (plan.id !== 'premium') {
+  if (plan.id !== 'premium' && sesion?.rol !== 'admin') {
     return (
       <Card><Card.Content className="p-2">
         <EmptyState icono="puntaje"

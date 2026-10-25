@@ -9,7 +9,7 @@ export default function PlanBadge() {
     () => db.usuarios.get(Number(localStorage.getItem('tp-user-id'))),
     [],
   )
-  if (!usuario) return null
+  if (!usuario || usuario.rol !== 'duenio') return null // el admin no tiene plan — hace todo
   const plan = planDe(usuario.plan)
   const precio = plan.precioUsd ? `USD ${plan.precioUsd}` : `$${plan.precioMensual.toLocaleString('es-AR')}`
   return (
