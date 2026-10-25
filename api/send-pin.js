@@ -60,7 +60,7 @@ export default async function handler(req, res) {
         intro: 'Te crearon una cuenta en <b>TuPuesto</b>. Tu PIN de acceso es:',
         codigo: pin,
         codigoPie: 'En el primer ingreso te va a pedir elegir tu propio PIN — este es de un solo uso.',
-        ctaUrl: appUrl ?? 'https://app-ten-tan-35.vercel.app',
+        ctaUrl: appUrl ?? 'https://tupuesto.vercel.app/app',
         ctaTexto: 'Entrar a la app',
         nota: 'Si no esperabas este email, ignoralo.',
       }),

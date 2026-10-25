@@ -76,7 +76,7 @@ export default function Admin() {
     try {
       await fetch('/api/send-pin', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: e, nombre: n, pin, appUrl: location.origin }),
+        body: JSON.stringify({ email: e, nombre: n, pin, appUrl: location.origin + '/app' }),
       })
     } catch { /* sin api en dev — el PIN queda en la ficha */ }
   }

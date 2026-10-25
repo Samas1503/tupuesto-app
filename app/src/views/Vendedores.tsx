@@ -50,7 +50,7 @@ export default function Vendedores() {
       const r = await fetch('/api/send-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, nombre, pin, appUrl: location.origin }),
+        body: JSON.stringify({ email, nombre, pin, appUrl: location.origin + '/app' }),
       })
       setCredencial(r.ok ? { nombre, email, enviado: true } : { nombre, pin, email, enviado: false })
     } catch {
