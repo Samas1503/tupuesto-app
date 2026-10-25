@@ -73,9 +73,13 @@ export default function Hoy() {
   // pull al montar — las solicitudes del vendedor aparecen sin esperar el loop de 30s
   useEffect(() => { void syncPull() }, [])
 
-  // solicitud de cierre anticipado pendiente para esa jornada
+  // solicitud de cierre anticipado pendiente para esa jornada —
+  // match por jornadaId (normalizando a number) o por vendedor si el campo falta
   const solCierreDe = (j: Jornada) =>
-    solicitudes.find(s => s.tipo === 'cierre-anticipado' && s.jornadaId === j.id)
+    solicitudes.find(s =>
+      s.tipo === 'cierre-anticipado' &&
+      (s.jornadaId != null ? Number(s.jornadaId) === j.id : s.vendedorId === j.vendedorId),
+    )
 
   async function resolverCierre(solId: number, aprobar: boolean, jornadaId?: number) {
     if (aprobar && jornadaId != null) {

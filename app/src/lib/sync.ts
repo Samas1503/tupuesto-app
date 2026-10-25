@@ -14,7 +14,8 @@ const MAP: Record<string, string> = {
   pin_hash: 'pinHash',
 }
 // Postgres devuelve bigint como string — los timestamps de Dexie son number
-const NUM = new Set(['createdAt', 'confirmadaAt', 'resueltaAt', 'fondoCaja', 'precio', 'precioCosto', 'total', 'cantidad'])
+const NUM = new Set(['createdAt', 'confirmadaAt', 'resueltaAt', 'fondoCaja', 'precio', 'precioCosto', 'total', 'cantidad',
+  'id', 'duenioId', 'vendedorId', 'puestoId', 'jornadaId', 'solicitadoPor'])
 const camel = (r: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(r).map(([k, v]) => {
     const key = MAP[k] ?? k
