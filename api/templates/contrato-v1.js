@@ -25,9 +25,9 @@ export const PLANTILLA_VERSION = 'contrato-v1'
 // pendiente (es preferible un marcador honesto a un dato inventado).
 // Se pueden sobreescribir por contrato pasando proveedor* en `datos`.
 export const PROVEEDOR = {
-  razonSocial: 'TuPuesto',
+  razonSocial: 'Samuel Paredes',
   cuit: '20-44706400-7',
-  domicilio: '[domicilio legal del titular — pendiente]',
+  domicilio: 'Av. Puerto Argentino Nro. 676, Barrio Malvinas Argentinas, San Salvador de Jujuy, Jujuy, Argentina',
   email: 'soporte@tupuesto.app',
 }
 
