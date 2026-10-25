@@ -34,7 +34,7 @@ export default function Reportes() {
   const proyeccion7d = promedioDia * 7
 
   // merma: diferencia de stock en jornadas cerradas (saldo esperado vs contado)
-  const merma = jornadas.reduce((a, j) => a + (j.cierre?.descartado ?? 0), 0)
+  const merma = jornadas.reduce((a, j) => a + (j.cierre?.merma ?? []).reduce((x, l) => x + l.cantidad, 0), 0)
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,7 +51,7 @@ export default function Reportes() {
         <p className="text-xs text-muted mb-2">Ventas del mes por producto</p>
         <ul className="flex flex-col gap-1.5">
           {productos.map(p => {
-            const t = ventas.reduce((a, v) => a + v.items.filter(i => i.productoId === p.id).reduce((x, i) => x + i.cantidad * i.precio, 0), 0)
+            const t = ventas.reduce((a, v) => a + v.items.filter(i => i.productoId === p.id).reduce((x, i) => x + i.cantidad * p.precio, 0), 0)
             return t > 0 ? (
               <li key={p.id} className="flex justify-between text-sm num">
                 <span>{p.nombre}</span><b>{fmtMoney(t)}</b>
