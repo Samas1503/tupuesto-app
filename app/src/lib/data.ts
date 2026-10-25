@@ -4,11 +4,11 @@ import type { Jornada, Solicitud, Venta } from '../types'
 
 /** dueño efectivo de la sesión para scoping de datos:
  *  duenio → su id · vendedor → su duenioId · admin → null (ve todo) */
-export function scopeDuenio(usuarios?: { id?: number; rol?: string; duenioId?: number }[]): number | null {
+export function scopeDuenio(): number | null {
   const rol = localStorage.getItem('tp-rol')
   const id = Number(localStorage.getItem('tp-user-id'))
   if (rol === 'duenio') return id
-  if (rol === 'vendedor' && usuarios) return usuarios.find(u => u.id === id)?.duenioId ?? null
+  if (rol === 'vendedor') return null // el vendedor no filtra — solo ve sus jornadas propias
   return null
 }
 
@@ -17,7 +17,7 @@ const deDuenio = <T extends { duenioId?: number }>(rows: T[], scope: number | nu
 
 export function useDatos() {
   const usuarios = useLiveQuery(() => db.usuarios.toArray(), [])
-  const scope = scopeDuenio(usuarios ?? undefined)
+  const scope = scopeDuenio()
 
   const productos = useLiveQuery(() => db.productos.orderBy('orden').toArray(), [])
   const puestos = useLiveQuery(() => db.puestos.orderBy('id').toArray(), [])
@@ -51,30 +51,32 @@ const jornadaDeScope = (
   return j.duenioId == null && (p == null || p.duenioId == null || p.duenioId === scope)
 }
 
-export function useJornadasDe(fecha: string, usuarios: { id?: number; duenioId?: number }[] = []): Jornada[] {
-  const scope = scopeDuenio(usuarios)
+export function useJornadasDe(fecha: string): Jornada[] {
+  const scope = scopeDuenio()
   return useLiveQuery(
     async () => {
-      const [js, ps] = await Promise.all([
+      const [js, ps, us] = await Promise.all([
         db.jornadas.where('fecha').equals(fecha).sortBy('puestoId'),
         db.puestos.toArray(),
+        db.usuarios.toArray(),
       ])
-      return js.filter(j => jornadaDeScope(j, scope, usuarios, ps))
+      return js.filter(j => jornadaDeScope(j, scope, us, ps))
     },
     [fecha, scope],
   ) ?? []
 }
 
-export function useJornadasRango(desde: string, hasta: string, usuarios: { id?: number; duenioId?: number }[] = []): Jornada[] {
-  const scope = scopeDuenio(usuarios)
+export function useJornadasRango(desde: string, hasta: string): Jornada[] {
+  const scope = scopeDuenio()
   return (
     useLiveQuery(
       async () => {
-        const [js, ps] = await Promise.all([
+        const [js, ps, us] = await Promise.all([
           db.jornadas.where('fecha').between(desde, hasta, true, true).sortBy('fecha'),
           db.puestos.toArray(),
+          db.usuarios.toArray(),
         ])
-        return js.filter(j => jornadaDeScope(j, scope, usuarios, ps))
+        return js.filter(j => jornadaDeScope(j, scope, us, ps))
       },
       [desde, hasta, scope],
     ) ?? []
@@ -107,27 +109,33 @@ export function useVentasDeJornadas(jornadaIds: number[]): Venta[] {
   ) ?? []
 }
 
-export function useSolicitudesPendientes(usuarios: { id?: number; duenioId?: number }[] = []): Solicitud[] {
-  const scope = scopeDuenio(usuarios)
+export function useSolicitudesPendientes(): Solicitud[] {
+  const scope = scopeDuenio()
   return useLiveQuery(
-    () => db.solicitudes.where('estado').equals('pendiente').toArray()
-      .then(ss => scope == null ? ss : ss.filter(s => {
-        const v = usuarios.find(u => u.id === s.vendedorId)
+    async () => {
+      const [ss, us] = await Promise.all([
+        db.solicitudes.where('estado').equals('pendiente').toArray(),
+        db.usuarios.toArray(),
+      ])
+      return scope == null ? ss : ss.filter(s => {
+        const v = us.find(u => u.id === s.vendedorId)
         return v?.duenioId === scope
-      })),
+      })
+    },
     [scope],
   ) ?? []
 }
 
-export function useJornadasLibres(fecha: string, usuarios: { id?: number; duenioId?: number }[] = []): Jornada[] {
-  const scope = scopeDuenio(usuarios)
+export function useJornadasLibres(fecha: string): Jornada[] {
+  const scope = scopeDuenio()
   return useLiveQuery(
     async () => {
-      const [js, ps] = await Promise.all([
+      const [js, ps, us] = await Promise.all([
         db.jornadas.where('fecha').equals(fecha).toArray(),
         db.puestos.toArray(),
+        db.usuarios.toArray(),
       ])
-      return js.filter(j => j.vendedorId == null && jornadaDeScope(j, scope, usuarios, ps))
+      return js.filter(j => j.vendedorId == null && jornadaDeScope(j, scope, us, ps))
     },
     [fecha, scope],
   ) ?? []

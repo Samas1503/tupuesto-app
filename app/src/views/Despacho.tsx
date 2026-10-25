@@ -15,7 +15,7 @@ function chipEstado(j: Jornada) {
 }
 
 export default function Despacho() {
-  const { productos, puestos, vendedores , usuarios, scope } = useDatos()
+  const { productos, puestos, vendedores, scope } = useDatos()
   const [fecha, setFecha] = useState(hoyISO())
   const [mesVis, setMesVis] = useState(() => hoyISO().slice(0, 7)) // YYYY-MM
   const [calAbierto, setCalAbierto] = useState(false)
@@ -31,7 +31,7 @@ export default function Despacho() {
   const [repoCantSel, setRepoCantSel] = useState(1)
   const [editingId, setEditingId] = useState<number | null>(null)
 
-  const jornadasEseDia = useJornadasDe(fecha, usuarios)
+  const jornadasEseDia = useJornadasDe(fecha)
   const activos = productos.filter(p => p.activo)
   const editando = editingId != null ? jornadasEseDia.find(j => j.id === editingId) : undefined
   const puestoSel = puestoId != null ? puestos.find(p => p.id === puestoId) : undefined

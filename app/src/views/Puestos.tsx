@@ -15,8 +15,8 @@ const COLOR_ESTADO: Record<EstadoJornada, 'default' | 'warning' | 'success'> = {
 }
 
 export default function Puestos() {
-  const { productos, puestos, vendedores , usuarios, scope } = useDatos()
-  const jornadasHoy = useJornadasDe(hoyISO(), usuarios)
+  const { productos, puestos, vendedores, scope } = useDatos()
+  const jornadasHoy = useJornadasDe(hoyISO())
   const [nombreP, setNombreP] = useState('')
   const [ubicacion, setUbicacion] = useState('')
 

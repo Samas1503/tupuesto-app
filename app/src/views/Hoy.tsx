@@ -60,15 +60,15 @@ function VentasDelTurno({ ventas, productos }: { ventas: Venta[]; productos: Pro
 }
 
 export default function Hoy() {
-  const { productos, puestos, vendedores , usuarios, scope } = useDatos()
+  const { productos, puestos, vendedores, scope } = useDatos()
   const hoy = hoyISO()
-  const jornadas = useJornadasDe(hoy, usuarios)
+  const jornadas = useJornadasDe(hoy)
   const ayer = isoMenosDias(1)
-  const jornadasAyer = useJornadasDe(ayer, usuarios)
+  const jornadasAyer = useJornadasDe(ayer)
   const [tab, setTab] = useState('turnos')
 
   const ventas = useVentasDeJornadas(jornadas.map(j => j.id!))
-  const solicitudes = useSolicitudesPendientes(usuarios)
+  const solicitudes = useSolicitudesPendientes()
 
   // pull al montar — las solicitudes del vendedor aparecen sin esperar el loop de 30s
   useEffect(() => { void syncPull() }, [])
