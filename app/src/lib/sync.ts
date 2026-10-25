@@ -9,13 +9,13 @@ const MAP: Record<string, string> = {
   jornada_id: 'jornadaId', solicitado_por: 'solicitadoPor', fondo_caja: 'fondoCaja',
   hora_fin: 'horaFin', cierre_anticipado_ok: 'cierreAnticipadoOk',
   confirmada_at: 'confirmadaAt', created_at: 'createdAt', resuelta_at: 'resueltaAt',
-  precio_costo: 'precioCosto', metodo_pago: 'metodoPago',
+  precio_costo: 'precioCosto', metodo_pago: 'metodoPago', stock_dia: 'stockDia',
   debe_cambiar_pin: 'debeCambiarPin', saldo_inicial: 'saldoInicial',
   pin_hash: 'pinHash',
 }
 // Postgres devuelve bigint como string — los timestamps de Dexie son number
 const NUM = new Set(['createdAt', 'confirmadaAt', 'resueltaAt', 'fondoCaja', 'precio', 'precioCosto', 'total', 'cantidad',
-  'id', 'duenioId', 'vendedorId', 'puestoId', 'jornadaId', 'solicitadoPor'])
+  'id', 'duenioId', 'vendedorId', 'puestoId', 'jornadaId', 'solicitadoPor', 'stockDia', 'orden'])
 const camel = (r: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(r).map(([k, v]) => {
     const key = MAP[k] ?? k

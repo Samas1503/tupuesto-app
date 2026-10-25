@@ -32,7 +32,13 @@ export default function Despacho() {
   const [editingId, setEditingId] = useState<number | null>(null)
 
   const jornadasEseDia = useJornadasDe(fecha)
-  const activos = productos.filter(p => p.activo)
+  const activos = productos.filter(p => p.activo && (p.stockDia ?? 0) > 0)
+
+  // stock ya despachado hoy en otras jornadas de ese puesto/producto
+  const yaDespachado = (productoId: number) =>
+    jornadasEseDia.reduce((a, j) => a + (j.id === editingId ? 0 : (j.despacho ?? []).filter(l => l.productoId === productoId).reduce((x, l) => x + l.cantidad, 0)), 0)
+  const stockRestante = (productoId: number) =>
+    (productos.find(p => p.id === productoId)?.stockDia ?? 0) - yaDespachado(productoId)
   const editando = editingId != null ? jornadasEseDia.find(j => j.id === editingId) : undefined
   const puestoSel = puestoId != null ? puestos.find(p => p.id === puestoId) : undefined
   // al editar, el vendedor del turno puede existir o no: nombre de respaldo
@@ -48,7 +54,9 @@ export default function Despacho() {
 
   function agregarLinea() {
     if (prodSel == null || cantSel <= 0) return
-    setLineas(prev => [...prev, { productoId: prodSel, cantidad: cantSel }])
+    const tope = stockRestante(prodSel)
+    if (tope <= 0) return
+    setLineas(prev => [...prev, { productoId: prodSel, cantidad: Math.min(cantSel, tope) }])
     setProdSel(null)
     setCantSel(1)
   }
@@ -241,7 +249,7 @@ export default function Despacho() {
                       </ListBox>
                     </Select.Popover>
                   </Select>
-                  <NumberField className="w-36 shrink-0" value={cantSel} onChange={v => setCantSel(Math.max(1, v ?? 1))} minValue={1} aria-label="Cantidad">
+                  <NumberField className="w-36 shrink-0" value={cantSel} onChange={v => setCantSel(Math.max(1, v ?? 1))} minValue={1} maxValue={prodSel != null ? Math.max(1, stockRestante(prodSel)) : undefined} aria-label="Cantidad">
                     <NumberField.Group>
                       <NumberField.DecrementButton />
                       <NumberField.Input />

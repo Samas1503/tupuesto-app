@@ -45,6 +45,8 @@ export interface Producto {
   imagen?: string
   /** ingredientes del producto (referencia del vendedor) */
   ingredientes?: string
+  /** unidades disponibles hoy — el dueño lo setea en Precios; sin stock no se puede despachar */
+  stockDia?: number
   activo: boolean
   orden: number
 }

@@ -27,6 +27,12 @@ export default function Catalogo() {
     await db.productos.update(id, { precioCosto })
     void pushRow('productos', id)
   }
+
+  async function setStockDia(id: number, stockDia: number) {
+    if (stockDia < 0) return
+    await db.productos.update(id, { stockDia })
+    void pushRow('productos', id)
+  }
   async function setActivo(id: number, activo: boolean) {
     await db.productos.update(id, { activo })
     void pushRow('productos', id)
@@ -258,6 +264,18 @@ export default function Catalogo() {
                   formatOptions={EUROS}
                 >
                   <Label>Venta</Label>
+                  <NumberField.Group>
+                    <NumberField.Input />
+                  </NumberField.Group>
+                </NumberField>
+                <NumberField
+                  className="flex-1"
+                  value={p.stockDia ?? 0}
+                  onChange={v => setStockDia(p.id!, v ?? 0)}
+                  minValue={0}
+                  step={1}
+                >
+                  <Label>Stock hoy</Label>
                   <NumberField.Group>
                     <NumberField.Input />
                   </NumberField.Group>

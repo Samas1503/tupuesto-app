@@ -7,7 +7,7 @@ const MAP_INV: Record<string, string> = {
   jornadaId: 'jornada_id', solicitadoPor: 'solicitado_por', fondoCaja: 'fondo_caja',
   horaFin: 'hora_fin', cierreAnticipadoOk: 'cierre_anticipado_ok',
   confirmadaAt: 'confirmada_at', createdAt: 'created_at', resueltaAt: 'resuelta_at',
-  precioCosto: 'precio_costo', metodoPago: 'metodo_pago',
+  precioCosto: 'precio_costo', metodoPago: 'metodo_pago', stockDia: 'stock_dia',
   debeCambiarPin: 'debe_cambiar_pin', saldoInicial: 'saldo_inicial',
   pinHash: 'pin_hash',
 }
