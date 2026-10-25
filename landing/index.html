@@ -457,6 +457,16 @@
   .footer-main p { font-size: .95rem; line-height: 1.7; color: #9fb3c8; }
   .footer-main svg { opacity: .9; }
   .footer-main svg:hover { opacity: 1; }
+  .plans { padding: 60px 0; }
+  .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-top: 26px; }
+  .plan { background: #fff; border: 1px solid #e3e8f0; border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 10px; }
+  .plan.destacado { border-color: var(--blurple); box-shadow: 0 8px 30px rgba(99,91,255,.14); }
+  .plan-name { font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--blurple); }
+  .plan-price { font-size: 2rem; font-weight: 800; }
+  .plan-price span { font-size: .9rem; font-weight: 600; color: var(--muted); }
+  .plan ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .plan ul li { padding-left: 20px; position: relative; font-size: .9rem; }
+  .plan ul li::before { content: "✓"; position: absolute; left: 0; color: var(--success); font-weight: 800; }
 </style>
 </head>
 <body>
@@ -918,6 +928,49 @@
     </div>
   </section>
 
+  <section id="precio" class="plans">
+    <div class="wrap">
+      <p class="kicker">Planes</p>
+      <h2>Elegí el plan que va con tu negocio</h2>
+      <div class="plans-grid">
+        <div class="plan">
+          <p class="plan-name">Básico</p>
+          <p class="plan-price">$13.000<span>/mes</span></p>
+          <ul>
+            <li>Hasta 2 puestos</li>
+            <li>Hasta 2 vendedores</li>
+            <li>Rendición diaria</li>
+            <li>Stats básicos</li>
+          </ul>
+          <a class="btn btn-wa" data-wa href="#">Empezar</a>
+        </div>
+        <div class="plan destacado">
+          <p class="plan-name">Estándar</p>
+          <p class="plan-price">$25.000<span>/mes</span></p>
+          <ul>
+            <li>Hasta 5 puestos</li>
+            <li>Hasta 5 vendedores</li>
+            <li>Todo del Básico</li>
+            <li>Contratos digitales</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <a class="btn btn-dark" data-wa href="#">Elegir</a>
+        </div>
+        <div class="plan">
+          <p class="plan-name">Premium</p>
+          <p class="plan-price">$45.000<span>/mes</span></p>
+          <ul>
+            <li>Puestos ilimitados</li>
+            <li>Vendedores ilimitados</li>
+            <li>Todo del Estándar</li>
+            <li>Reportes avanzados</li>
+            <li>Onboarding 1 a 1</li>
+          </ul>
+          <a class="btn btn-wa" data-wa href="#">Contactar</a>
+        </div>
+      </div>
+    </div>
+  </section>
   <footer class="footer-main">
     <div class="wrap">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:28px;text-align:left;">

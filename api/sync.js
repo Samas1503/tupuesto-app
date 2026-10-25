@@ -4,7 +4,7 @@
 import { neon } from '@neondatabase/serverless'
 
 const TABLAS = {
-  usuarios:    ['rol', 'nombre', 'email', 'pin_hash', 'debe_cambiar_pin', 'activo', 'eliminado', 'duenio_id', 'categoria'],
+  usuarios:    ['rol', 'nombre', 'email', 'pin_hash', 'debe_cambiar_pin', 'activo', 'eliminado', 'duenio_id', 'categoria', 'plan'],
   puestos:     ['duenio_id', 'nombre', 'ubicacion', 'activo'],
   productos:   ['duenio_id', 'nombre', 'precio', 'precio_costo', 'ingredientes', 'imagen', 'orden', 'activo'],
   jornadas:    ['duenio_id', 'puesto_id', 'vendedor_id', 'fecha', 'despacho', 'reposiciones', 'saldo_inicial', 'descarte', 'fondo_caja', 'hora_fin', 'cierre_anticipado_ok', 'estado', 'cierre', 'confirmada_at', 'created_at'],

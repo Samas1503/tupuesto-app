@@ -23,6 +23,8 @@ export interface Usuario {
   duenioId?: number
   /** solo dueños — 'otro' si no eligió (admin no tiene) */
   categoria?: Categoria
+  /** plan de suscripción del dueño (basico|estandar|premium) */
+  plan?: string
   /** compat con el modelo viejo: puesto habitual del vendedor (el vínculo real es la jornada) */
   puestoId?: number
 }

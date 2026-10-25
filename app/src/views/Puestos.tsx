@@ -1,6 +1,7 @@
 import EmptyState from '../components/EmptyState'
 import { useState } from 'react'
 import { Alert, AlertDialog, Button, Card, Chip, Input, Label, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@heroui/react'
+import { planDe, permiteMas } from '../lib/planes'
 import { db } from '../db'
 import { useDatos, useJornadasDe } from '../lib/data'
 import { despachoValor } from '../lib/arqueo'
@@ -15,7 +16,7 @@ const COLOR_ESTADO: Record<EstadoJornada, 'default' | 'warning' | 'success'> = {
 }
 
 export default function Puestos() {
-  const { productos, puestos, vendedores, scope } = useDatos()
+  const { productos, puestos, vendedores, scope, usuarios } = useDatos()
   const jornadasHoy = useJornadasDe(hoyISO())
   const [nombreP, setNombreP] = useState('')
   const [ubicacion, setUbicacion] = useState('')
@@ -31,7 +32,13 @@ export default function Puestos() {
     await db.puestos.update(puestoId, { activo })
     void pushRow('puestos', puestoId)
   }
+  // plan del dueño de sesión — límite de puestos
+  const usuarioSesion = usuarios?.find(u => u.id === Number(localStorage.getItem('tp-user-id')))
+  const plan = planDe(usuarioSesion?.plan)
+  const limitePuestos = !permiteMas(plan, puestos.filter(p => p.activo).length, 'puestos')
+
   async function agregar() {
+    if (limitePuestos) { alert(`Límite del plan ${plan.nombre}: ${plan.maxPuestos} puestos`); return }
     const n = nombreP.trim()
     if (!n) return
     const id = await db.puestos.add({

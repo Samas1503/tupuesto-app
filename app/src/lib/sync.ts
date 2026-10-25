@@ -11,7 +11,7 @@ const MAP: Record<string, string> = {
   confirmada_at: 'confirmadaAt', created_at: 'createdAt', resuelta_at: 'resueltaAt',
   precio_costo: 'precioCosto', metodo_pago: 'metodoPago', stock_dia: 'stockDia',
   debe_cambiar_pin: 'debeCambiarPin', saldo_inicial: 'saldoInicial',
-  pin_hash: 'pinHash',
+  pin_hash: 'pinHash', plan: 'plan',
 }
 // Postgres devuelve bigint como string — los timestamps de Dexie son number
 const NUM = new Set(['createdAt', 'confirmadaAt', 'resueltaAt', 'fondoCaja', 'precio', 'precioCosto', 'total', 'cantidad',

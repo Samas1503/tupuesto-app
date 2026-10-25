@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AlertDialog, Button, Card, Chip, Input, Label, ListBox, Select, TextField } from '@heroui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
+import { pushRow } from '../lib/snake'
 import { fmtMoney } from '../lib/format'
 import {
   crearContrato, descargarPaquete, linkFirma, listarContratos,
@@ -38,6 +39,7 @@ export default function AdminContratos() {
   const [domicilio, setDomicilio] = useState('')
   const [plan, setPlan] = useState('Fundador — $12.900/mes')
   const [precio, setPrecio] = useState('12900')
+  const [crearDuenio, setCrearDuenio] = useState(false)
   const [duenioId, setDuenioId] = useState<number | null>(null)
   const [creando, setCreando] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -101,6 +103,22 @@ export default function AdminContratos() {
     setCreando(true)
     setFormError(null)
     try {
+      // cuenta de dueño nueva: rol duenio + email + nombre (sin PIN — el email le genera el acceso)
+      if (crearDuenio) {
+        const dup = await db.usuarios.where('email').equals(nuevo.email).first()
+        if (dup) { setFormError('Ya existe un usuario con ese email'); setCreando(false); return }
+        const id = await db.usuarios.add({
+          rol: 'duenio',
+          nombre: nuevo.razonSocial,
+          email: nuevo.email,
+          pinHash: '',
+          debeCambiarPin: true,
+          activo: true,
+          eliminado: false,
+        })
+        void pushRow('usuarios', id)
+        nuevo.duenioId = id
+      }
       const { contrato, emailFallo } = await crearContrato(nuevo)
       setCreado(contrato)
       setAvisoCreado(emailFallo)
@@ -244,6 +262,10 @@ export default function AdminContratos() {
                       </ListBox>
                     </Select.Popover>
                   </Select>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={crearDuenio} onChange={e => setCrearDuenio(e.target.checked)} className="accent-accent h-4 w-4" />
+                    Crear cuenta de dueño con este email (accede con PIN por correo)
+                  </label>
                   {formError != null && <p className="text-xs text-danger font-semibold">{formError}</p>}
                   <p className="text-xs text-muted">
                     Se genera el contrato y se envía el link de firma al email del suscriptor.

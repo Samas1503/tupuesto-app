@@ -1,6 +1,7 @@
 import EmptyState from '../components/EmptyState'
 import { useState } from 'react'
 import { AlertDialog, Button, Card, Chip, Input, Label, Switch, TextField } from '@heroui/react'
+import { planDe, permiteMas } from '../lib/planes'
 import { db } from '../db'
 import { totalVentas, vendidos, ventasTotal } from '../lib/arqueo'
 import { fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
@@ -16,7 +17,7 @@ const duenioSesion = () =>
   localStorage.getItem('tp-rol') === 'duenio' ? Number(localStorage.getItem('tp-user-id')) : undefined
 
 export default function Vendedores() {
-  const { vendedores, productos} = useDatos()
+  const { vendedores, productos, usuarios} = useDatos()
   const solicitudes = useSolicitudesPendientes()
   // stats por vendedor — jornadas de los últimos 365 días + ventas registradas
   const jornadas = useJornadasRango(isoMenosDias(365), hoyISO())
@@ -58,7 +59,13 @@ export default function Vendedores() {
     }
   }
 
+  // plan del dueño de sesión — límite de vendedores
+  const usuarioSesion = usuarios?.find(u => u.id === Number(localStorage.getItem('tp-user-id')))
+  const plan = planDe(usuarioSesion?.plan)
+  const limiteVendedores = !permiteMas(plan, vendedores.filter(v => !v.eliminado).length, 'vendedores')
+
   async function agregar() {
+    if (limiteVendedores) { alert(`Límite del plan ${plan.nombre}: ${plan.maxVendedores} vendedores`); return }
     const n = nombre.trim()
     if (!n) return
     const e = email.trim()

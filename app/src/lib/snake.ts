@@ -9,7 +9,7 @@ const MAP_INV: Record<string, string> = {
   confirmadaAt: 'confirmada_at', createdAt: 'created_at', resueltaAt: 'resuelta_at',
   precioCosto: 'precio_costo', metodoPago: 'metodo_pago', stockDia: 'stock_dia',
   debeCambiarPin: 'debe_cambiar_pin', saldoInicial: 'saldo_inicial',
-  pinHash: 'pin_hash',
+  pinHash: 'pin_hash', plan: 'plan',
 }
 
 /** convierte las keys de primer nivel de una fila Dexie a snake_case (Neon).
