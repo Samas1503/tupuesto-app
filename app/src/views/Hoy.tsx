@@ -83,7 +83,8 @@ export default function Hoy() {
 
   async function resolverCierre(solId: number, aprobar: boolean, jornadaId?: number) {
     if (aprobar && jornadaId != null) {
-      await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true })
+      // aprobar = cierre anticipado OK + el turno pasa a 'cerrada' (falta el OK del dueño)
+      await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true, estado: 'cerrada' })
       void pushRow('jornadas', jornadaId)
       await db.solicitudes.update(solId, { estado: 'aprobada', resueltaAt: Date.now() })
     } else {

@@ -82,7 +82,7 @@ export default function Vendedores() {
     if (tipo === 'cierre-anticipado') {
       // aprobar = habilita el botón de cerrar del vendedor en esa jornada
       if (jornadaId != null) {
-        await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true })
+        await db.jornadas.update(jornadaId, { cierreAnticipadoOk: true, estado: 'cerrada' })
         void pushRow('jornadas', jornadaId)
       }
       await db.solicitudes.update(solId, { estado: 'aprobada', resueltaAt: Date.now() })
