@@ -144,7 +144,9 @@ export default function AdminMoney() {
             Por dueño · {DIAS_RANGO} días
           </p>
           <div className="flex flex-col gap-2.5">
-            {duenios.length === 0 && <p className="text-sm text-muted">Sin dueños cargados.</p>}
+            {duenios.length === 0 && (
+              <EmptyState titulo="Sin dueños" descripcion="No hay cuentas de dueño registradas todavía." hint="Los dueños aparecen acá cuando se registran"/>
+            )}
             {duenios.map(d => (
               <div key={d.duenio.id} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -168,7 +170,9 @@ export default function AdminMoney() {
             Ranking de puestos · {DIAS_RANGO} días
           </p>
           <div className="flex flex-col gap-2.5">
-            {ranking.length === 0 && <p className="text-sm text-muted">Sin actividad en el rango.</p>}
+            {ranking.length === 0 && (
+              <EmptyState titulo="Sin actividad" descripcion="No hay ventas registradas en el rango de 30 días." hint="El ranking de puestos se arma con las ventas de los vendedores"/>
+            )}
             {ranking.map((x, i) => (
               <div key={x.puesto.id} className="flex items-center gap-3">
                 <span className="text-xs font-bold text-muted w-4">{i + 1}º</span>

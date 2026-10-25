@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AlertDialog, Button, Card, Chip, Input, Label, ListBox, Select, TextField } from '@heroui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
+import EmptyState from '../components/EmptyState'
 import { pushRow } from '../lib/snake'
 import { fmtMoney } from '../lib/format'
 import {
@@ -182,7 +183,7 @@ export default function AdminContratos() {
             </p>
           )}
           {contratos != null && error == null && contratos.length === 0 && (
-            <p className="text-sm text-muted">Sin contratos todavía — creá el primero con “Nuevo contrato”.</p>
+            <EmptyState titulo="Sin contratos" descripcion="No hay contratos emitidos todavía — creá el primero para el suscriptor con el botón +." hint="El link de firma se envía por email"/>
           )}
           {contratos?.map(c => (
             <div key={String(c.id)} className="flex items-start justify-between gap-3">
