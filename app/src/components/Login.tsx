@@ -163,6 +163,7 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
         </Card.Content>
       </Card>
 
+      {new URLSearchParams(location.search).has('demo') && (
       <Card className="w-full max-w-[380px] !rounded-3xl relative z-10 !bg-white/80 backdrop-blur">
         <Card.Content className="px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-muted mb-2">Credenciales de la demo</p>
@@ -175,6 +176,7 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
           </ul>
         </Card.Content>
       </Card>
+      )}
     </div>
   )
 }
