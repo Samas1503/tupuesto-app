@@ -114,10 +114,14 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
 
       <Card className="w-full max-w-[380px] !rounded-3xl !shadow-xl !shadow-navy/10 relative z-10">
         <Card.Header className="px-4 pt-4 pb-0">
-          <Card.Title className="text-base">Ingreso</Card.Title>
-          <Card.Description>Entrá con tu email y tu PIN.</Card.Description>
+          <Card.Title className="text-base">{reset == null ? 'Ingreso' : 'Recuperar PIN'}</Card.Title>
+          <Card.Description>
+            {reset == null ? 'Entrá con tu email y tu PIN.' : 'Te mandamos un código por email para elegir un PIN nuevo.'}
+          </Card.Description>
         </Card.Header>
         <Card.Content className="px-4 py-3 flex flex-col gap-3">
+          {/* un solo formulario a la vez: ingreso o recuperación */}
+          {reset == null && <>
           <TextField value={email} onChange={v => { setEmail(v); setError(false) }}>
             <Label>Email</Label>
             <Input type="email" placeholder="tu@correo.com" autoComplete="email" />
@@ -131,8 +135,8 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
             className="anim-shine !h-11">
             Entrar
           </Button>
+          </>}
 
-          {/* reset de PIN por código de email — discreto, dentro de la misma card */}
           <button
             type="button"
             onClick={toggleReset}
@@ -141,9 +145,8 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
             {reset != null ? 'Volver al ingreso' : '¿Olvidaste tu PIN?'}
           </button>
 
-          {/* si el email no identifica la cuenta todavía, se pide antes del ResetPin */}
           {reset === 'email' && (
-            <div className="border-t border-dashed border-border pt-3 flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <p className="text-xs text-muted">Ingresá tu email para encontrar tu cuenta.</p>
               <TextField value={resetEmail} onChange={v => { setResetEmail(v); setResetError(false) }}>
                 <Label>Email</Label>
@@ -155,11 +158,7 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
               </Button>
             </div>
           )}
-          {reset === 'ok' && (
-            <div className="border-t border-dashed border-border pt-3">
-              <ResetPin onDone={cerrarReset} />
-            </div>
-          )}
+          {reset === 'ok' && <ResetPin onDone={cerrarReset} />}
         </Card.Content>
       </Card>
 
