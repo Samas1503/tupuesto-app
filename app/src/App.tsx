@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Tabs } from '@heroui/react'
-import { IHoy, IDespacho, IPrecios, IPuestos, IEquipo, IStats } from './components/icons'
+import { IHoy, IDespacho, IPrecios, IPuestos, IEquipo, IStats, IReportes } from './components/icons'
+import PlanBadge from './components/PlanBadge'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { Rol } from './types'
 import { db } from './db'
@@ -11,11 +12,12 @@ import Catalogo from './views/Catalogo'
 import Puestos from './views/Puestos'
 import Vendedores from './views/Vendedores'
 import Historial from './views/Historial'
+import Reportes from './views/Reportes'
 import MiDia from './views/MiDia'
 import Admin from './views/Admin'
 import FirmarContrato from './views/FirmarContrato'
 
-type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'vendedores' | 'historial'
+type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'vendedores' | 'historial' | 'reportes'
 
 const NAV_DUENIO: { id: Vista; label: string; Icon: (p: { className?: string }) => React.ReactNode }[] = [
   { id: 'hoy', label: 'Hoy', Icon: IHoy },
@@ -24,6 +26,7 @@ const NAV_DUENIO: { id: Vista; label: string; Icon: (p: { className?: string }) 
   { id: 'puestos', label: 'Puestos', Icon: IPuestos },
   { id: 'vendedores', label: 'Equipo', Icon: IEquipo },
   { id: 'historial', label: 'Stats', Icon: IStats },
+  { id: 'reportes', label: 'Reportes', Icon: IReportes },
 ]
 
 type Sesion = { rol: Rol; id: number }
@@ -169,6 +172,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 min-w-0 shrink-0">
+            <span className="hidden sm:inline"><PlanBadge /></span>
             <span className="text-sm font-semibold truncate max-w-36">{nombreSesion ?? '…'}</span>
             <Button size="sm" variant="tertiary" onPress={salir}>Salir</Button>
           </div>
@@ -192,6 +196,7 @@ export default function App() {
             {vista === 'catalogo' && <Catalogo />}
             {vista === 'puestos' && <Puestos />}
             {vista === 'vendedores' && <Vendedores />}
+            {vista === 'reportes' && <Reportes />}
             {vista === 'historial' && <Historial />}
           </>
         )}

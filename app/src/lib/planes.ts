@@ -4,7 +4,8 @@ export type PlanId = 'basico' | 'estandar' | 'premium' | 'fundador'
 export interface Plan {
   id: PlanId
   nombre: string
-  precioMensual: number          // ARS/mes
+  precioMensual: number          // ARS/mes — 0 cuando el precio es en USD (fundador)
+  precioUsd?: number             // USD/mes — fundador: precio fijo en dólares cobrado en pesos al cambio
   maxVendedores: number          // -1 = ilimitado
   maxPuestos: number
   maxProductos: number
@@ -14,18 +15,19 @@ export interface Plan {
 export const PLANES: Record<PlanId, Plan> = {
   basico: {
     id: 'basico', nombre: 'Básico', precioMensual: 13000,
-    maxVendedores: 2, maxPuestos: 2, maxProductos: 20,
-    beneficios: ['Hasta 2 puestos', 'Hasta 2 vendedores', 'Rendición diaria', 'Stats básicos'],
+    maxVendedores: 3, maxPuestos: 3, maxProductos: 25,
+    beneficios: ['Hasta 3 puestos', 'Hasta 3 vendedores', 'Rendición diaria', 'Stats básicos'],
   },
   estandar: {
     id: 'estandar', nombre: 'Estándar', precioMensual: 25000,
-    maxVendedores: 5, maxPuestos: 5, maxProductos: 100,
-    beneficios: ['Hasta 5 puestos', 'Hasta 5 vendedores', 'Todo del Básico', 'Contratos digitales', 'Soporte prioritario'],
+    maxVendedores: 10, maxPuestos: 10, maxProductos: 100,
+    beneficios: ['Hasta 10 puestos', 'Hasta 10 vendedores', 'Todo del Básico', 'Contratos digitales', 'Soporte prioritario'],
   },
   fundador: {
-    id: 'fundador', nombre: 'Fundador', precioMensual: 15000,
-    maxVendedores: 5, maxPuestos: 5, maxProductos: 100,
-    beneficios: ['Hasta 5 puestos', 'Hasta 5 vendedores', 'Precio fundador de por vida', 'Participación en nuevas features', 'Badge fundador', 'Soporte prioritario'],
+    id: 'fundador', nombre: 'Fundador', precioMensual: 0,
+    precioUsd: 10,
+    maxVendedores: -1, maxPuestos: -1, maxProductos: -1,
+    beneficios: ['Puestos y vendedores ilimitados', 'Precio fundador de por vida — USD 10 cobrado en pesos', 'Participación en nuevas features', 'Badge fundador', 'Solo 5 cupos'],
   },
   premium: {
     id: 'premium', nombre: 'Premium', precioMensual: 45000,

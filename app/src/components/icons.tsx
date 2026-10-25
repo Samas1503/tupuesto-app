@@ -32,3 +32,8 @@ export const IEquipo = ({ className }: P) => (
 export const IStats = ({ className }: P) => (
   <Svg className={className}><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></Svg>
 )
+
+/** Reportes — lupa sobre gráfico */
+export const IReportes = ({ className }: P) => (
+  <Svg className={className}><path d="M4 19V9M10 19V4M16 19v-6"/><circle cx="17" cy="15" r="3.5"/><path d="M19.5 17.5L22 20"/></Svg>
+)
