@@ -26,7 +26,7 @@ export const PLANTILLA_VERSION = 'contrato-v1'
 // Se pueden sobreescribir por contrato pasando proveedor* en `datos`.
 export const PROVEEDOR = {
   razonSocial: 'TuPuesto',
-  cuit: '[CUIT del titular — pendiente]',
+  cuit: '20-44706400-7',
   domicilio: '[domicilio legal del titular — pendiente]',
   email: 'soporte@tupuesto.app',
 }
