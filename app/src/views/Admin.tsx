@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertDialog, Button, Card, Chip, Input, Label, ListBox, Select, Switch, TextField, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 import AdminMoney from './AdminMoney'
 import AdminScores from './AdminScores'
+import AdminContratos from './AdminContratos'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import { cobrado } from '../lib/arqueo'
@@ -58,7 +59,7 @@ export default function Admin() {
   const [categoria, setCategoria] = useState<Categoria>('comida')
   const [confirmElim, setConfirmElim] = useState<{ id: number; nombre: string } | null>(null)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
-  const [seccion, setSeccion] = useState<'gestion' | 'dinero' | 'puntajes'>('gestion')
+  const [seccion, setSeccion] = useState<'gestion' | 'dinero' | 'puntajes' | 'contratos'>('gestion')
 
   const nEliminados = usuarios.filter(u => u.eliminado && u.rol !== 'admin').length
 
@@ -117,7 +118,7 @@ export default function Admin() {
       <ToggleButtonGroup
         selectionMode="single"
         selectedKeys={new Set([seccion])}
-        onSelectionChange={k => setSeccion([...k][0] as 'gestion' | 'dinero' | 'puntajes')}
+        onSelectionChange={k => setSeccion([...k][0] as 'gestion' | 'dinero' | 'puntajes' | 'contratos')}
         aria-label="Sección"
         size="sm"
         className="self-start"
@@ -125,10 +126,12 @@ export default function Admin() {
         <ToggleButton id="gestion">Gestión</ToggleButton>
         <ToggleButton id="dinero">Dinero</ToggleButton>
         <ToggleButton id="puntajes">Puntajes</ToggleButton>
+        <ToggleButton id="contratos">Contratos</ToggleButton>
       </ToggleButtonGroup>
 
       {seccion === 'dinero' && <AdminMoney />}
       {seccion === 'puntajes' && <AdminScores />}
+      {seccion === 'contratos' && <AdminContratos />}
 
       {seccion === 'gestion' && <>
       {/* control global */}

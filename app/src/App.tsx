@@ -13,6 +13,7 @@ import Vendedores from './views/Vendedores'
 import Historial from './views/Historial'
 import MiDia from './views/MiDia'
 import Admin from './views/Admin'
+import FirmarContrato from './views/FirmarContrato'
 
 type Vista = 'hoy' | 'despacho' | 'catalogo' | 'puestos' | 'vendedores' | 'historial'
 
@@ -128,6 +129,12 @@ export default function App() {
     limpiarSesionLS()
     setSesion(null)
     setVista('hoy')
+  }
+
+  // ruta pública de firma electrónica — /app/firmar?token=… entra sin sesión.
+  // La app vive bajo /app (base de Vite), así que el path llega como /app/firmar.
+  if (location.pathname.replace(/\/+$/, '').endsWith('/firmar')) {
+    return <FirmarContrato />
   }
 
   // gate unificado — toda la app detrás del login (sin navbar ni vistas)

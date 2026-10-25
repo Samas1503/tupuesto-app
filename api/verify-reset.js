@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
   const rows = await sql.query(
     `SELECT id FROM codigos_reset
-     WHERE usuario_id = $1 AND codigo = $2
+     WHERE entidad = 'usuarios' AND usuario_id = $1 AND codigo = $2
        AND usado = FALSE AND expires_at >= $3
      ORDER BY id DESC LIMIT 1`,
     [user.id, codigoNorm, Date.now()],
