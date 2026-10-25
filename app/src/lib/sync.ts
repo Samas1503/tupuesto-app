@@ -31,6 +31,10 @@ export async function syncPull() {
     for (const [tabla, rows] of Object.entries(data) as [string, Record<string, unknown>[]][]) {
       const t = (db as Record<string, any>)[tabla]
       if (!t) continue
+      // remota es la fuente de verdad: borra lo local que ya no existe en Neon
+      const ids = new Set(rows.map(r => Number(r.id)))
+      const locales = await t.toCollection().primaryKeys()
+      for (const id of locales) if (!ids.has(Number(id))) await t.delete(id)
       for (const row of rows) await t.put(camel(row))
     }
   } catch { /* sin red → queda local */ }
