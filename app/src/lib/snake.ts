@@ -25,8 +25,17 @@ export type TablaSync =
 
 /** relee la fila de Dexie y la empuja a Neon (upsert por id).
  *  Fire-and-forget: nunca rechaza ni bloquea la UI — si no hay red queda local. */
+/** sesión demo (email @demo.tupuesto): no persiste a Neon — solo IndexedDB local */
+async function esDemo(): Promise<boolean> {
+  const id = Number(localStorage.getItem('tp-user-id'))
+  if (!id) return false
+  const u = await db.usuarios.get(id)
+  return u?.email?.endsWith('@demo.tupuesto') ?? false
+}
+
 export async function pushRow(tabla: TablaSync, id: number) {
   try {
+    if (await esDemo()) return // demo: los cambios no suben a Neon
     const row = await db[tabla].get(id)
     if (row) syncPush(tabla, [toSnake(row)]).catch(() => {})
   } catch { /* error local — queda para el próximo sync */ }
