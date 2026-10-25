@@ -249,7 +249,7 @@ export default function Hoy() {
       {jornadas.length === 0 && (
         <Card>
           <Card.Content className="p-2">
-            <EmptyState
+            <EmptyState icono="jornada"
               titulo="Sin turnos hoy"
               descripcion="Todavía no creaste ningún turno — cada puesto necesita su vendedor, caja y despacho para arrancar."
               hint="Creá el primero con el botón +"
@@ -453,7 +453,7 @@ export default function Hoy() {
             </Card.Header>
             <Card.Content className="px-4 py-3 flex flex-col gap-3">
               {disponibleHoy.length === 0 && (
-                <EmptyState
+                <EmptyState icono="jornada"
                   titulo="Sin productos para hoy"
                   descripcion="No hay despachos cargados ni sobrantes de ayer — cargá mercadería para que los puestos tengan qué vender."
                   hint="Cargá productos con el botón +"

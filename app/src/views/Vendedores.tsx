@@ -176,7 +176,7 @@ export default function Vendedores() {
         {vendedores.filter(v => !v.eliminado).length === 0 && (
           <Card>
             <Card.Content className="p-2">
-              <EmptyState
+              <EmptyState icono="equipo"
                 titulo="Sin vendedores"
                 descripcion="Tu equipo todavía está vacío — los vendedores que des cargan su turno y su rendición desde su celu."
                 hint="Sumá el primero con el botón +"

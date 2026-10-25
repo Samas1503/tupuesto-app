@@ -186,7 +186,7 @@ export default function Admin() {
           })}
           {duenios.filter(d => !d.eliminado).length === 0 && (
             <Card><Card.Content className="p-2">
-              <EmptyState titulo="Sin dueños" descripcion="Todavía no hay cuentas de dueño registradas." hint="Creá el primero con el botón +"/>
+              <EmptyState icono="equipo" titulo="Sin dueños" descripcion="Todavía no hay cuentas de dueño registradas." hint="Creá el primero con el botón +"/>
             </Card.Content></Card>
           )}
         </Card.Content>
@@ -227,7 +227,7 @@ export default function Admin() {
           ))}
           {vendedores.filter(v => !v.eliminado).length === 0 && (
             <Card><Card.Content className="p-2">
-              <EmptyState titulo="Sin vendedores" descripcion="No hay vendedores registrados — los crea cada dueño desde Equipo." hint="Los vendedores dependen del dueño"/>
+              <EmptyState icono="equipo" titulo="Sin vendedores" descripcion="No hay vendedores registrados — los crea cada dueño desde Equipo." hint="Los vendedores dependen del dueño"/>
             </Card.Content></Card>
           )}
         </Card.Content>
@@ -255,7 +255,7 @@ export default function Admin() {
           ))}
           {puestos.length === 0 && (
               <Card><Card.Content className="p-2">
-                <EmptyState titulo="Sin puestos" descripcion="No hay puntos de venta cargados en el sistema." hint="Los puestos se crean desde la vista del dueño"/>
+                <EmptyState icono="puesto" titulo="Sin puestos" descripcion="No hay puntos de venta cargados en el sistema." hint="Los puestos se crean desde la vista del dueño"/>
               </Card.Content></Card>
             )}
         </Card.Content>
@@ -285,7 +285,7 @@ export default function Admin() {
           ))}
           {jornadas.length === 0 && (
               <Card><Card.Content className="p-2">
-                <EmptyState titulo="Sin jornadas" descripcion="No hay turnos registrados todavía." hint="Cuando los vendedores empiecen a trabajar aparecen acá"/>
+                <EmptyState icono="jornada" titulo="Sin jornadas" descripcion="No hay turnos registrados todavía." hint="Cuando los vendedores empiecen a trabajar aparecen acá"/>
               </Card.Content></Card>
             )}
         </Card.Content>

@@ -203,7 +203,7 @@ export default function Catalogo() {
         {productos.length === 0 && (
           <Card>
             <Card.Content className="p-2">
-              <EmptyState
+              <EmptyState icono="producto"
                 titulo="Sin productos"
                 descripcion="Todavía no hay productos cargados en el catálogo — el primero ya define precio, costo y foto."
                 hint="Agregá el primero con el botón +"

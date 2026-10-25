@@ -429,7 +429,7 @@ export default function Despacho() {
       {jornadasEseDia.length === 0 && (
         <Card>
           <Card.Content className="p-2">
-            <EmptyState
+            <EmptyState icono="despacho"
               titulo="Sin despachos este día"
               descripcion="Aún no hay turnos activos para realizar despachos en esta fecha."
               hint="Creá el despacho con el botón +"

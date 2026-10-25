@@ -51,7 +51,7 @@ export default function AdminMoney() {
 
       {totalMovido <= 0 && (
         <Card><Card.Content className="p-2">
-          <EmptyState titulo="Sin flujo de dinero" descripcion="No hay ventas registradas en el período — el dinero movido aparece cuando los vendedores empiecen a vender." hint="Los turnos activos cargan datos automáticamente"/>
+          <EmptyState icono="dinero" titulo="Sin flujo de dinero" descripcion="No hay ventas registradas en el período — el dinero movido aparece cuando los vendedores empiecen a vender." hint="Los turnos activos cargan datos automáticamente"/>
         </Card.Content></Card>
       )}
       {/* $ total movido + sparkline últimos 14 días */}
@@ -145,7 +145,7 @@ export default function AdminMoney() {
           </p>
           <div className="flex flex-col gap-2.5">
             {duenios.length === 0 && (
-              <EmptyState titulo="Sin dueños" descripcion="No hay cuentas de dueño registradas todavía." hint="Los dueños aparecen acá cuando se registran"/>
+              <EmptyState icono="dinero" titulo="Sin dueños" descripcion="No hay cuentas de dueño registradas todavía." hint="Los dueños aparecen acá cuando se registran"/>
             )}
             {duenios.map(d => (
               <div key={d.duenio.id} className="flex items-center justify-between gap-3">
@@ -171,7 +171,7 @@ export default function AdminMoney() {
           </p>
           <div className="flex flex-col gap-2.5">
             {ranking.length === 0 && (
-              <EmptyState titulo="Sin actividad" descripcion="No hay ventas registradas en el rango de 30 días." hint="El ranking de puestos se arma con las ventas de los vendedores"/>
+              <EmptyState icono="dinero" titulo="Sin actividad" descripcion="No hay ventas registradas en el rango de 30 días." hint="El ranking de puestos se arma con las ventas de los vendedores"/>
             )}
             {ranking.map((x, i) => (
               <div key={x.puesto.id} className="flex items-center gap-3">

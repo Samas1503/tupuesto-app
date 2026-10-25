@@ -65,7 +65,7 @@ export default function Puestos() {
       {puestos.length === 0 && (
         <Card>
           <Card.Content className="p-2">
-            <EmptyState
+            <EmptyState icono="puesto"
               titulo="Sin puestos"
               descripcion="Todavía no registraste ningún punto de venta — cada uno define dónde se vende y cuánta caja se espera."
               hint="Creá el primero con el botón +"

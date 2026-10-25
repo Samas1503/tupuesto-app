@@ -75,7 +75,7 @@ export default function AdminScores() {
 
       {grupos.length === 0 && (
         <Card><Card.Content className="p-2">
-          <EmptyState titulo="Sin puntajes" descripcion="No hay usuarios con jornadas cerradas en el período — el scoring se genera cuando hay turnos confirmados." hint="Los puntajes se calculan solo para el admin"/>
+          <EmptyState icono="puntaje" titulo="Sin puntajes" descripcion="No hay usuarios con jornadas cerradas en el período — el scoring se genera cuando hay turnos confirmados." hint="Los puntajes se calculan solo para el admin"/>
         </Card.Content></Card>
       )}
       <div className="flex flex-col gap-5">

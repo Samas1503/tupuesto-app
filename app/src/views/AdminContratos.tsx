@@ -183,7 +183,7 @@ export default function AdminContratos() {
             </p>
           )}
           {contratos != null && error == null && contratos.length === 0 && (
-            <EmptyState titulo="Sin contratos" descripcion="No hay contratos emitidos todavía — creá el primero para el suscriptor con el botón +." hint="El link de firma se envía por email"/>
+            <EmptyState icono="contrato" titulo="Sin contratos" descripcion="No hay contratos emitidos todavía — creá el primero para el suscriptor con el botón +." hint="El link de firma se envía por email"/>
           )}
           {contratos?.map(c => (
             <div key={String(c.id)} className="flex items-start justify-between gap-3">

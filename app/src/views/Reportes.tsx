@@ -18,7 +18,7 @@ export default function Reportes() {
   if (plan.id !== 'premium') {
     return (
       <Card><Card.Content className="p-2">
-        <EmptyState
+        <EmptyState icono="puntaje"
           titulo="Reportes avanzados — Premium"
           descripcion={`Esta sección es exclusiva del plan Premium. Tu plan actual es ${plan.nombre} — los reportes avanzados incluyen proyecciones de venta, análisis de merma y comparativas por vendedor.`}
           hint="Contactanos para hacer el upgrade"
