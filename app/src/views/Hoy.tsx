@@ -3,9 +3,10 @@ import { db } from '../db'
 import { useDatos, useJornadasDe, useJornadasRango, useSolicitudesPendientes, useVentasDeJornadas } from '../lib/data'
 import { fmtDif, fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
 import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import EmptyState from '../components/EmptyState'
 import { pushRow } from '../lib/snake'
+import { syncPull } from '../lib/sync'
 import type { Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 function estadoChip(j: Jornada) {
@@ -68,6 +69,9 @@ export default function Hoy() {
 
   const ventas = useVentasDeJornadas(jornadas.map(j => j.id!))
   const solicitudes = useSolicitudesPendientes(usuarios)
+
+  // pull al montar — las solicitudes del vendedor aparecen sin esperar el loop de 30s
+  useEffect(() => { void syncPull() }, [])
 
   // solicitud de cierre anticipado pendiente para esa jornada
   const solCierreDe = (j: Jornada) =>
