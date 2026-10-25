@@ -24,6 +24,12 @@ const camel = (r: Record<string, unknown>) =>
 
 /** pull remoto → merge real: upsert por id, la remota gana (last-write-wins) */
 export async function syncPull() {
+  // sesión demo (@demo.tupuesto): no pull — la demo vive 100% en IndexedDB local
+  const sesionId = Number(localStorage.getItem('tp-user-id'))
+  if (sesionId) {
+    const u = await db.usuarios.get(sesionId)
+    if (u?.email?.endsWith('@demo.tupuesto')) return
+  }
   try {
     const res = await fetch(`${API}/api/sync`)
     if (!res.ok) return

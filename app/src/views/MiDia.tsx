@@ -7,6 +7,7 @@ import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockAc
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
 import { pushRow } from '../lib/snake'
 import ProdIcon from '../components/ProdIcon'
+import EmptyState from '../components/EmptyState'
 import type { Cierre, Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
 
@@ -209,17 +210,14 @@ export default function MiDia() {
             </Card.Content>
           </Card>
         ) : (
-          <Alert>
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{jornada?.estado === 'confirmada' ? 'Turno terminado' : 'Hoy no tenés jornada'}</Alert.Title>
-              <Alert.Description>
-                {jornada?.estado === 'confirmada'
-                  ? 'El dueño confirmó tu rendición. Podés tomar otro turno o volver mañana.'
-                  : 'El dueño todavía no cargó ningún despacho del día.'}
-              </Alert.Description>
-            </Alert.Content>
-          </Alert>
+          <Card><Card.Content className="p-2">
+            <EmptyState icono="jornada"
+              titulo={jornada?.estado === 'confirmada' ? 'Turno terminado' : 'Hoy no tenés jornada'}
+              descripcion={jornada?.estado === 'confirmada'
+                ? 'El dueño confirmó tu rendición. Podés tomar otro turno o volver mañana.'
+                : 'El dueño todavía no cargó ningún despacho del día.'}
+              hint="Tomá un turno libre con el botón +" />
+          </Card.Content></Card>
         )
       )}
 
@@ -519,7 +517,9 @@ function MiHistorial({
           <div><p className="text-base font-extrabold num">{stats.unidades}</p><p className="text-[0.6rem] text-muted uppercase font-bold">unidades</p></div>
           <div><p className="text-base font-extrabold num">{fmtMoney(stats.vendido)}</p><p className="text-[0.6rem] text-muted uppercase font-bold">vendido</p></div>
         </div>
-        {fechas.length === 0 && <p className="text-xs text-muted">Todavía no tenés jornadas registradas.</p>}
+        {fechas.length === 0 && (
+          <EmptyState icono="jornada" titulo="Sin historial" descripcion="Todavía no tenés jornadas registradas." hint="Cuando completes un turno aparece acá"/>
+        )}
         {fechas.map(fecha => {
           const js = porFecha.get(fecha)!
           const totalDia = js.reduce((a, j) => a + (j.cierre ? totalVentas(j, productos) : ventasTotal(misVentas.filter(v => v.jornadaId === j.id))), 0)
