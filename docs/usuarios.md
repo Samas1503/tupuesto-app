@@ -10,7 +10,7 @@ Desde la migración (`app/scripts/migrate-usuarios.mjs`) hay **una sola tabla `u
 | `id` | serial | pk — las jornadas referencian `vendedor_id` aquí |
 | `rol` | `'admin'\|'duenio'\|'vendedor'` | define vistas y acceso |
 | `nombre`, `email` | | email es unique + login |
-| `pin_hash` | sha256 hex | nunca el PIN en claro — se hashea cliente (Web Crypto) y server (api) |
+| `pin_hash` | `salt:hash` scrypt | nunca el PIN en claro — hash server-side scrypt (`api/_lib/pin.js`); sha256 legacy migra en el próximo login |
 | `debe_cambiar_pin` | bool | alta/reseteo → el próximo ingreso pide PIN nuevo |
 | `activo`, `eliminado` | bool | eliminación lógica restaurable por admin |
 | `duenio_id` | int? | solo vendedores — dependencia con su dueño (`usuarios.duenio_id → usuarios.id`) |
@@ -21,7 +21,7 @@ Desde la migración (`app/scripts/migrate-usuarios.mjs`) hay **una sola tabla `u
 
 Un solo form email+PIN detecta el rol por la fila de `usuarios`.
 **Desde el hardening de auth**: el PIN lo verifica el **server** (`loginServer` → `/api/sync`), no el cliente. Solo la demo (`@demo.tupuesto`) sigue verificando local; hay fallback offline contra Dexie.
-- compara `SHA-256(pin)` vs `pinHash` (`lib/pin.ts` → `hashPin`)
+- el server compara `scrypt(pin, salt)` vs `pin_hash` (`api/_lib/pin.js` → `verifyPin`); el cliente solo guarda sha256 para verificar offline
 - `debeCambiarPin` → flujo "Elegí tu PIN" (4-8 dígitos) → `pin_hash` + `pushRow('usuarios')`
 - sesión en `localStorage`: `tp-rol` + `tp-user-id`
 
@@ -38,7 +38,7 @@ Un solo form email+PIN detecta el rol por la fila de `usuarios`.
 `components/ResetPin.tsx` (inline, no modal):
 1. email → `POST /api/request-reset` `{email}` — código 6 dígitos al correo (Resend)
 2. código + PIN nuevo → `POST /api/verify-reset` `{email, codigo, nuevoPin}` —
-   valida ≤15min + no usado, escribe `pin_hash` (SHA-256 server-side) y marca usado
+   valida ≤15min + no usado, escribe `pin_hash` (scrypt `salt:hash` server-side) y marca usado
 3. éxito → ya puede entrar
 
 ## Temas por categoría

@@ -6,7 +6,7 @@ Token firmado server-side (HMAC-SHA256, estilo JWT liviano, sin dependencias). E
 
 ## Flujo
 
-1. `POST /api/sync {accion:'login', email, pin}` → el server verifica `pin_hash` en Neon (SHA-256) → devuelve `{token, usuario}`.
+1. `POST /api/sync {accion:'login', email, pin}` → el server verifica `pin_hash` (scrypt `salt:hash`, `api/_lib/pin.js`) → el server verifica `pin_hash` en Neon (scrypt con salt, `api/_lib/pin.js` — legacy sha256 migra transparente en el login) → devuelve `{token, usuario}`.
 2. El cliente guarda `tp-token` en localStorage + `tp-login-at` para el TTL local.
 3. Todas las llamadas a `/api/sync` (pull y push) llevan `Authorization: Bearer <token>` → 401 si falta o expira.
 4. `pin_hash` **no viaja en el pull** — solo el login devuelve el propio (para verificar offline).
@@ -31,6 +31,6 @@ Mismo TTL en el token (`api/_lib/auth.js` → `TTL_MS`) y en la lectura local (`
 ## Qué NO es (límites honestos)
 
 - No es JWT estándar (sin librería) — formato propio `base64url(payload).firma`, compatible conceptualmente.
-- El secret por defecto es `tupuesto-dev-secret-cambiar-en-prod` — **configurar `AUTH_SECRET` en Vercel**.
+- `AUTH_SECRET` y `MP_WEBHOOK_SECRET` ya están seteados en Vercel prod (el default solo aplica en dev local).
 - Los endpoints públicos por diseño: `/api/firmar` (firma por token de contrato), `/api/contratos?cupos=1` (landing), `/api/request-reset`, `/api/verify-reset`, `/api/send-pin` (limitado a usuarios existentes), `/api/mp-*` (Mercado Pago).
-- Endpoints admin sin auth todavía: mutaciones de `/api/contratos` y `/api/paquete` — pendiente forzar `rol === 'admin'` en el token.
+- Admin-only ya enforced: `GET`/`POST` `/api/contratos`, `/api/paquete?contrato_id`, `anular` → `authOf` + `rol==='admin'`. `/api/send-pin` → Bearer de cualquier rol + whitelist de `appUrl`.

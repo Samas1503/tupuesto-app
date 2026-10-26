@@ -45,7 +45,8 @@ Sync mapea tablas 1:1 + auth por rol + `negocioId` por tabla.
 
 ## Env vars del backend
 
-- `AUTH_SECRET` — secreto para firmar tokens de sesión (`api/_lib/auth.js`). **Configurarlo en Vercel — el default es solo dev.**
+- `AUTH_SECRET` — secreto para firmar tokens de sesión (`api/_lib/auth.js`). Ya seteado en Vercel prod.
+- `MP_WEBHOOK_SECRET` — firma del webhook de MP (`x-signature`). Ya seteado; sin él el webhook solo re-fetch (sin verificar).
 - `DATABASE_URL`, `RESEND_API_KEY`, `FROM_EMAIL`, credenciales MP — en Vercel.
 
 ## Emails (Resend)

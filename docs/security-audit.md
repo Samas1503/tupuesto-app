@@ -14,7 +14,7 @@ Hallazgos resueltos en el hardening de esta ronda. Artefactos: `~/security-audit
 
 - **A1 send-pin relay**: requiere Bearer; `appUrl` whitelist (`tupuesto.vercel.app`/`localhost`).
 - **A2 AUTH_SECRET**: seteado en Vercel (default solo dev).
-- **A3 PIN**: `crypto.getRandomValues` en Vendedores/Admin; pendiente salt/scrypt (documentado).
+- **A3 PIN**: `crypto.getRandomValues` en Vendedores/Admin; scrypt `salt:hash` en `api/_lib/pin.js` — hecho.
 - **A4 OTP brute force**: `intentos` en `codigos_reset` (quema a los 5), consumo atómico en verify-reset, invalidación de códigos previos en request-reset, cooldown 60s en reenvío de firma.
 - **M3 IP forense**: `x-vercel-forwarded-for`/último XFF (no el primero spoofeable).
 - **M4 hash-chain**: advisory lock por contrato + `UNIQUE(contrato_id,prev_hash)` + retry.
@@ -24,6 +24,6 @@ Hallazgos resueltos en el hardening de esta ronda. Artefactos: `~/security-audit
 
 ## Pendiente documentado
 
-- `MP_WEBHOOK_SECRET` en Vercel + mismo valor en el panel de MP.
-- Hash de PIN con scrypt/bcrypt (hoy SHA-256 sin salt).
+- ~~`MP_WEBHOOK_SECRET`~~ — seteado en Vercel (webhook verifica `x-signature`).
+- ~~scrypt PIN~~ — hecho en `api/_lib/pin.js` (`salt:hash`, legacy sha256 migra en login).
 - Scoping del pull podría endurecerse más (datos derivados).
