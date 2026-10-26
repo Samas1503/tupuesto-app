@@ -23,7 +23,7 @@ const INSTRUCCIONES = [
 ]
 
 export default async function handler(req, res) {
-  cors(res, 'GET, OPTIONS')
+  cors(req, res, 'GET, OPTIONS')
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' })
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })

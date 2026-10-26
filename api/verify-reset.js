@@ -7,16 +7,14 @@
 // Respuesta genérica siempre: no se revela si el email existe ni si el
 // código era válido. Env: DATABASE_URL
 import { hashPin } from './_lib/pin.js'
+import { applyCors } from './_lib/cors.js'
 import { neon } from '@neondatabase/serverless'
 import { createHash } from 'node:crypto'
 
 const MAX_INTENTOS = 5
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  if (req.method === 'OPTIONS') return res.status(204).end()
+  if (applyCors(req, res, 'POST, OPTIONS')) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' })
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })
 

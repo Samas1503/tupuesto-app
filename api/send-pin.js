@@ -40,6 +40,7 @@ async function categoriaPara(sql, emailNorm) {
 }
 
 export default async function handler(req, res) {
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' })
   // sesión obligatoria (cualquier rol autenticado, no solo admin)
   const sesion = authOf(req)

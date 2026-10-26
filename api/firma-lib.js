@@ -1,3 +1,4 @@
+import { applyCors } from './_lib/cors.js'
 // Helpers compartidos del flujo de firma electrónica de contratos (T01).
 //
 // Modelo legal (ver .context/work/contratos-firma/debate/synthesis.md):
@@ -405,8 +406,4 @@ export async function enviarEmail({ to, subject, html, attachments }) {
   }
 }
 
-export const cors = (res, methods = 'GET, POST, OPTIONS') => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', methods)
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-}
+export const cors = (req, res, methods = 'GET, POST, OPTIONS') => applyCors(req, res, methods)

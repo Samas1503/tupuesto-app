@@ -5,6 +5,7 @@
 import { neon } from '@neondatabase/serverless'
 import crypto from 'node:crypto'
 import { signToken, authOf } from './_lib/auth.js'
+import { applyCors } from './_lib/cors.js'
 import { verifyPin, hashPin as hashPinScrypt } from './_lib/pin.js'
 
 const TABLAS = {
@@ -22,10 +23,7 @@ const JSONB = {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  if (req.method === 'OPTIONS') return res.status(204).end()
+  if (applyCors(req, res, 'GET, POST, OPTIONS')) return
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })
 
   const sql = neon(process.env.DATABASE_URL)

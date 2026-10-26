@@ -4,16 +4,14 @@
 // Siempre responde 200 genérico (no filtra si el email existe).
 // Env: DATABASE_URL, RESEND_API_KEY, FROM_EMAIL (opcional)
 import { neon } from '@neondatabase/serverless'
+import { applyCors } from './_lib/cors.js'
 import { randomInt } from 'node:crypto'
 import { emailHtml } from './email-template.js'
 
 const EXPIRA_MS = 15 * 60 * 1000 // 15 minutos
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  if (req.method === 'OPTIONS') return res.status(204).end()
+  if (applyCors(req, res, 'POST, OPTIONS')) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' })
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })
   if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'RESEND_API_KEY no configurada' })

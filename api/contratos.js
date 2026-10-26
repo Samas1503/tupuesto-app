@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     return res.json({ cupos, tomados: Number(t[0].c), quedan: Math.max(0, cupos - Number(t[0].c)) })
   }
 
-  cors(res)
+  cors(req, res)
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })
   const sql = neon(process.env.DATABASE_URL)

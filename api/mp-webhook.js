@@ -28,6 +28,7 @@ function firmaValida(req, paymentId, secret) {
 }
 
 export default async function handler(req, res) {
+  if (applyCors(req, res)) return
   // MP puede mandar el evento por body o por query
   const type = req.body?.type ?? req.query?.type
   const paymentId = req.body?.data?.id ?? req.query?.['data.id']

@@ -30,7 +30,7 @@ import {
 const FIRMA_RE = /^data:image\/(png|jpe?g);base64,[a-z0-9+/=\s]+$/i
 
 export default async function handler(req, res) {
-  cors(res)
+  cors(req, res)
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })
   const sql = neon(process.env.DATABASE_URL)
