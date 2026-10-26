@@ -3,6 +3,7 @@ import { Button, Tabs } from '@heroui/react'
 import { IHoy, IDespacho, IPrecios, IPuestos, IEquipo, IStats, IReportes } from './components/icons'
 import PlanBadge from './components/PlanBadge'
 import NotifBell from './components/NotifBell'
+import SoporteBtn from './components/SoporteBtn'
 import { pedirPermisoNotif, avisarNuevasPendientes } from './lib/notificar'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { Rol } from './types'
@@ -183,6 +184,7 @@ export default function App() {
 
           <div className="flex items-center gap-2 min-w-0 shrink-0">
             <NotifBell />
+            <SoporteBtn />
             <span className="hidden sm:inline"><PlanBadge /></span>
             <span className="text-sm font-semibold truncate max-w-36">{nombreSesion ?? '…'}</span>
             <Button size="sm" variant="tertiary" onPress={salir}>Salir</Button>

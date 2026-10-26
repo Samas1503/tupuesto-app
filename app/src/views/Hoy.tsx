@@ -6,6 +6,7 @@ import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, me
 import { useEffect, useState } from 'react'
 import EmptyState from '../components/EmptyState'
 import { pushRow } from '../lib/snake'
+import { notificar } from '../lib/notificar'
 import { syncPull } from '../lib/sync'
 import type { Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
@@ -91,6 +92,17 @@ export default function Hoy() {
       await db.solicitudes.update(solId, { estado: 'rechazada', resueltaAt: Date.now() })
     }
     void pushRow('solicitudes', solId)
+    // aviso al vendedor que pidió el cierre
+    const sol = solicitudes.find(x => x.id === solId)
+    if (sol?.vendedorId) {
+      void notificar({
+        usuarioId: sol.vendedorId, tipo: 'solicitud',
+        titulo: aprobar ? 'Tu cierre fue aprobado' : 'Tu solicitud fue rechazada',
+        descripcion: aprobar
+          ? `${sol.motivo ? `"${sol.motivo}" — ` : ''}El dueño aprobó tu cierre anticipado. Podés hacer el conteo físico.`
+          : 'El dueño no aprobó el cierre anticipado — seguí vendiendo hasta la hora fin.',
+      })
+    }
   }
 
   // productos del día: sobrante de ayer + despachado hoy (+repos) − vendido registrado
