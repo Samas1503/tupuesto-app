@@ -1101,7 +1101,7 @@ body {
     var cache = Number(localStorage.getItem(CACHE_KEY))
     var ts = Number(localStorage.getItem(CACHE_TS))
     if (cache && (Date.now() - ts) < SEMANA) { pintar(cache); return }
-    fetch('https://dolarapi.com/v1/dolares/blue')
+    fetch('https://dolarapi.com/v1/dolares/oficial')
       .then(function(r) { return r.json() })
       .then(function(d) {
         var v = 10 * d.venta
