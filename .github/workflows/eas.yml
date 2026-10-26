@@ -1,0 +1,42 @@
+name: Mobile — OTA update + build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build:
+        description: 'Forzar build nativo (AAB/IPA + submit)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  ota:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: eas update --branch production --message "${{ github.sha }} — ${{ github.event.head_commit.message }}" --non-interactive
+
+  build:
+    if: github.event.inputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: eas build --platform all --profile production --auto-submit --non-interactive

@@ -48,14 +48,23 @@ export async function syncPull() {
 }
 
 let loopTimer: ReturnType<typeof setInterval> | null = null
+let appSub: { remove: () => void } | null = null
 
-/** pull inicial + refresco periódico cada 30 s — devuelve función de stop */
+/** pull inicial + al volver a foreground + cada 5 min — devuelve función de stop.
+ *  En vez de polling de 30s: la app refresca cuando la abrís/volvés o cada 5 min si quedó abierta.
+ *  El outbox drena al reconectar; el push de datos nuevos llega por expo-notifications. */
 export function startSyncLoop(): () => void {
   void syncPull()
   if (loopTimer) clearInterval(loopTimer)
-  loopTimer = setInterval(syncPull, 30_000)
+  // pull al volver a la app — reemplaza el polling frecuente (batería + requests)
+  import('react-native').then(({ AppState }) => {
+    appSub?.remove()
+    appSub = AppState.addEventListener('change', st => { if (st === 'active') void syncPull() })
+  }).catch(() => {})
+  loopTimer = setInterval(syncPull, 5 * 60_000) // 5 min si queda abierta
   return () => {
     if (loopTimer) { clearInterval(loopTimer); loopTimer = null }
+    appSub?.remove(); appSub = null
   }
 }
 
