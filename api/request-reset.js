@@ -35,6 +35,12 @@ export default async function handler(req, res) {
 
     const codigo = String(randomInt(0, 1_000_000)).padStart(6, '0')
     const ahora = Date.now()
+    // A4 — un solo código vigente por usuario: los anteriores quedan quemados
+    await sql.query(
+      `UPDATE codigos_reset SET usado = TRUE
+       WHERE usuario_id = $1 AND entidad = 'usuarios' AND usado = FALSE`,
+      [user.id],
+    )
     await sql.query(
       `INSERT INTO codigos_reset (entidad, usuario_id, codigo, expires_at, usado, created_at)
        VALUES ($1, $2, $3, $4, FALSE, $5)`,

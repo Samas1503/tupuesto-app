@@ -57,9 +57,43 @@ export default async function handler(req, res) {
   if (!sesion) return res.status(401).json({ error: 'no autorizado' })
 
   if (req.method === 'GET') {
+    // scoping por sesión — cada rol solo baja datos de su tenant
+    const isAdmin = sesion.rol === 'admin'
+    const tenant = sesion.rol === 'duenio' ? sesion.id : sesion.duenioId
+    let queries
+    if (isAdmin) {
+      queries = Object.fromEntries(Object.keys(TABLAS).map(t => [t, [`SELECT * FROM ${t}`]]))
+    } else if (tenant != null) {
+      // dueño (tenant = su propio id) o vendedor (tenant = el id de su dueño)
+      const p = [tenant]
+      queries = {
+        usuarios:    ['SELECT * FROM usuarios WHERE id = $1 OR duenio_id = $1', p],
+        puestos:     ['SELECT * FROM puestos WHERE duenio_id = $1 OR duenio_id IS NULL', p],
+        productos:   ['SELECT * FROM productos WHERE duenio_id = $1 OR duenio_id IS NULL', p],
+        jornadas:    ['SELECT * FROM jornadas WHERE duenio_id = $1 OR duenio_id IS NULL', p],
+        ventas:      ['SELECT * FROM ventas WHERE jornada_id IN (SELECT id FROM jornadas WHERE duenio_id = $1)', p],
+        solicitudes: ['SELECT * FROM solicitudes WHERE duenio_id = $1 OR duenio_id IS NULL', p],
+        notificaciones: ['SELECT * FROM notificaciones WHERE usuario_id = $1 OR usuario_id IN (SELECT id FROM usuarios WHERE duenio_id = $1)', p],
+      }
+    } else {
+      // vendedor sin dueño asignado — solo lo estrictamente propio
+      const p = [sesion.id]
+      queries = {
+        usuarios:    ['SELECT * FROM usuarios WHERE id = $1', p],
+        puestos:     ['SELECT * FROM puestos WHERE 1 = 0'],
+        productos:   ['SELECT * FROM productos WHERE 1 = 0'],
+        jornadas:    ['SELECT * FROM jornadas WHERE vendedor_id = $1', p],
+        ventas:      ['SELECT * FROM ventas WHERE 1 = 0'],
+        solicitudes: ['SELECT * FROM solicitudes WHERE 1 = 0'],
+        notificaciones: ['SELECT * FROM notificaciones WHERE usuario_id = $1', p],
+      }
+    }
     const out = {}
-    for (const t of Object.keys(TABLAS)) out[t] = await sql.query(`SELECT * FROM ${t}`)
-    // pin_hash nunca baja al cliente — la verificación es server-side
+    for (const t of Object.keys(TABLAS)) {
+      const [q, params] = queries[t]
+      out[t] = await sql.query(q, params)
+    }
+    // pin_hash nunca baja al cliente — la verificación es server-side (tampoco para admin)
     out.usuarios = out.usuarios.map(u => { const { pin_hash, ...rest } = u; return rest })
     return res.json(out)
   }
@@ -68,18 +102,62 @@ export default async function handler(req, res) {
     const { tabla, rows } = req.body ?? {}
     const allowed = TABLAS[tabla]
     if (!allowed || !Array.isArray(rows)) return res.status(400).json({ error: 'tabla/rows inválidos' })
+    const isAdmin = sesion.rol === 'admin'
+    const tenant = sesion.rol === 'duenio' ? sesion.id : sesion.duenioId
     let n = 0
     for (const row of rows) {
-      const cols = Object.keys(row).filter(k => k === 'id' ? true : allowed.includes(k))
       if (!row.id) return res.status(400).json({ error: 'cada row necesita id' })
+
+      // ownership — admin escribe todo; el resto solo dentro de su tenant
+      if (!isAdmin) {
+        if (tabla === 'usuarios') {
+          // solo su propia fila y solo pin_hash/debe_cambiar_pin (flujo elegirPIN)
+          if (Number(row.id) !== sesion.id) {
+            return res.status(403).json({ error: 'solo podés modificar tu propio usuario' })
+          }
+          const prohibidas = Object.keys(row).filter(k => !['id', 'pin_hash', 'debe_cambiar_pin'].includes(k))
+          if (prohibidas.length) {
+            return res.status(403).json({ error: `columnas no permitidas: ${prohibidas.join(', ')}` })
+          }
+        } else if (tabla === 'notificaciones') {
+          // usuario_id propio o de un usuario del mismo tenant
+          if (row.usuario_id == null) return res.status(400).json({ error: 'notificaciones requiere usuario_id' })
+          if (Number(row.usuario_id) !== sesion.id) {
+            const dest = await sql.query('SELECT duenio_id FROM usuarios WHERE id = $1', [row.usuario_id])
+            if (tenant == null || !dest[0] || Number(dest[0].duenio_id) !== tenant) {
+              return res.status(403).json({ error: 'notificación fuera de tu cuenta' })
+            }
+          }
+        } else if (tabla === 'ventas') {
+          // ventas no tiene duenio_id — se valida por la jornada a la que pertenece
+          if (row.jornada_id == null) return res.status(400).json({ error: 'ventas requiere jornada_id' })
+          const j = await sql.query('SELECT duenio_id, vendedor_id FROM jornadas WHERE id = $1', [row.jornada_id])
+          const ok = j[0] && (tenant != null
+            ? Number(j[0].duenio_id) === tenant
+            : Number(j[0].vendedor_id) === sesion.id)
+          if (!ok) return res.status(403).json({ error: 'jornada fuera de tu cuenta' })
+        } else {
+          // tablas con duenio_id: debe ser el tenant de la sesión; si falta, se setea
+          if (row.duenio_id != null && Number(row.duenio_id) !== tenant) {
+            return res.status(403).json({ error: 'duenio_id no corresponde a tu cuenta' })
+          }
+          if (row.duenio_id == null) row.duenio_id = tenant
+        }
+      }
+
+      const cols = Object.keys(row).filter(k => k === 'id' ? true : allowed.includes(k))
       const vals = cols.map(c => {
         const v = row[c]
         return JSONB[tabla]?.has(c) && v != null ? JSON.stringify(v) : v
       })
-      const sets = cols.filter(c => c !== 'id').map(c => `${c} = EXCLUDED.${c}`).join(', ')
+      const updates = cols.filter(c => c !== 'id')
+      // si solo viene el id no hay nada que actualizar — DO NOTHING evita SQL inválido
+      const onConflict = updates.length
+        ? `DO UPDATE SET ${updates.map(c => `${c} = EXCLUDED.${c}`).join(', ')}`
+        : 'DO NOTHING'
       await sql.query(
         `INSERT INTO ${tabla} (${cols.join(', ')}) VALUES (${cols.map((_, i) => '$' + (i + 1)).join(', ')})
-         ON CONFLICT (id) DO UPDATE SET ${sets}`,
+         ON CONFLICT (id) ${onConflict}`,
         vals,
       )
       n++

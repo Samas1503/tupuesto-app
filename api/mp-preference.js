@@ -15,7 +15,10 @@ export default async function handler(req, res) {
   if (!base) return res.status(500).json({ error: 'BASE_URL no configurado' })
 
   const { leadId, nombre } = req.body ?? {}
-  const ref = leadId || `sena-${Date.now()}`
+  // external_reference es público por diseño, pero se acota a 64 chars
+  // alfanuméricos (con guion) — evita inyectar texto arbitrario en el pago
+  const lead = typeof leadId === 'string' ? leadId.trim() : ''
+  const ref = /^[a-zA-Z0-9-]{1,64}$/.test(lead) ? lead : `sena-${Date.now()}`
 
   const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',

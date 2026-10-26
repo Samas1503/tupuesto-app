@@ -10,11 +10,13 @@
 //      credencial, reemplaza al login). Devuelve {ok, estado, datos, cuerpo,…}
 //
 // Env: DATABASE_URL, RESEND_API_KEY, FROM_EMAIL (opcional), BASE_URL (opcional)
-// Nota: como el resto de la API (send-pin, sync) no hay auth server-side — el
-// gating es client-side (la vista admin solo es accesible con login admin).
+// Auth: GET ?token= y GET ?cupos=1 son públicos (el token UUID es la credencial
+// del suscriptor; cupos lo consulta la landing). GET lista y POST (crear/anular)
+// exigen Authorization: Bearer con rol 'admin'.
 import { neon } from '@neondatabase/serverless'
 import { emailHtml } from './email-template.js'
 import { appendEvento, clientIp, clientUa, cors, enviarEmail, textoCanonico } from './firma-lib.js'
+import { authOf } from './_lib/auth.js'
 
 const baseUrl = () => (process.env.BASE_URL ?? 'https://tupuesto.app').replace(/\/$/, '')
 const linkDe = (token) => `${baseUrl()}/app/firmar?token=${token}`
@@ -30,7 +32,9 @@ const contratoPublico = (c) => ({
 
 // Normaliza el input (plano o {datos:{…}}, snake_case o camelCase) al shape
 // canónico camelCase que espera la plantilla de T03 (api/templates/contrato-v1.js).
-// Los campos extra del caller se preservan dentro de datos.
+// WHITELIST estricta: solo campos del suscriptor. Nunca se preservan claves
+// extra del body — en particular proveedor*: el proveedor del texto legal es
+// siempre el PROVEEDOR de contrato-v1.js, un cliente no puede reescribirlo.
 function normDatos(body) {
   const src = body?.datos && typeof body.datos === 'object' && !Array.isArray(body.datos) ? body.datos : body
   const pick = (...ks) => {
@@ -40,16 +44,17 @@ function normDatos(body) {
     }
     return undefined
   }
-  const datos = { ...src }
-  datos.razonSocial = pick('razonSocial', 'razon_social', 'razon', 'suscriptor')
-  datos.cuit = pick('cuit', 'CUIT')
-  datos.email = pick('email', 'mail', 'correo')
-  datos.domicilio = pick('domicilio', 'domicilio_legal', 'direccion')
-  datos.plan = pick('plan')
-  datos.precio = pick('precio', 'monto', 'price')
-  for (const k of ['razon_social', 'razon', 'suscriptor', 'CUIT', 'mail', 'correo', 'domicilio_legal', 'direccion', 'monto', 'price', 'datos',
-                   'accion', 'id', 'duenio_id', 'duenioId', 'plantilla_version', 'plantillaVersion', 'token', 'paso']) {
-    delete datos[k]
+  const datos = {
+    razonSocial: pick('razonSocial', 'razon_social', 'razon', 'suscriptor'),
+    cuit: pick('cuit', 'CUIT'),
+    email: pick('email', 'mail', 'correo'),
+    domicilio: pick('domicilio', 'domicilio_legal', 'direccion'),
+    plan: pick('plan'),
+    precio: pick('precio', 'monto', 'price'),
+    fecha: pick('fecha'),
+    tipo: pick('tipo'),
+    plazoMeses: pick('plazoMeses', 'plazo_meses'),
+    esFundador: pick('esFundador', 'es_fundador'),
   }
   for (const k of Object.keys(datos)) if (datos[k] === undefined) delete datos[k]
   if (typeof datos.email === 'string') datos.email = datos.email.toLowerCase()
@@ -92,6 +97,11 @@ export default async function handler(req, res) {
         firmado_at: c.firmado_at, anclaje_pendiente: c.anclaje_pendiente, pdf_hash: c.pdf_hash,
       })
     }
+    // lista completa — solo admin (el ?token= de arriba queda público)
+    const sesion = authOf(req)
+    if (sesion?.rol !== 'admin') {
+      return res.status(sesion ? 403 : 401).json({ error: 'no autorizado' })
+    }
     const rows = await sql.query(
       `SELECT id, token, duenio_id, plantilla_version, datos, estado, pdf_hash,
               anclaje_pendiente, provider, envelope_id, created_at, enviado_at, firmado_at
@@ -101,6 +111,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' })
+  // crear/anular — solo admin
+  const sesion = authOf(req)
+  if (sesion?.rol !== 'admin') {
+    return res.status(sesion ? 403 : 401).json({ error: 'no autorizado' })
+  }
   const { accion, id } = req.body ?? {}
 
   /* ── POST acción anular ─────────────────────────────────────── */

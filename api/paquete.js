@@ -13,6 +13,7 @@
 // Env: DATABASE_URL
 import { neon } from '@neondatabase/serverless'
 import { appendEvento, clientIp, clientUa, cors, verificarCadena } from './firma-lib.js'
+import { authOf } from './_lib/auth.js'
 
 const INSTRUCCIONES = [
   '1. Integridad del documento: bajar el PDF (pdf_base64), recomputar SHA-256 y comparar con pdf_hash.',
@@ -31,6 +32,12 @@ export default async function handler(req, res) {
   const { contrato_id, token } = req.query ?? {}
   let rows
   if (contrato_id != null) {
+    // export por id — solo admin (por ?token= queda público: es la copia
+    // probatoria del propio firmante, el token UUID es su credencial)
+    const sesion = authOf(req)
+    if (sesion?.rol !== 'admin') {
+      return res.status(sesion ? 403 : 401).json({ error: 'no autorizado' })
+    }
     const cid = Number(contrato_id)
     if (!Number.isInteger(cid)) return res.status(400).json({ error: 'contrato_id inválido' })
     rows = await sql.query(`SELECT * FROM contratos WHERE id = $1 LIMIT 1`, [cid])

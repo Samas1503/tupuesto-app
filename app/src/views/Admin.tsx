@@ -9,10 +9,11 @@ import { db } from '../db'
 import { cobrado } from '../lib/arqueo'
 import { fmtFecha, fmtMoney } from '../lib/format'
 import { pushRow } from '../lib/snake'
+import { authHeader } from '../lib/auth'
 import { hashPin } from '../lib/pin'
 import type { Categoria, EstadoJornada, Puesto } from '../types'
 
-function genPin() { return String(Math.floor(1000 + Math.random() * 9000)) }
+function genPin() { return String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0') }
 
 const CATEGORIAS: { id: Categoria; label: string }[] = [
   { id: 'comida', label: 'Comida' },
@@ -77,7 +78,7 @@ export default function Admin() {
     setNombre(''); setEmail(''); setCategoria('comida')
     try {
       await fetch('/api/send-pin', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify({ email: e, nombre: n, pin, appUrl: location.origin + '/app' }),
       })
     } catch { /* sin api en dev — el PIN queda en la ficha */ }

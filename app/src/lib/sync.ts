@@ -59,10 +59,12 @@ export function startSyncLoop() {
 /** push de una tabla hacia Neon (upsert por id) */
 export async function syncPush(tabla: string, rows: unknown[]) {
   try {
-    await fetch(`${API}/api/sync`, {
+    const res = await fetch(`${API}/api/sync`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({ tabla, rows }),
     })
+    // token vencido/inválido → forzar re-login (igual que el pull)
+    if (res.status === 401) localStorage.removeItem('tp-token')
   } catch { /* sin red — queda para el próximo sync */ }
 }

@@ -1,5 +1,5 @@
 // Token de sesión firmado con HMAC-SHA256 — tipo JWT liviano sin dependencias.
-// Formato: base64url(id|rol|exp) + "." + firma. El servidor lo firma al login
+// Formato: base64url(id|rol|exp|duenio_id) + "." + firma. El servidor lo firma al login
 // y los endpoints lo verifican — sin DB, stateless.
 import crypto from 'node:crypto'
 
@@ -13,8 +13,11 @@ const TTL_MS = {
 }
 
 export function signToken(usuario) {
-  const exp = TTL_MS[usuario.rol] == null ? 0 : Date.now() + TTL_MS[usuario.rol]
-  const payload = `${usuario.id}|${usuario.rol}|${exp}`
+  // rol desconocido → se firma como vendedor (TTL corto), nunca sesión eterna
+  const rol = usuario.rol === 'admin' || usuario.rol === 'duenio' ? usuario.rol : 'vendedor'
+  const ttl = TTL_MS[rol]
+  const exp = ttl == null ? 0 : Date.now() + ttl
+  const payload = `${usuario.id}|${rol}|${exp}|${usuario.duenio_id ?? ''}`
   const sig = crypto.createHmac('sha256', SECRET).update(payload).digest('base64url')
   return `${Buffer.from(payload).toString('base64url')}.${sig}`
 }
@@ -26,9 +29,12 @@ export function verifyToken(token) {
     const payload = Buffer.from(p64, 'base64url').toString()
     const expected = crypto.createHmac('sha256', SECRET).update(payload).digest('base64url')
     if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null
-    const [id, rol, exp] = payload.split('|')
+    const parts = payload.split('|')
+    const [id, rol, exp] = parts
+    // compat: tokens viejos (3 campos) no traen duenio_id → null
+    const duenioId = parts.length >= 4 && parts[3] !== '' ? Number(parts[3]) : null
     if (Number(exp) !== 0 && Date.now() > Number(exp)) return null
-    return { id: Number(id), rol, exp: Number(exp) }
+    return { id: Number(id), rol, duenioId, exp: Number(exp) }
   } catch { return null }
 }
 

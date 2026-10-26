@@ -20,6 +20,10 @@
 //   3. Trigger BEFORE UPDATE OR DELETE que aborta con excepción — enforce
 //      append-only a nivel DB, no solo por convención de la app.
 //   4. Índices (token, estado, contrato_id) todos IF NOT EXISTS.
+//   5. W4 (hardening): UNIQUE (contrato_id, prev_hash) en firma_eventos —
+//      una cadena no puede bifurcarse; columna codigos_reset.intentos para
+//      el contador anti brute-force de OTP; tabla mp_webhooks_procesados
+//      para idempotencia del webhook de Mercado Pago.
 //
 // Verificación de la cadena: node app/scripts/verify-firma-chain.mjs [contrato_id]
 
@@ -112,6 +116,20 @@ await sql.query(`
   )
 `)
 await sql.query(`CREATE INDEX IF NOT EXISTS firma_eventos_contrato_idx ON firma_eventos (contrato_id, id)`)
+// W4/M4 — una cadena sana usa cada prev_hash UNA vez por contrato: el índice
+// UNIQUE convierte cualquier bifurcación residual en error (appendEvento lo
+// detecta y reintenta). Si ya existen forks de races viejas, el CREATE falla
+// y el SELECT previo muestra las puntas conflictivas para resolverlas a mano.
+const forks = await sql.query(
+  `SELECT contrato_id, prev_hash, COUNT(*)::int n
+   FROM firma_eventos GROUP BY contrato_id, prev_hash HAVING COUNT(*) > 1`,
+)
+if (forks.length) {
+  console.error('ATENCIÓN — bifurcaciones preexistentes en firma_eventos (resolver antes de crear el UNIQUE):')
+  for (const f of forks) console.error(`  contrato ${f.contrato_id}: ${f.n} eventos con prev_hash ${String(f.prev_hash).slice(0, 16)}…`)
+  process.exit(1)
+}
+await sql.query(`CREATE UNIQUE INDEX IF NOT EXISTS firma_eventos_prev_hash ON firma_eventos (contrato_id, prev_hash)`)
 console.log('tabla firma_eventos: OK')
 
 /* ── 3. enforce append-only a nivel DB ────────────────────────── */
@@ -130,6 +148,22 @@ await sql.query(`
     FOR EACH ROW EXECUTE FUNCTION firma_eventos_no_update()
 `)
 console.log('trigger append-only: OK')
+
+/* ── 4. hardening W4 ──────────────────────────────────────────── */
+// A4 — contador de intentos fallidos en codigos_reset (OTP anti brute-force).
+// La tabla la crea la migración de usuarios; IF EXISTS la tolera ausente.
+await sql.query(`ALTER TABLE IF EXISTS codigos_reset ADD COLUMN IF NOT EXISTS intentos INT NOT NULL DEFAULT 0`)
+console.log('codigos_reset.intentos: OK')
+
+// M5 — idempotencia del webhook de Mercado Pago: un payment_id se procesa
+// una sola vez aunque MP reintente la notificación.
+await sql.query(`
+  CREATE TABLE IF NOT EXISTS mp_webhooks_procesados (
+    payment_id  BIGINT PRIMARY KEY,
+    created_at  BIGINT NOT NULL
+  )
+`)
+console.log('tabla mp_webhooks_procesados: OK')
 
 /* ── resumen ──────────────────────────────────────────────────── */
 const nContratos = await sql.query(`SELECT COUNT(*)::int n FROM contratos`)

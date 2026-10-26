@@ -4,8 +4,20 @@
 // (usuarios.duenio_id), duenio → su categoría, admin/otro → 'otro'.
 // Env: RESEND_API_KEY (re.dashboard.resend.com), FROM_EMAIL (opcional),
 //      DATABASE_URL (opcional — sin DB el accent cae en 'otro')
+// Auth: requiere sesión válida (cualquier rol — los dueños mandan PIN a sus
+// vendedores, el admin a los dueños). Sin token → 401.
 import { neon } from '@neondatabase/serverless'
 import { emailHtml } from './email-template.js'
+import { authOf } from './_lib/auth.js'
+
+const APP_URL_DEFAULT = 'https://tupuesto.vercel.app/app'
+// appUrl viene del cliente y entra como link en el email — whitelist:
+// solo la app real o localhost (dev). Cualquier otra cosa → default, así
+// nadie puede usar el remitente verificado para mandar links arbitrarios.
+const appUrlSegura = (u) =>
+  typeof u === 'string' && (u.startsWith('https://tupuesto.vercel.app') || u.startsWith('http://localhost'))
+    ? u
+    : APP_URL_DEFAULT
 
 // Busca la categoría que define el accent del email para ese usuario.
 async function categoriaPara(sql, emailNorm) {
@@ -29,6 +41,9 @@ async function categoriaPara(sql, emailNorm) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' })
+  // sesión obligatoria (cualquier rol autenticado, no solo admin)
+  const sesion = authOf(req)
+  if (!sesion) return res.status(401).json({ error: 'no autorizado' })
   const key = process.env.RESEND_API_KEY
   if (!key) return res.status(500).json({ error: 'RESEND_API_KEY no configurada' })
 
@@ -60,7 +75,7 @@ export default async function handler(req, res) {
         intro: 'Te crearon una cuenta en <b>TuPuesto</b>. Tu PIN de acceso es:',
         codigo: pin,
         codigoPie: 'En el primer ingreso te va a pedir elegir tu propio PIN — este es de un solo uso.',
-        ctaUrl: appUrl ?? 'https://tupuesto.vercel.app/app',
+        ctaUrl: appUrlSegura(appUrl),
         ctaTexto: 'Entrar a la app',
         nota: 'Si no esperabas este email, ignoralo.',
       }),

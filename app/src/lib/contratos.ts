@@ -3,6 +3,8 @@
  *  embebido, y las variantes de shape ({contrato:…}, array directo, {items:…})
  *  para que el front no se rompa si el backend devuelve algo distinto. */
 
+import { authHeader } from './auth'
+
 export interface Contrato {
   id: number | string
   token?: string
@@ -126,9 +128,9 @@ export function linkFirma(c: Pick<Contrato, 'token' | 'link'>): string {
 
 /* ── endpoints ─────────────────────────────────────────────────────── */
 
-/** GET /api/contratos — lista (admin) */
+/** GET /api/contratos — lista (admin, requiere Bearer) */
 export async function listarContratos(): Promise<Contrato[]> {
-  return normLista(await api('/api/contratos'))
+  return normLista(await api('/api/contratos', { headers: { ...authHeader() } }))
 }
 
 /** POST /api/contratos — crea + envía el link por email.
@@ -150,7 +152,7 @@ export async function crearContrato(nuevo: NuevoContrato): Promise<{ contrato: C
   }
   if (nuevo.domicilio) datos.domicilio = nuevo.domicilio
   const res = await fetch('/api/contratos', {
-    method: 'POST', headers: JSON_HEADERS,
+    method: 'POST', headers: { ...JSON_HEADERS, ...authHeader() },
     body: JSON.stringify({
       datos,
       duenio_id: nuevo.duenioId ?? null,
@@ -280,11 +282,12 @@ export async function enviarFirma(opts: {
  *  (el nombre del contrato del ticket era /api/contratos-paquete — fallback) */
 export async function getPaquete(contratoId: number | string): Promise<unknown> {
   const id = encodeURIComponent(String(contratoId))
+  const init: RequestInit = { headers: { ...authHeader() } } // ?contrato_id es admin — el backend exige Bearer
   try {
-    return await api(`/api/paquete?contrato_id=${id}`)
+    return await api(`/api/paquete?contrato_id=${id}`, init)
   } catch (e) {
     if (!(e instanceof Error) || !/404|no encontr/i.test(e.message)) throw e
-    return api(`/api/contratos-paquete?contrato_id=${id}`)
+    return api(`/api/contratos-paquete?contrato_id=${id}`, init)
   }
 }
 

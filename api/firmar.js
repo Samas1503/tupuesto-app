@@ -21,9 +21,10 @@ import { neon } from '@neondatabase/serverless'
 import { randomInt } from 'node:crypto'
 import { emailHtml } from './email-template.js'
 import {
-  ENTIDAD_OTP, OTP_EXPIRA_MS, MAX_FIRMA_BYTES,
+  ENTIDAD_OTP, OTP_EXPIRA_MS, OTP_REENVIO_MS, MAX_FIRMA_BYTES, MAX_FIRMA_PIXELS,
   appendEvento, anclarOts, buildContratoPdf, buscarOtpVigente, clientIp,
-  clientUa, consumirOtp, cors, enviarEmail, sha256hex, textoCanonico,
+  clientUa, consumirOtp, cors, enviarEmail, imagenPixels,
+  registrarIntentoOtpFallido, sha256hex, textoCanonico,
 } from './firma-lib.js'
 
 const FIRMA_RE = /^data:image\/(png|jpe?g);base64,[a-z0-9+/=\s]+$/i
@@ -83,7 +84,12 @@ export default async function handler(req, res) {
       const codigoNorm = String(codigo).trim()
       if (!/^\d{6}$/.test(codigoNorm)) return res.status(400).json({ error: 'código inválido' })
       const otp = await buscarOtpVigente(sql, contrato.id, codigoNorm)
-      if (!otp) return res.status(400).json({ error: 'código inválido o vencido' })
+      if (!otp) {
+        // A4 — cuenta el intento sobre el último código vigente; a los
+        // MAX_INTENTOS_OTP fallidos lo quema. Respuesta genérica siempre.
+        await registrarIntentoOtpFallido(sql, contrato.id)
+        return res.status(400).json({ error: 'código inválido o vencido' })
+      }
       await appendEvento(sql, contrato.id, 'otp_validado', { otp_id: otp.id, ip, ua })
       return res.json({ ok: true, validado: true })
     }
@@ -92,6 +98,15 @@ export default async function handler(req, res) {
     if (contrato.estado === 'firmado') return res.status(409).json({ error: 'el contrato ya está firmado' })
     if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'RESEND_API_KEY no configurada' })
     const ahora = Date.now()
+    // cooldown de reenvío: no generar otro código si el último tiene <60s
+    const ult = await sql.query(
+      `SELECT created_at FROM codigos_reset
+       WHERE entidad = $1 AND usuario_id = $2 ORDER BY id DESC LIMIT 1`,
+      [ENTIDAD_OTP, contrato.id],
+    )
+    if (ult[0] && ahora - Number(ult[0].created_at) < OTP_REENVIO_MS) {
+      return res.status(429).json({ error: 'esperá un minuto antes de pedir otro código' })
+    }
     await sql.query(
       `UPDATE codigos_reset SET usado = TRUE
        WHERE entidad = $1 AND usuario_id = $2 AND usado = FALSE`,
@@ -134,10 +149,17 @@ export default async function handler(req, res) {
     if (typeof firma !== 'string' || !FIRMA_RE.test(firma) || firma.length > MAX_FIRMA_BYTES) {
       return res.status(400).json({ error: 'firma requerida como dataURL png/jpeg del canvas' })
     }
+    // M7 — rechazar decompression-bombs por dimensiones declaradas en el header
+    const px = imagenPixels(firma)
+    if (px != null && px > MAX_FIRMA_PIXELS) {
+      return res.status(400).json({ error: 'la imagen de firma excede el tamaño máximo' })
+    }
 
-    // consumo atómico del OTP: un solo request puede pasar de acá
     const otp = await buscarOtpVigente(sql, contrato.id, codigoNorm)
-    if (!otp || !(await consumirOtp(sql, otp.id))) {
+    if (!otp) {
+      // A4 — mismo contador que el paso 'otp' (este endpoint también es
+      // superficie de brute-force). Respuesta genérica.
+      await registrarIntentoOtpFallido(sql, contrato.id)
       return res.status(400).json({ error: 'código inválido o vencido' })
     }
 
@@ -156,6 +178,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'no se pudo generar el PDF del contrato' })
     }
     const pdfHash = sha256hex(pdf)
+
+    // consumo atómico del OTP DESPUÉS del PDF: un fallo de generación no quema
+    // el código; si otro request lo consumió en paralelo, este queda afuera
+    if (!(await consumirOtp(sql, otp.id))) {
+      return res.status(409).json({ error: 'código inválido o vencido' })
+    }
 
     // cierre atómico del estado — un segundo request concurrente queda afuera
     const upd = await sql.query(

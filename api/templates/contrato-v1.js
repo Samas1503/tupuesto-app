@@ -118,6 +118,17 @@ export function generarContrato(datos = {}) {
 
   const valores = {}
   for (const campo of CAMPOS_REQUERIDOS) valores[campo] = limpiar(datos[campo])
+
+  // Validaciones blandas (warn, no throw): el campo CUIT también admite DNI y
+  // el precio puede llegar con formato — se avisa en el log pero no se bloquea
+  // la emisión del contrato.
+  if (!/^\d{2}-\d{7,8}-\d$/.test(valores.cuit)) {
+    console.warn(`generarContrato: cuit fuera del formato XX-XXXXXXXX-X: ${valores.cuit}`)
+  }
+  if (!Number.isFinite(Number(valores.precio))) {
+    console.warn(`generarContrato: precio no numérico: ${valores.precio}`)
+  }
+
   // Proveedor: default del módulo, sobreescribible por contrato via datos.
   const opt = (v, def) => (v != null && limpiar(v) !== '' ? limpiar(v) : def)
   valores.proveedorRazonSocial = opt(datos.proveedorRazonSocial, PROVEEDOR.razonSocial)

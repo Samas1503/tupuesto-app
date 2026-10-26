@@ -6,11 +6,12 @@ import { db } from '../db'
 import { totalVentas, vendidos, ventasTotal } from '../lib/arqueo'
 import { fmtMoney, hoyISO, isoMenosDias } from '../lib/format'
 import { pushRow } from '../lib/snake'
+import { authHeader } from '../lib/auth'
 import { hashPin } from '../lib/pin'
 import { useDatos, useJornadasRango, useSolicitudesPendientes, useVentasDeJornadas } from '../lib/data'
 
 /** PIN aleatorio de 4 dígitos — el "link de acceso" local (con backend: email + token) */
-const pinAleatorio = () => String(Math.floor(1000 + Math.random() * 9000))
+const pinAleatorio = () => String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0')
 
 /** dueño de la sesión — los vendedores creados quedan vinculados a su cuenta */
 const duenioSesion = () =>
@@ -50,7 +51,7 @@ export default function Vendedores() {
     try {
       const r = await fetch('/api/send-pin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify({ email, nombre, pin, appUrl: location.origin + '/app' }),
       })
       setCredencial(r.ok ? { nombre, email, enviado: true } : { nombre, pin, email, enviado: false })

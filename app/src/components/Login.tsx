@@ -72,13 +72,18 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
       if (usuario.debeCambiarPin) { setPendiente({ id: usuario.id, rol: usuario.rol } as Usuario); return }
       onLogin(usuario.rol, usuario.id); return
     } catch (err) {
-      // offline → verificación local contra la copia en Dexie
-      if (u && (!u.pinHash || u.pinHash === (await hashPin(p)))) {
+      // si el server respondió (4xx/5xx — p.ej. 401 "Email o PIN incorrectos") no es
+      // offline: mostrar error sin caer al fallback local
+      const esErrorRed = err instanceof TypeError ||
+        (err instanceof DOMException && (err.name === 'AbortError' || err.name === 'TimeoutError'))
+      if (!esErrorRed) { setError(true); return }
+      // sin red → verificación local contra la copia en Dexie; exige pinHash previo
+      // (tras un pull el server strippea pinHash — sin hash local no hay login offline)
+      if (u?.pinHash && u.pinHash === (await hashPin(p))) {
         if (u.debeCambiarPin) { setPendiente(u); return }
         localStorage.setItem('tp-login-at', String(Date.now()))
         onLogin(u.rol, u.id!); return
       }
-      if (err instanceof Error && err.message !== 'Email o PIN incorrectos') { setError(true); return }
       setError(true)
     }
   }
