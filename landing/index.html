@@ -469,8 +469,14 @@ body {
   .plan ul li { padding-left: 20px; position: relative; font-size: .9rem; }
   .plan ul li::before { content: "✓"; position: absolute; left: 0; color: var(--success); font-weight: 800; }
   .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
-  .feature { padding: 22px; border: 1px solid #e3e8f0; border-radius: 18px; }
-  .feature-name { font-weight: 800; margin-bottom: 8px; }
+  .feature { padding: 24px 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white);
+    transition: transform .18s ease, box-shadow .18s ease; }
+  .feature:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(10,37,64,.09); }
+  .feature-ico { display: inline-grid; place-items: center; width: 42px; height: 42px;
+    border-radius: 12px; background: linear-gradient(135deg, var(--blurple), var(--cyan));
+    color: #fff; margin-bottom: 14px; }
+  .feature-ico svg { width: 22px; height: 22px; }
+  .feature-name { font-weight: 800; margin-bottom: 8px; color: var(--navy); }
   .feature-desc { font-size: .88rem; color: var(--muted); line-height: 1.6; }
 </style>
 </head>
@@ -604,32 +610,38 @@ body {
       </div>
     </div>
   </section>
-  <section id="features" style="background:var(--white);">
+  <section id="features">
     <div class="wrap">
       <p class="kicker">Qué incluye</p>
       <h2>Todo para correr el negocio, no solo la caja</h2>
       <div class="features-grid">
         <div class="feature">
+          <span class="feature-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
           <p class="feature-name">Control en tiempo real</p>
           <p class="feature-desc">Cada venta aparece al instante en tu panel — sin llamadas de noche ni mensajes. El vendedor registra, vos ves.</p>
         </div>
         <div class="feature">
+          <span class="feature-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
           <p class="feature-name">Notificaciones inteligentes</p>
           <p class="feature-desc">Solicitudes de cierre, turnos cerrados y productos por agotarse — te llegan en el celu y en la compu, con panel tipo Instagram.</p>
         </div>
         <div class="feature">
+          <span class="feature-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/><path d="M9 6h6"/></svg></span>
           <p class="feature-name">Offline primero</p>
           <p class="feature-desc">El vendedor vende sin señal — todo queda en el celu y se sincroniza cuando hay red. No se pierde ni una venta.</p>
         </div>
         <div class="feature">
+          <span class="feature-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/><path d="M9 11.5l2 2 4-4"/></svg></span>
           <p class="feature-name">Seguridad real</p>
           <p class="feature-desc">Sesiones con token firmado, cada dueño solo ve lo suyo, PIN cifrado — auditado. Tus datos y los de tus clientes, protegidos.</p>
         </div>
         <div class="feature">
+          <span class="feature-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M8 17c2-3 4-3 6 0"/></svg></span>
           <p class="feature-name">Contratos con firma electrónica</p>
           <p class="feature-desc">El contrato se genera solo, el suscriptor firma desde el celu con código por email — con hash sellado y copia probatoria exportable.</p>
         </div>
         <div class="feature">
+          <span class="feature-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 13l4-5 4 3 5-7"/></svg></span>
           <p class="feature-name">Reportes que proyectan</p>
           <p class="feature-desc">Premium: proyección de ventas, merma, ranking de puestos y rendimiento por vendedor — decisiones con datos, no con intuición.</p>
         </div>
