@@ -6,6 +6,7 @@ import { useDatos, useJornadaVendedor, useJornadasLibres, useVentasDe } from '..
 import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockActual, totalVentas, vendidos, vendidosRegistrados, ventasTotal } from '../lib/arqueo'
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
 import { pushRow } from '../lib/snake'
+import { notificar } from '../lib/notificar'
 import ProdIcon from '../components/ProdIcon'
 import EmptyState from '../components/EmptyState'
 import type { Cierre, Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
@@ -19,7 +20,7 @@ function chipMetodo(m: MetodoPago) {
 }
 
 export default function MiDia() {
-  const { productos, puestos } = useDatos()
+  const { productos, puestos, usuarios } = useDatos()
   // sesión unificada — el login de App ya dejó el id en 'tp-user-id'; MiDia solo lo lee
   const vendedorId = (() => {
     const v = localStorage.getItem('tp-user-id')
@@ -85,6 +86,13 @@ export default function MiDia() {
       createdAt: Date.now(),
     })
     void pushRow('solicitudes', solId)
+    // notificación al dueño
+    const duenioId = jornada.duenioId ?? usuarios?.find(u => u.id === vendedorId)?.duenioId
+    if (duenioId) void notificar({
+      usuarioId: duenioId, tipo: 'solicitud',
+      titulo: `${usuarios?.find(u => u.id === vendedorId)?.nombre ?? 'El vendedor'} pidió terminar antes`,
+      descripcion: motivoCierre.trim(),
+    })
     setSolCierreEnviada(true)
     setMotivoCierre('')
     setSolCierre(false)
@@ -132,6 +140,22 @@ export default function MiDia() {
       createdAt: Date.now(),
     })
     void pushRow('ventas', ventaId)
+    // stock bajo → aviso al dueño por cada producto que quede al 20% o menos del stock del día
+    const vendidoAntes = ventas.map(v => v.items).flat()
+    for (const p of productos.filter(x => x.stockDia != null && x.stockDia > 0)) {
+      const vendidas = [...(jornada.despacho ?? []), ...vendidoAntes]
+        .filter(l => l.productoId === p.id).reduce((a, l) => a + l.cantidad, 0)
+      const restante = (p.stockDia ?? 0) - vendidas
+      const umbral = Math.max(1, Math.ceil((p.stockDia ?? 0) * 0.2))
+      if (restante <= umbral && restante >= 0) {
+        const duenioId = jornada.duenioId ?? usuarios?.find(u => u.id === vendedorId)?.duenioId
+        if (duenioId) void notificar({
+          usuarioId: duenioId, tipo: 'stock',
+          titulo: `Queda poco ${p.nombre}`,
+          descripcion: `${restante} unidades restantes de ${p.stockDia} del día.`,
+        })
+      }
+    }
     setBoleta([]); setBoletaAbierta(false); setMetodoPago(metodoBoleta)
   }
 
@@ -153,6 +177,12 @@ export default function MiDia() {
     }
     await db.jornadas.update(jornada.id!, { cierre, estado: 'cerrada' })
     void pushRow('jornadas', jornada.id!)
+    const duenioId = jornada.duenioId ?? usuarios?.find(u => u.id === vendedorId)?.duenioId
+    if (duenioId) void notificar({
+      usuarioId: duenioId, tipo: 'cierre',
+      titulo: `${usuarios?.find(u => u.id === vendedorId)?.nombre ?? 'El vendedor'} cerró el turno`,
+      descripcion: `Cierre registrado — revisá el arqueo en Hoy.`,
+    })
     setListo(true)
   }
 

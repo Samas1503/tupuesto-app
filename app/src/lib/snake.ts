@@ -9,7 +9,7 @@ const MAP_INV: Record<string, string> = {
   confirmadaAt: 'confirmada_at', createdAt: 'created_at', resueltaAt: 'resuelta_at',
   precioCosto: 'precio_costo', metodoPago: 'metodo_pago', stockDia: 'stock_dia',
   debeCambiarPin: 'debe_cambiar_pin', saldoInicial: 'saldo_inicial',
-  pinHash: 'pin_hash', plan: 'plan',
+  pinHash: 'pin_hash', usuarioId: 'usuario_id', plan: 'plan',
 }
 
 /** convierte las keys de primer nivel de una fila Dexie a snake_case (Neon).
@@ -21,7 +21,7 @@ export function toSnake<T extends object>(obj: T): Record<string, unknown> {
 /** tablas espejadas en Neon (whitelist del api /api/sync) */
 export type TablaSync =
   | 'usuarios' | 'puestos' | 'productos'
-  | 'jornadas' | 'ventas' | 'solicitudes'
+  | 'jornadas' | 'ventas' | 'solicitudes' | 'notificaciones'
 
 /** relee la fila de Dexie y la empuja a Neon (upsert por id).
  *  Fire-and-forget: nunca rechaza ni bloquea la UI — si no hay red queda local. */

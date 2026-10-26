@@ -149,3 +149,14 @@ export interface Jornada {
 
 /** @deprecated usar Usuario (rol 'duenio') — alias para compat */
 export type Duenio = Usuario
+
+/** notificación in-app — campana del header (sincroniza a Neon para cruzar dispositivos) */
+export interface Notificacion {
+  id?: number
+  usuarioId: number           // a quién va dirigida
+  tipo: 'solicitud' | 'cierre' | 'stock' | 'login' | 'sistema'
+  titulo: string
+  descripcion: string
+  leida: boolean
+  createdAt: number
+}

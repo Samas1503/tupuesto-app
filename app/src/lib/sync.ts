@@ -1,3 +1,4 @@
+import { avisarNuevasPendientes } from './notificar'
 import { db } from '../db'
 
 /** base del api — en prod landing sirve /api desde tupuesto.vercel.app */
@@ -11,7 +12,7 @@ const MAP: Record<string, string> = {
   confirmada_at: 'confirmadaAt', created_at: 'createdAt', resuelta_at: 'resueltaAt',
   precio_costo: 'precioCosto', metodo_pago: 'metodoPago', stock_dia: 'stockDia',
   debe_cambiar_pin: 'debeCambiarPin', saldo_inicial: 'saldoInicial',
-  pin_hash: 'pinHash', plan: 'plan',
+  pin_hash: 'pinHash', usuario_id: 'usuarioId', plan: 'plan',
 }
 // Postgres devuelve bigint como string — los timestamps de Dexie son number
 const NUM = new Set(['createdAt', 'confirmadaAt', 'resueltaAt', 'fondoCaja', 'precio', 'precioCosto', 'total', 'cantidad',
@@ -43,6 +44,8 @@ export async function syncPull() {
       for (const id of locales) if (!ids.has(Number(id))) await t.delete(id)
       for (const row of rows) await t.put(camel(row))
     }
+    // notificaciones nuevas de otros dispositivos → push del SO
+    void avisarNuevasPendientes()
   } catch { /* sin red → queda local */ }
 }
 

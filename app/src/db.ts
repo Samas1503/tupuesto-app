@@ -11,6 +11,7 @@ export class TuPuestoDB extends Dexie {
   jornadas!: Table<Jornada, number>
   ventas!: Table<Venta, number>
   solicitudes!: Table<Solicitud, number>
+  notificaciones!: Table<import('./types').Notificacion, number>
   /** @deprecated tabla legacy (≤v8) — se conserva para migrar DBs locales viejas */
   duenios!: Table<Usuario, number>
   usuarios!: Table<Usuario, number>
@@ -42,6 +43,9 @@ export class TuPuestoDB extends Dexie {
     // Las tablas duenios/vendedores quedan solo para migrar DBs locales viejas.
     this.version(9).stores({
       usuarios: '++id, rol, email, duenioId, activo',
+    })
+    this.version(10).stores({
+      notificaciones: '++id, usuarioId, leida, createdAt',
     })
   }
 }

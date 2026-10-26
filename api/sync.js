@@ -10,6 +10,7 @@ const TABLAS = {
   jornadas:    ['duenio_id', 'puesto_id', 'vendedor_id', 'fecha', 'despacho', 'reposiciones', 'saldo_inicial', 'descarte', 'fondo_caja', 'hora_fin', 'cierre_anticipado_ok', 'estado', 'cierre', 'confirmada_at', 'created_at'],
   ventas:      ['jornada_id', 'items', 'total', 'metodo_pago', 'created_at'],
   solicitudes: ['duenio_id', 'tipo', 'vendedor_id', 'solicitado_por', 'jornada_id', 'motivo', 'estado', 'created_at', 'resuelta_at'],
+  notificaciones: ['usuario_id', 'tipo', 'titulo', 'descripcion', 'leida', 'created_at'],
 }
 const JSONB = {
   jornadas: new Set(['despacho', 'reposiciones', 'saldo_inicial', 'descarte', 'cierre']),

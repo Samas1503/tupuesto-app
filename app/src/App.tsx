@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Tabs } from '@heroui/react'
 import { IHoy, IDespacho, IPrecios, IPuestos, IEquipo, IStats, IReportes } from './components/icons'
 import PlanBadge from './components/PlanBadge'
+import NotifBell from './components/NotifBell'
+import { pedirPermisoNotif, avisarNuevasPendientes } from './lib/notificar'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { Rol } from './types'
 import { db } from './db'
@@ -68,6 +70,8 @@ export default function App() {
     if (sesion) {
       localStorage.setItem('tp-rol', sesion.rol)
       localStorage.setItem('tp-user-id', String(sesion.id))
+      void pedirPermisoNotif()
+      void avisarNuevasPendientes()
     }
   }, [sesion])
 
@@ -178,6 +182,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 min-w-0 shrink-0">
+            <NotifBell />
             <span className="hidden sm:inline"><PlanBadge /></span>
             <span className="text-sm font-semibold truncate max-w-36">{nombreSesion ?? '…'}</span>
             <Button size="sm" variant="tertiary" onPress={salir}>Salir</Button>
