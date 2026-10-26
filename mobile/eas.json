@@ -15,14 +15,16 @@
     },
     "production": {
       "autoIncrement": true,
-      "android": { "buildType": "aab" },
+      "android": { "buildType": "app-bundle" },
       "ios": {}
     }
   },
   "submit": {
     "production": {
-      "android": { "serviceAccountKeyPath": "./google-play-service-account.json", "track": "internal" },
-      "ios": { "appleId": "", "ascAppId": "", "appleTeamId": "" }
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
     }
   }
 }

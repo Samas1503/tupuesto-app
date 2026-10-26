@@ -13,7 +13,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#f6f9fc"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.tupuesto.mobile"
@@ -33,6 +35,12 @@
           "color": "#635bff"
         }
       ]
-    ]
+    ],
+    "owner": "samas1503",
+    "extra": {
+      "eas": {
+        "projectId": "f3f76d98-7eb3-4205-8163-c90e3d952050"
+      }
+    }
   }
 }
