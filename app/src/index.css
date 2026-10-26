@@ -174,3 +174,6 @@ nav [role="tab"]:hover:not([data-selected]) {
   position: fixed; border-radius: 9999px; filter: blur(70px); opacity: .5;
   pointer-events: none; z-index: 0; animation: blobDrift 9s ease-in-out infinite;
 }
+
+/* modo demo: ningún texto seleccionable — el visitante no copia nada */
+html[data-demo] * { user-select: none !important; -webkit-user-select: none !important; }

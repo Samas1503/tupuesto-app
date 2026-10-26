@@ -91,6 +91,12 @@ export default function App() {
     document.documentElement.dataset.tema = duenioDelTema?.categoria ?? 'otro'
   }, [duenioDelTema?.categoria])
 
+  // modo demo — nada seleccionable
+  useEffect(() => {
+    if (usuario?.email?.endsWith('@demo.tupuesto')) document.documentElement.dataset.demo = '1'
+    else delete document.documentElement.dataset.demo
+  }, [usuario?.email])
+
   useEffect(() => {
     if (sesion && tablaCargada && !sesionValida) {
       limpiarSesionLS()
