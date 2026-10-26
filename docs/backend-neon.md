@@ -43,7 +43,12 @@ con `DATABASE_URL` del `.env` raíz).
 - Sin auth de sesión real — PIN + email plano (el JWT/refresh va en una iteración posterior)
 - `duenio_id` en `jornadas` puede ser null en filas viejas (scoping vía vendedor)
 
-## Sync — semántica "remota gana"
+## Sync — autenticado + semántica "remota gana"
+
+- **Todas las llamadas requieren `Authorization: Bearer <token>`** (ver `auth.md`). Sin token → 401.
+- `pin_hash` no viaja en el pull — el login es server-side.
+- Login: `POST /api/sync {accion:'login', email, pin}` → `{token, usuario}`.
+
 
 - `syncPull` cada 30s: la remota es la fuente de verdad — upsert por id + **borra lo local que no está en Neon** (huérfanos).
 - `pushRow` sube la fila a Neon tras cada escritura local.

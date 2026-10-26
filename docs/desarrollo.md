@@ -43,6 +43,11 @@ Sync mapea tablas 1:1 + auth por rol + `negocioId` por tabla.
 `debeCambiarPin` + `email` ya esperan el envío real con token único —
 `api/send-pin` es el punto de integración.
 
+## Env vars del backend
+
+- `AUTH_SECRET` — secreto para firmar tokens de sesión (`api/_lib/auth.js`). **Configurarlo en Vercel — el default es solo dev.**
+- `DATABASE_URL`, `RESEND_API_KEY`, `FROM_EMAIL`, credenciales MP — en Vercel.
+
 ## Emails (Resend)
 
 - Envío: `notificaciones@samas-server.com` (dominio verificado en Resend)

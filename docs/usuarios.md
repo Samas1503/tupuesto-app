@@ -19,7 +19,8 @@ Desde la migración (`app/scripts/migrate-usuarios.mjs`) hay **una sola tabla `u
 
 ## Login unificado (`components/Login.tsx`)
 
-Un solo form email+PIN detecta el rol por la fila de `usuarios`:
+Un solo form email+PIN detecta el rol por la fila de `usuarios`.
+**Desde el hardening de auth**: el PIN lo verifica el **server** (`loginServer` → `/api/sync`), no el cliente. Solo la demo (`@demo.tupuesto`) sigue verificando local; hay fallback offline contra Dexie.
 - compara `SHA-256(pin)` vs `pinHash` (`lib/pin.ts` → `hashPin`)
 - `debeCambiarPin` → flujo "Elegí tu PIN" (4-8 dígitos) → `pin_hash` + `pushRow('usuarios')`
 - sesión en `localStorage`: `tp-rol` + `tp-user-id`

@@ -17,6 +17,9 @@ fallback una sola vez.
 
 ## Extras recientes
 
+- **`NotifBell`** — campana en header + panel de notificaciones (ver `notificaciones.md`).
+- **`SoporteBtn`** — botón ❓ que envía soporte al admin (dueños/vendedores).
+
 - **`PlanBadge`** — chip en el header con plan + precio del dueño (solo `rol === 'duenio'`; el admin no tiene plan).
 - **Reportes** (`views/Reportes.tsx`) — tab premium/admin: proyección 7d, merma del mes, ventas por producto. No-premium ve upsell.
 - **`EmptyState`** — ilustración por sección (`icono`: puesto/equipo/jornada/dinero/puntaje/contrato/producto/despacho), `currentColor` + tinte accent.
