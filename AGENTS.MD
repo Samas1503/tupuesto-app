@@ -75,3 +75,24 @@ no adelantarse.
 **Demo/deploy:** `scripts/gen-sqlite.mjs` genera `public/tupuesto.sqlite`; `cargarDesdeSqlite()` hidrata IndexedDB desde el archivo estático vía `sql.js` WASM → demo sin backend en Vercel. Dos proyectos: landing `tupuesto-app.vercel.app` (root, `vercel.json` → `landing/`, detecta `api/`) y app `app-ten-tan-35.vercel.app` (root dir `app/`). `DEMO_URL` en landing apunta a la app. Git connect pendiente en dashboard.
 
 **Backend**: Neon Postgres + `api/sync` (pull/upsert) — Dexie sincroniza con Neon cada 30s, todos los writes pushean. Seed Neon: `node app/scripts/seed-neon.mjs`.
+
+## Regla — arquitectura multi-repo (3 proyectos)
+
+El proyecto está separado en 3 repositorios + este (legacy/fuente):
+
+| Repo | Dominio | Contenido |
+|---|---|---|
+| `tupuesto-web` (~/Documentos/Proyectos/tupuesto-web) | tupuesto.vercel.app | landing + app PWA (`app/` + `landing/`) |
+| `tupuesto-api` (~/Documentos/Proyectos/tupuesto-api) | tupuesto-api.vercel.app | 11 endpoints serverless (`api/` + `_lib/`) |
+| `tupuesto-mobile` (~/Documentos/Proyectos/tupuesto-mobile) | EAS builds | app RN Expo |
+| `tupuesto-app` (este repo) | legacy | fuente original combinada — referencia |
+
+**Regla de orquestación**: cualquier cambio de lógica de negocio, tipos, planes, sync, auth, esquema de datos o features que se haga en ESTE repo debe propagarse a los demás en paralelo — siempre que el cambio les afecte:
+
+- `app/src/lib/*`, `types.ts`, `planes.ts`, `snake.ts`, `arqueo.ts`, `scoring.ts` → llevar igual a `tupuesto-web/app/src/` y `tupuesto-mobile/src/lib/`
+- `api/*` → solo en `tupuesto-api`
+- `landing/` → solo en `tupuesto-web/landing/`
+- Tablas/columnas nuevas → whitelist en `tupuesto-api/api/sync.js` + tipos en web y mobile + DDL en Neon
+- Cambios de auth/CORS/tokens → api + los fetchers de web (`lib/auth.ts`, `lib/contratos.ts`) y mobile (`lib/auth.ts`, `lib/sync.ts`)
+
+**Cómo ejecutarlo**: lanzar workers (subagent_general) en paralelo — uno por repo afectado — con lanes disjoint (cada uno solo toca su repo). Deploys: api→tupuesto-api.vercel.app, web→tupuesto.vercel.app (rsync `app/dist`→`landing/app` antes), mobile→`eas update`/`eas build`. Commit y push con la identidad del usuario (commits de "Devin" bloquean los deploys de Vercel en proyectos nuevos).
