@@ -61,12 +61,13 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
     // usuarios reales — el PIN lo verifica el server; si no hay red, fallback local
     try {
       const { usuario } = await loginServer(e, p)
+      const pinOffline = await hashPin(p)
       // el server devuelve el pinHash propio para verificar offline después
       await db.usuarios.put({
         id: usuario.id, rol: usuario.rol, nombre: usuario.nombre, email: usuario.email,
         debeCambiarPin: usuario.debeCambiarPin, duenioId: usuario.duenioId,
         categoria: usuario.categoria as any, plan: usuario.plan,
-        pinHash: usuario.pinHash, activo: true,
+        pinHash: pinOffline, activo: true, // hash local para verificar offline
       } as Usuario)
       localStorage.setItem('tp-login-at', String(Date.now()))
       if (usuario.debeCambiarPin) { setPendiente({ id: usuario.id, rol: usuario.rol } as Usuario); return }

@@ -6,6 +6,7 @@
 // brute-force): cada intento fallido suma `intentos` y al 5to quema el código.
 // Respuesta genérica siempre: no se revela si el email existe ni si el
 // código era válido. Env: DATABASE_URL
+import { hashPin } from './_lib/pin.js'
 import { neon } from '@neondatabase/serverless'
 import { createHash } from 'node:crypto'
 
@@ -75,7 +76,7 @@ export default async function handler(req, res) {
   )
   if (!consumed.length) return res.status(409).json({ error: 'código inválido o vencido' })
 
-  const pinHash = createHash('sha256').update(pinNorm, 'utf8').digest('hex')
+  const pinHash = hashPin(pinNorm)
   await sql.query(`UPDATE usuarios SET pin_hash = $1, debe_cambiar_pin = FALSE WHERE id = $2`, [pinHash, user.id])
   return res.status(200).json({ ok: true })
 }

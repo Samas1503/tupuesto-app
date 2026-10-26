@@ -5,6 +5,7 @@
 import { neon } from '@neondatabase/serverless'
 import crypto from 'node:crypto'
 import { signToken, authOf } from './_lib/auth.js'
+import { verifyPin, hashPin as hashPinScrypt } from './_lib/pin.js'
 
 const TABLAS = {
   usuarios:    ['rol', 'nombre', 'email', 'pin_hash', 'debe_cambiar_pin', 'activo', 'eliminado', 'duenio_id', 'categoria', 'plan'],
@@ -39,15 +40,17 @@ export default async function handler(req, res) {
       [email],
     )
     const u = rows[0]
-    const pinHash = crypto.createHash('sha256').update(pin, 'utf8').digest('hex')
-    // usuarios sin pin todavía (alta vieja) — se les pide PIN nuevo por reset
-    if (!u || u.pin_hash !== pinHash) return res.status(401).json({ error: 'Email o PIN incorrectos' })
+    if (!u) return res.status(401).json({ error: 'Email o PIN incorrectos' })
+    const v = verifyPin(pin, u.pin_hash)
+    if (!v.ok) return res.status(401).json({ error: 'Email o PIN incorrectos' })
+    if (v.upgrade) { // sha256 → scrypt transparente en el login
+      await sql.query('UPDATE usuarios SET pin_hash = $1 WHERE id = $2', [hashPinScrypt(pin), u.id]).catch(() => {})
+    }
     return res.json({
       token: signToken(u),
       usuario: {
         id: Number(u.id), rol: u.rol, nombre: u.nombre, email: u.email,
         debeCambiarPin: u.debe_cambiar_pin, duenioId: u.duenio_id, categoria: u.categoria, plan: u.plan,
-        pinHash: u.pin_hash, // para verificar offline después — solo la propia
       },
     })
   }
