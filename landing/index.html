@@ -863,14 +863,14 @@ body {
         <h2>Sé uno de los 10 fundadores — precio de por vida</h2>
         <p class="lead">Los primeros en entrar construyen el producto conmigo: votan las features que siguen, tienen soporte directo y su precio nunca sube.</p>
         <div class="garantias">
-          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><p><b>Precio fundador de por vida.</b> $10.000/mes congelado para siempre — el precio no sube.</p></div>
+          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><p><b>Precio fundador de por vida.</b> Precio fundador en pesos — USD 10 al cambio del día, congelado para siempre.</p></div>
           <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/><path d="M12 8v4l3 2"/></svg></span><p><b>Todos los beneficios de Premium.</b> Puestos ilimitados, vendedores ilimitados, reportes avanzados — desde el día uno.</p></div>
           <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6L5 18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2L14 8V2"/><path d="M8 2h8"/></svg></span><p><b>15 días de prueba gratis.</b> Probá con tus puestos y vendedores — al terminar la prueba decidís si seguís.</p></div>
         </div>
       </div>
       <div class="price-card">
         <span class="tag">Precio fundador</span>
-        <p class="price">$10.000<small>/mes</small></p>
+        <p class="price"><span data-precio-fundador>$10.000</span><small>/mes</small></p>
         <p class="sub">Puestos ilimitados · vendedores ilimitados · beneficios Premium</p>
         <hr>
         <ul class="ticks">
@@ -1088,6 +1088,29 @@ body {
     }
   </script>
 <script>document.getElementById("demo-nav")&&(document.getElementById("demo-nav").href=DEMO_URL)</script>
+<script>
+  // precio fundador: USD 10 al dólar blue — actualiza una vez por semana (localStorage)
+  (function() {
+    var CACHE_KEY = 'tp-fundador-precio', CACHE_TS = 'tp-fundador-ts'
+    var SEMANA = 7 * 24 * 60 * 60 * 1000
+    function pintar(v) {
+      document.querySelectorAll('[data-precio-fundador]').forEach(function(el) {
+        el.textContent = '$' + Math.round(v).toLocaleString('es-AR')
+      })
+    }
+    var cache = Number(localStorage.getItem(CACHE_KEY))
+    var ts = Number(localStorage.getItem(CACHE_TS))
+    if (cache && (Date.now() - ts) < SEMANA) { pintar(cache); return }
+    fetch('https://dolarapi.com/v1/dolares/blue')
+      .then(function(r) { return r.json() })
+      .then(function(d) {
+        var v = 10 * d.venta
+        localStorage.setItem(CACHE_KEY, v); localStorage.setItem(CACHE_TS, Date.now())
+        pintar(v)
+      })
+      .catch(function() { if (cache) pintar(cache) })
+  })()
+</script>
 <script>
   // cupos fundador en tiempo real — lee /api/fundadores
   fetch('/api/contratos?cupos=1').then(r => r.json()).then(d => {
