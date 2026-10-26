@@ -467,6 +467,10 @@
   .plan ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
   .plan ul li { padding-left: 20px; position: relative; font-size: .9rem; }
   .plan ul li::before { content: "✓"; position: absolute; left: 0; color: var(--success); font-weight: 800; }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
+  .feature { padding: 22px; border: 1px solid #e3e8f0; border-radius: 18px; }
+  .feature-name { font-weight: 800; margin-bottom: 8px; }
+  .feature-desc { font-size: .88rem; color: var(--muted); line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -897,7 +901,39 @@
   </section>
 
   <!-- ═══ FAQ ═══ -->
-  <section id="faq" style="background:var(--white);">
+  <section id="features" style="background:var(--white);">
+    <div class="wrap">
+      <p class="kicker">Qué incluye</p>
+      <h2>Todo para correr el negocio, no solo la caja</h2>
+      <div class="features-grid">
+        <div class="feature">
+          <p class="feature-name">Control en tiempo real</p>
+          <p class="feature-desc">Cada venta aparece al instante en tu panel — sin llamadas de noche ni mensajes. El vendedor registra, vos ves.</p>
+        </div>
+        <div class="feature">
+          <p class="feature-name">Multi-puesto con dueños separados</p>
+          <p class="feature-desc">Cada cuenta es independiente: puestos, vendedores, productos y jornadas aislados por dueño. Nadie ve lo de nadie.</p>
+        </div>
+        <div class="feature">
+          <p class="feature-name">Offline primero</p>
+          <p class="feature-desc">El vendedor vende sin señal — todo queda en el celu y se sincroniza cuando hay red. No se pierde ni una venta.</p>
+        </div>
+        <div class="feature">
+          <p class="feature-name">Planes que escalan con vos</p>
+          <p class="feature-desc">Básico para empezar, Estándar para crecer, Premium sin límites. Plan Fundador con precio de por vida para los primeros 5.</p>
+        </div>
+        <div class="feature">
+          <p class="feature-name">Contratos digitales</p>
+          <p class="feature-desc">El admin genera el contrato desde la app y el suscriptor firma desde el celu — con OTP, hash sellado y copia por email.</p>
+        </div>
+        <div class="feature">
+          <p class="feature-name">Reportes que proyectan</p>
+          <p class="feature-desc">Premium: proyección de ventas, merma, ranking de puestos y rendimiento por vendedor — decisiones con datos, no con intuición.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="faq style="background:var(--white);">
     <div class="wrap">
       <p class="kicker">Preguntas frecuentes</p>
       <h2>Lo que todos preguntan</h2>
