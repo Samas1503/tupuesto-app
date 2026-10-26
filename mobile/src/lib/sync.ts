@@ -1,6 +1,7 @@
 import { avisarNuevasPendientes } from './notificar'
 import { API, authHeader, borrarToken } from './auth'
-import { bumpStore, replaceTabla, type Tabla } from './store'
+import { bumpStore, replaceTabla, TABLAS, type Tabla } from './store'
+import { encolar } from './outbox'
 
 /** snake_case (Neon) → camelCase (store local) — igual que lib/sync.ts de web */
 const MAP: Record<string, string> = {
@@ -37,7 +38,7 @@ export async function syncPull() {
     }
     const data = await res.json()
     for (const [tabla, rows] of Object.entries(data) as [string, Record<string, unknown>[]][]) {
-      if (!Array.isArray(rows)) continue
+      if (!Array.isArray(rows) || !TABLAS.includes(tabla as Tabla)) continue
       replaceTabla(tabla as Tabla, rows.map(camel))
     }
     bumpStore()
@@ -58,7 +59,8 @@ export function startSyncLoop(): () => void {
   }
 }
 
-/** push de una tabla hacia Neon (upsert por id) */
+/** push de una tabla hacia Neon (upsert por id).
+ *  Si falla la red → encola en el outbox (offline-first) en vez de perderse. */
 export async function syncPush(tabla: string, rows: unknown[]) {
   try {
     const res = await fetch(`${API}/api/sync`, {
@@ -67,6 +69,11 @@ export async function syncPush(tabla: string, rows: unknown[]) {
       body: JSON.stringify({ tabla, rows }),
     })
     // token vencido/inválido → forzar re-login (igual que el pull)
-    if (res.status === 401) { borrarToken(); onNoAutorizado?.() }
-  } catch { /* sin red — queda para el próximo sync */ }
+    if (res.status === 401) { borrarToken(); onNoAutorizado?.(); return }
+    // 5xx → reintentar vía outbox; 4xx de datos se descarta (el server la rechazó)
+    if (!res.ok && res.status >= 500) await encolar(tabla, rows)
+  } catch {
+    // sin red — queda en la cola para cuando vuelva la conectividad
+    await encolar(tabla, rows).catch(() => {})
+  }
 }

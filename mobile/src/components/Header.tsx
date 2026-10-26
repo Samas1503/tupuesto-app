@@ -10,6 +10,7 @@ import { C, useAccent } from '../theme'
 import { all, useStoreVersion } from '../lib/store'
 import { sesionActual } from '../lib/auth'
 import { planDe } from '../lib/planes'
+import { useNetInfo, useOutboxCount } from '../lib/outbox'
 
 export function Header({ onSalir }: { onSalir: () => void }) {
   const insets = useSafeAreaInsets()
@@ -22,6 +23,9 @@ export function Header({ onSalir }: { onSalir: () => void }) {
     ? all('notificaciones').filter(n => n.usuarioId === sesion.id && !n.leida).length
     : 0
   const plan = usuario?.rol === 'duenio' ? planDe(usuario.plan) : null
+  const net = useNetInfo()
+  const pendientes = useOutboxCount()
+  const offline = net.isConnected === false || net.isInternetReachable === false
 
   return (
     <View style={[st.header, { paddingTop: insets.top + 8 }]}>
@@ -39,6 +43,15 @@ export function Header({ onSalir }: { onSalir: () => void }) {
             </View>
           )}
         </View>
+
+        {/* estado de conectividad / cola offline */}
+        {(offline || pendientes > 0) && (
+          <View style={[st.offChip, { backgroundColor: offline ? '#b8490018' : '#f59e4220' }]}>
+            <Text style={{ fontSize: 9, fontWeight: '800', color: offline ? C.danger : '#92600a' }}>
+              {offline ? 'sin conexión' : `${pendientes} pendiente${pendientes !== 1 ? 's' : ''}`}
+            </Text>
+          </View>
+        )}
 
         {/* campana → pantalla Notificaciones */}
         <Pressable onPress={() => nav.navigate('Notificaciones')} hitSlop={10} style={{ marginRight: 12 }}>
@@ -80,6 +93,7 @@ const st = StyleSheet.create({
   },
   marca: { fontSize: 19, fontWeight: '800', color: C.navy, letterSpacing: -0.5 },
   planPill: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+  offChip: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, marginRight: 10 },
   badge: {
     position: 'absolute', top: -4, right: -6, minWidth: 15, height: 15,
     borderRadius: 8, backgroundColor: C.danger,

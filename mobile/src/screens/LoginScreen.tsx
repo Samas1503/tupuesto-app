@@ -11,6 +11,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { C } from '../theme'
 import { Btn, Card, CardBody, Field, Muted } from '../components/ui'
 import { API, loginServer, type Sesion } from '../lib/auth'
+import { activarBio, hayBiometria, tipoBiometria } from '../lib/bio'
+import { Alert } from 'react-native'
 import { all, put, update } from '../lib/store'
 import { hashPin } from '../lib/pin'
 import { syncPush } from '../lib/sync'
@@ -34,6 +36,20 @@ export default function LoginScreen({ onLogin }: { onLogin: (s: Sesion) => void 
   const [codigo, setCodigo] = useState('')
   const [resetPin, setResetPin] = useState('')
   const [resetMsg, setResetMsg] = useState('')
+
+  /** tras un login exitoso: si el device tiene biometría, ofrecer activarla */
+  async function ofrecerBiometria() {
+    if (!(await hayBiometria())) return
+    const tipo = await tipoBiometria()
+    Alert.alert(
+      'Ingreso biométrico',
+      `¿Querés entrar con ${tipo} la próxima vez?`,
+      [
+        { text: 'No, gracias', style: 'cancel' },
+        { text: `Activar ${tipo}`, onPress: () => void activarBio() },
+      ],
+    )
+  }
 
   /** usuario activo por email — cache local (para fallback offline) */
   function usuarioDe(e: string): Usuario | undefined {
@@ -64,6 +80,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (s: Sesion) => void 
         setPendiente({ id: usuario.id, rol: usuario.rol } as Usuario)
         return
       }
+      await ofrecerBiometria()
       onLogin({ rol: usuario.rol as Rol, id: usuario.id })
       return
     } catch (err) {
@@ -77,6 +94,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (s: Sesion) => void 
       const u = usuarioDe(e)
       if (u?.pinHash && u.pinHash === (await hashPin(p))) {
         if (u.debeCambiarPin) { setPendiente(u); return }
+        await ofrecerBiometria()
         onLogin({ rol: u.rol, id: u.id! })
         return
       }

@@ -10,7 +10,16 @@
 
 import { useSyncExternalStore } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { decryptJson, encryptJson } from './crypto'
 import type { Jornada, Notificacion, Producto, Puesto, Solicitud, Usuario, Venta } from '../types'
+
+export interface PushToken {
+  id?: number
+  usuarioId: number
+  token: string
+  plataforma?: string
+  createdAt: number
+}
 
 export type Tabla =
   | 'usuarios'
@@ -20,9 +29,10 @@ export type Tabla =
   | 'ventas'
   | 'solicitudes'
   | 'notificaciones'
+  | 'push_tokens'
 
 export const TABLAS: Tabla[] = [
-  'usuarios', 'puestos', 'productos', 'jornadas', 'ventas', 'solicitudes', 'notificaciones',
+  'usuarios', 'puestos', 'productos', 'jornadas', 'ventas', 'solicitudes', 'notificaciones', 'push_tokens',
 ]
 
 export interface Tablas {
@@ -33,13 +43,14 @@ export interface Tablas {
   ventas: Venta[]
   solicitudes: Solicitud[]
   notificaciones: Notificacion[]
+  push_tokens: PushToken[]
 }
 
 type Fila = { id?: number } & Record<string, unknown>
 
 const data: Record<Tabla, Fila[]> = {
   usuarios: [], puestos: [], productos: [], jornadas: [],
-  ventas: [], solicitudes: [], notificaciones: [],
+  ventas: [], solicitudes: [], notificaciones: [], push_tokens: [],
 }
 
 /* ── pub/sub para React ── */
@@ -75,7 +86,9 @@ export function byId<T extends Tabla>(t: T, id: number): Tablas[T][number] | und
 const cacheKey = (t: Tabla) => `tp-cache-${t}`
 
 function persist(t: Tabla) {
-  void AsyncStorage.setItem(cacheKey(t), JSON.stringify(data[t])).catch(() => {})
+  void encryptJson(JSON.stringify(data[t]))
+    .then(enc => AsyncStorage.setItem(cacheKey(t), enc))
+    .catch(() => {})
 }
 
 /** inserta con id local = max(ids)+1 (paridad con Dexie ++id tras un pull) */
@@ -127,12 +140,14 @@ export function bumpStore() {
 export async function hydrateStore() {
   try {
     const pares = await AsyncStorage.multiGet(TABLAS.map(cacheKey))
-    pares.forEach(([, v], i) => {
-      if (!v) return
+    for (const [i, [, v]] of pares.entries()) {
+      if (!v) continue
       try {
-        data[TABLAS[i]] = JSON.parse(v) as Fila[]
+        const json = await decryptJson(v) // AES-GCM o JSON plano (v1)
+        if (json == null) continue
+        data[TABLAS[i]] = JSON.parse(json) as Fila[]
       } catch { /* cache corrupto — se ignora */ }
-    })
+    }
     bump()
   } catch { /* sin cache — arranca vacío */ }
 }

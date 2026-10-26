@@ -34,6 +34,12 @@ import {
 import { all, clearStore, hydrateStore, useStoreVersion } from './src/lib/store'
 import { setOnNoAutorizado, startSyncLoop, syncPull } from './src/lib/sync'
 import { avisarNuevasPendientes, pedirPermisoNotif } from './src/lib/notificar'
+import { initOutbox } from './src/lib/outbox'
+import { bioActiva, hayBiometria, pedirBiometria, tipoBiometria } from './src/lib/bio'
+import { registrarPushToken } from './src/lib/push'
+import { navRef } from './src/lib/navRef'
+import * as Notifications from 'expo-notifications'
+import { Btn, Card, CardBody, Muted } from './src/components/ui'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -81,13 +87,19 @@ function DuenioTabs() {
 export default function App() {
   const [booting, setBooting] = useState(true)
   const [sesion, setSesion] = useState<Sesion | null>(null)
+  const [locked, setLocked] = useState(false)
+  const [bioTipo, setBioTipo] = useState('tu biometría')
 
-  // hidratar store + sesión al arrancar
+  // hidratar store + sesión al arrancar — con sesión + biometría activa → lock
   useEffect(() => {
     void (async () => {
       await hydrateStore()
       const s = await leerSesion()
       setSesion(s)
+      if (s && (await bioActiva()) && (await hayBiometria())) {
+        setBioTipo(await tipoBiometria())
+        setLocked(true)
+      }
       setBooting(false)
     })()
   }, [])
@@ -100,14 +112,32 @@ export default function App() {
     return () => setOnNoAutorizado(null)
   }, [])
 
-  // sync loop + permiso de notificaciones al entrar
+  // sync loop + outbox + permiso de notificaciones + push token al entrar
   useEffect(() => {
     if (!sesion) return
     const stop = startSyncLoop()
-    void pedirPermisoNotif()
+    const unsubOutbox = initOutbox()
+    void pedirPermisoNotif().then(() => registrarPushToken())
     void avisarNuevasPendientes()
-    return stop
+    return () => { stop(); unsubOutbox() }
   }, [sesion])
+
+  // tap en notificación → navegar a la pantalla relevante
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(res => {
+      const tipo = (res.notification.request.content.data as { tipo?: string } | undefined)?.tipo
+      if (!navRef.isReady()) return
+      const rol = sesionActual()?.rol
+      const mapa: Record<string, string> = {
+        solicitud: 'Hoy', cierre: 'Hoy', stock: 'Precios',
+      }
+      if (tipo === 'login' && rol === 'admin') navRef.navigate('Admin' as never)
+      else if (rol === 'duenio' && mapa[tipo ?? '']) {
+        ;(navRef.navigate as (name: string, params: object) => void)('Home', { screen: mapa[tipo!] })
+      } else navRef.navigate('Notificaciones' as never)
+    })
+    return () => sub.remove()
+  }, [])
 
   async function entrar(s: Sesion) {
     await guardarSesion(s)
@@ -132,10 +162,31 @@ export default function App() {
     )
   }
 
+  // lock biométrico — sesión guardada + flag → huella/Face ID antes de entrar
+  if (sesion && locked) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: C.paper, justifyContent: 'center', padding: 20 }}>
+          <Card><CardBody style={{ alignItems: 'center', gap: 14, paddingVertical: 26 }}>
+            <Text style={{ fontSize: 40 }}>🔐</Text>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: C.navy }}>TuPuesto</Text>
+            <Muted style={{ fontSize: 13, textAlign: 'center' }}>Usá {bioTipo} para entrar.</Muted>
+            <Btn onPress={() => void pedirBiometria().then(ok => { if (ok) setLocked(false) })}>
+              Ingresá con {bioTipo}
+            </Btn>
+            <Btn variant="tertiary" onPress={() => { setLocked(false); void limpiarSesion().then(() => setSesion(null)) }}>
+              Entrar con PIN
+            </Btn>
+          </CardBody></Card>
+        </View>
+      </SafeAreaProvider>
+    )
+  }
+
   return (
     <SafeAreaProvider>
       <SesionYAccent sesion={sesion}>
-        <NavigationContainer key={sesion ? `${sesion.rol}:${sesion.id}` : 'login'}>
+        <NavigationContainer ref={navRef} key={sesion ? `${sesion.rol}:${sesion.id}` : 'login'}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             {sesion == null ? (
               <Stack.Screen name="Login">

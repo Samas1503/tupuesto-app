@@ -129,3 +129,23 @@ mobile/
   se traga el error — en mobile se respeta esa restricción en "elegir PIN";
   altas de vendedores/dueños pushean la fila completa (mismo comportamiento
   que web: si el server lo rechaza queda solo local hasta que sync lo limpie).
+
+## Fase 2 — hardening
+
+- **Offline-first**: `lib/outbox.ts` — toda mutación que falla por red o 5xx se
+  encola en `tp-outbox` (AsyncStorage) y se drena FIFO a `/api/sync` cuando
+  `NetInfo` detecta conectividad. Header muestra "sin conexión" / "N pendientes".
+- **Datos encriptados**: el token vive en `expo-secure-store` (`tp-token`, con
+  migración desde AsyncStorage). El cache `tp-cache-*` se guarda cifrado con
+  **AES-256-GCM** (`@stablelib/aes`+`gcm`); key = SHA-256(APP_SECRET + salt del
+  dispositivo en SecureStore). Best-effort sin KMS — la key nunca sale del
+  dispositivo.
+- **Login biométrico**: `expo-local-authentication`. Tras login con PIN se
+  ofrece activar huella/Face ID (`tp-biometric-ok`); al abrir la app con sesión
+  + flag se pide biometría (lock screen) o se permite entrar con PIN.
+- **Push real (cliente)**: `lib/push.ts` — al login se sube el Expo push token a
+  la tabla `push_tokens` (whitelist agregada en `api/sync.js`; requiere el DDL
+  `CREATE TABLE push_tokens (id bigint PRIMARY KEY, duenio_id bigint, usuario_id
+  bigint, token text, plataforma text, created_at bigint)` en Neon). Tap en una
+  notificación navega a la pantalla del tipo (`solicitud`/`cierre`→Hoy,
+  `stock`→Precios, `login`→Admin). **Pendiente**: `api/push.js` server→exp.host.

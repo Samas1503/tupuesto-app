@@ -15,6 +15,7 @@ const TABLAS = {
   ventas:      ['jornada_id', 'items', 'total', 'metodo_pago', 'created_at'],
   solicitudes: ['duenio_id', 'tipo', 'vendedor_id', 'solicitado_por', 'jornada_id', 'motivo', 'estado', 'created_at', 'resuelta_at'],
   notificaciones: ['usuario_id', 'tipo', 'titulo', 'descripcion', 'leida', 'created_at'],
+  push_tokens: ['duenio_id', 'usuario_id', 'token', 'plataforma', 'created_at'],
 }
 const JSONB = {
   jornadas: new Set(['despacho', 'reposiciones', 'saldo_inicial', 'descarte', 'cierre']),
@@ -77,6 +78,7 @@ export default async function handler(req, res) {
         ventas:      ['SELECT * FROM ventas WHERE jornada_id IN (SELECT id FROM jornadas WHERE duenio_id = $1)', p],
         solicitudes: ['SELECT * FROM solicitudes WHERE duenio_id = $1 OR duenio_id IS NULL', p],
         notificaciones: ['SELECT * FROM notificaciones WHERE usuario_id = $1 OR usuario_id IN (SELECT id FROM usuarios WHERE duenio_id = $1)', p],
+        push_tokens: ['SELECT * FROM push_tokens WHERE duenio_id = $1 OR duenio_id IS NULL', p],
       }
     } else {
       // vendedor sin dueño asignado — solo lo estrictamente propio
@@ -89,6 +91,7 @@ export default async function handler(req, res) {
         ventas:      ['SELECT * FROM ventas WHERE 1 = 0'],
         solicitudes: ['SELECT * FROM solicitudes WHERE 1 = 0'],
         notificaciones: ['SELECT * FROM notificaciones WHERE usuario_id = $1', p],
+        push_tokens: ['SELECT * FROM push_tokens WHERE usuario_id = $1', p],
       }
     }
     const out = {}

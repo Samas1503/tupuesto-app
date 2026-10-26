@@ -3,6 +3,7 @@
  *  El token se cachea en memoria para que authHeader() sea síncrono. */
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
 import type { Rol } from '../types'
 
 /** base del api — configurable con EXPO_PUBLIC_API_URL para apuntar a un vercel dev */
@@ -32,12 +33,12 @@ export const token = () => memToken
 
 export async function guardarToken(t: string) {
   memToken = t
-  await AsyncStorage.setItem(K_TOKEN, t)
+  await SecureStore.setItemAsync(K_TOKEN, t)
 }
 
 export function borrarToken() {
   memToken = ''
-  void AsyncStorage.removeItem(K_TOKEN)
+  void SecureStore.deleteItemAsync(K_TOKEN).catch(() => {})
 }
 
 /** headers con el Bearer token para llamadas al backend */
@@ -55,12 +56,21 @@ export function setSesionActual(s: Sesion | null) {
 
 /** lee la sesión persistida — respeta el TTL por rol (igual que App.tsx web) */
 export async function leerSesion(): Promise<Sesion | null> {
-  const [rol, id, loginAt, tok] = await Promise.all([
+  const [rol, id, loginAt] = await Promise.all([
     AsyncStorage.getItem(K_ROL),
     AsyncStorage.getItem(K_UID),
     AsyncStorage.getItem(K_LOGIN_AT),
-    AsyncStorage.getItem(K_TOKEN),
   ])
+  // token en SecureStore — migración desde AsyncStorage si quedó de la v1
+  let tok = await SecureStore.getItemAsync(K_TOKEN).catch(() => null)
+  if (tok == null) {
+    const viejo = await AsyncStorage.getItem(K_TOKEN)
+    if (viejo) {
+      tok = viejo
+      await SecureStore.setItemAsync(K_TOKEN, viejo).catch(() => {})
+      void AsyncStorage.removeItem(K_TOKEN)
+    }
+  }
   memToken = tok ?? ''
   if ((rol === 'duenio' || rol === 'vendedor' || rol === 'admin') && id != null && id !== '') {
     const ttl = SESION_TTL[rol]
@@ -90,7 +100,8 @@ export async function guardarSesion(s: Sesion) {
 export async function limpiarSesion() {
   memSesion = null
   memToken = ''
-  await AsyncStorage.multiRemove([K_ROL, K_UID, K_LOGIN_AT, K_TOKEN])
+  await AsyncStorage.multiRemove([K_ROL, K_UID, K_LOGIN_AT])
+  await SecureStore.deleteItemAsync(K_TOKEN).catch(() => {})
 }
 
 export interface LoginOK {
