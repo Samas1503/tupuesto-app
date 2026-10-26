@@ -57,6 +57,14 @@ function normDatos(body) {
 }
 
 export default async function handler(req, res) {
+  // cupos del plan fundador — cualquier visitante lo consulta (landing)
+  if (req.method === 'GET' && (req.query.cupos === '1' || req.query.cupos === 'true')) {
+    const sql = neon(process.env.DATABASE_URL)
+    const t = await sql.query("SELECT count(*) c FROM usuarios WHERE plan = 'fundador' AND activo = true AND eliminado = false")
+    const cupos = 5
+    return res.json({ cupos, tomados: Number(t[0].c), quedan: Math.max(0, cupos - Number(t[0].c)) })
+  }
+
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })

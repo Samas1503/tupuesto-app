@@ -1084,7 +1084,7 @@
 <script>document.getElementById("demo-nav")&&(document.getElementById("demo-nav").href=DEMO_URL)</script>
 <script>
   // cupos fundador en tiempo real — lee /api/fundadores
-  fetch('/api/fundadores').then(r => r.json()).then(d => {
+  fetch('/api/contratos?cupos=1').then(r => r.json()).then(d => {
     document.querySelectorAll('[data-cupos]').forEach(el => { el.textContent = d.quedan })
   }).catch(() => {})
 </script>
