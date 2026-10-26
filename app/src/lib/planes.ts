@@ -21,7 +21,7 @@ export const PLANES: Record<PlanId, Plan> = {
   estandar: {
     id: 'estandar', nombre: 'Estándar', precioMensual: 25000,
     maxVendedores: 10, maxPuestos: 10, maxProductos: 100,
-    beneficios: ['Hasta 10 puestos', 'Hasta 10 vendedores', 'Todo del Básico', 'Contratos digitales', 'Soporte prioritario'],
+    beneficios: ['Hasta 10 puestos', 'Hasta 10 vendedores', 'Rendición + stats', 'Solicitudes de cierre', 'Soporte prioritario'],
   },
   fundador: {
     id: 'fundador', nombre: 'Fundador', precioMensual: 0,
@@ -32,7 +32,7 @@ export const PLANES: Record<PlanId, Plan> = {
   premium: {
     id: 'premium', nombre: 'Premium', precioMensual: 45000,
     maxVendedores: -1, maxPuestos: -1, maxProductos: -1,
-    beneficios: ['Puestos ilimitados', 'Vendedores ilimitados', 'Todo del Estándar', 'Reportes avanzados', 'Onboarding 1 a 1'],
+    beneficios: ['Puestos ilimitados', 'Vendedores ilimitados', 'Rendición + stats + solicitudes', 'Reportes avanzados', 'Te ayudamos a arrancar 1 a 1'],
   },
 }
 
