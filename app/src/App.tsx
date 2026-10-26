@@ -34,12 +34,25 @@ const NAV_DUENIO: { id: Vista; label: string; Icon: (p: { className?: string }) 
 
 type Sesion = { rol: Rol; id: number }
 
+/** duración de sesión por rol — ms. Admin sin límite. */
+const SESION_TTL: Record<Rol, number | null> = {
+  vendedor: 8 * 60 * 60 * 1000,   // 8h — un turno de trabajo
+  duenio:   16 * 60 * 60 * 1000,  // 16h — la jornada del dueño
+  admin:    null,                  // sin límite
+}
+
 // sesión unificada: tp-rol + tp-user-id. Migración de keys viejas:
 // 'tp-duenio-id' → rol duenio con ese id; 'tp-vendedor' → rol vendedor
 function leerSesionLS(): Sesion | null {
   const rol = localStorage.getItem('tp-rol')
   const id = localStorage.getItem('tp-user-id')
   if ((rol === 'duenio' || rol === 'vendedor' || rol === 'admin') && id != null && id !== '') {
+    // expiración por rol — si pasó el TTL la sesión no vale
+    const ttl = SESION_TTL[rol]
+    if (ttl != null) {
+      const loginAt = Number(localStorage.getItem('tp-login-at'))
+      if (!loginAt || Date.now() - loginAt > ttl) { limpiarSesionLS(); return null }
+    }
     return { rol, id: Number(id) }
   }
   const duenioId = localStorage.getItem('tp-duenio-id')
@@ -52,6 +65,8 @@ function leerSesionLS(): Sesion | null {
 function limpiarSesionLS() {
   localStorage.removeItem('tp-rol')
   localStorage.removeItem('tp-user-id')
+  localStorage.removeItem('tp-login-at')
+  localStorage.removeItem('tp-token')
   // keys viejas — por si quedaron de la sesión anterior
   localStorage.removeItem('tp-duenio-id')
   localStorage.removeItem('tp-vendedor')
@@ -71,6 +86,7 @@ export default function App() {
     if (sesion) {
       localStorage.setItem('tp-rol', sesion.rol)
       localStorage.setItem('tp-user-id', String(sesion.id))
+      if (!localStorage.getItem('tp-login-at')) localStorage.setItem('tp-login-at', String(Date.now()))
       void pedirPermisoNotif()
       void avisarNuevasPendientes()
     }

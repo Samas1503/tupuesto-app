@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import { seedDemoAccesos } from '../db'
 import { pushRow } from '../lib/snake'
+import { loginServer } from '../lib/auth'
 import { hashPin } from '../lib/pin'
 import type { Rol, Usuario } from '../types'
 import ResetPin from './ResetPin'
@@ -51,13 +52,35 @@ export default function Login({ onLogin }: { onLogin: (rol: Rol, id: number) => 
       await seedDemoAccesos()
       u = await db.usuarios.where('email').equals(e).first()
     }
-    if (u) {
-      // sin pinHash todavía (alta vieja sin migrar) no bloquea el ingreso
+    if (u?.email?.endsWith('@demo.tupuesto')) {
+      // demo — verificación local, sin server
       if (u.pinHash && u.pinHash !== (await hashPin(p))) { setError(true); return }
       if (u.debeCambiarPin) { setPendiente(u); return }
       onLogin(u.rol, u.id!); return
     }
-    setError(true)
+    // usuarios reales — el PIN lo verifica el server; si no hay red, fallback local
+    try {
+      const { usuario } = await loginServer(e, p)
+      // el server devuelve el pinHash propio para verificar offline después
+      await db.usuarios.put({
+        id: usuario.id, rol: usuario.rol, nombre: usuario.nombre, email: usuario.email,
+        debeCambiarPin: usuario.debeCambiarPin, duenioId: usuario.duenioId,
+        categoria: usuario.categoria as any, plan: usuario.plan,
+        pinHash: usuario.pinHash, activo: true,
+      } as Usuario)
+      localStorage.setItem('tp-login-at', String(Date.now()))
+      if (usuario.debeCambiarPin) { setPendiente({ id: usuario.id, rol: usuario.rol } as Usuario); return }
+      onLogin(usuario.rol, usuario.id); return
+    } catch (err) {
+      // offline → verificación local contra la copia en Dexie
+      if (u && (!u.pinHash || u.pinHash === (await hashPin(p)))) {
+        if (u.debeCambiarPin) { setPendiente(u); return }
+        localStorage.setItem('tp-login-at', String(Date.now()))
+        onLogin(u.rol, u.id!); return
+      }
+      if (err instanceof Error && err.message !== 'Email o PIN incorrectos') { setError(true); return }
+      setError(true)
+    }
   }
 
   async function elegirPin() {

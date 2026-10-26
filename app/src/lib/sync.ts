@@ -1,4 +1,5 @@
 import { avisarNuevasPendientes } from './notificar'
+import { authHeader } from './auth'
 import { db } from '../db'
 
 /** base del api — en prod landing sirve /api desde tupuesto.vercel.app */
@@ -32,8 +33,8 @@ export async function syncPull() {
     if (u?.email?.endsWith('@demo.tupuesto')) return
   }
   try {
-    const res = await fetch(`${API}/api/sync`)
-    if (!res.ok) return
+    const res = await fetch(`${API}/api/sync`, { headers: { ...authHeader() } })
+    if (!res.ok) { if (res.status === 401) localStorage.removeItem('tp-token'); return }
     const data = await res.json()
     for (const [tabla, rows] of Object.entries(data) as [string, Record<string, unknown>[]][]) {
       const t = (db as Record<string, any>)[tabla]

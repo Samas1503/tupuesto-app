@@ -1,7 +1,10 @@
 // POSTGRES/NEON sync endpoint — Dexie (IndexedDB) ↔ Neon
-// GET  /api/sync  → pull: todas las tablas como JSON
-// POST /api/sync  → push: upserts { tabla, rows[] } (columnas whitelisteadas)
+// GET  /api/sync  → pull: todas las tablas como JSON (requiere Bearer token)
+// POST /api/sync  → push: upserts { tabla, rows[] } (requiere Bearer token)
+// POST {accion:'login', email, pin} → sesión: {usuario, token}
 import { neon } from '@neondatabase/serverless'
+import crypto from 'node:crypto'
+import { signToken, authOf } from './_lib/auth.js'
 
 const TABLAS = {
   usuarios:    ['rol', 'nombre', 'email', 'pin_hash', 'debe_cambiar_pin', 'activo', 'eliminado', 'duenio_id', 'categoria', 'plan'],
@@ -20,15 +23,44 @@ const JSONB = {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL no configurada' })
 
   const sql = neon(process.env.DATABASE_URL)
 
+  // ── login server-side: email + PIN → token firmado ──
+  if (req.method === 'POST' && req.body?.accion === 'login') {
+    const email = String(req.body.email ?? '').trim().toLowerCase()
+    const pin = String(req.body.pin ?? '').trim()
+    if (!email || !pin) return res.status(400).json({ error: 'email y pin requeridos' })
+    const rows = await sql.query(
+      'SELECT * FROM usuarios WHERE lower(email) = $1 AND activo = true AND (eliminado IS NULL OR eliminado = false) LIMIT 1',
+      [email],
+    )
+    const u = rows[0]
+    const pinHash = crypto.createHash('sha256').update(pin, 'utf8').digest('hex')
+    // usuarios sin pin todavía (alta vieja) — se les pide PIN nuevo por reset
+    if (!u || u.pin_hash !== pinHash) return res.status(401).json({ error: 'Email o PIN incorrectos' })
+    return res.json({
+      token: signToken(u),
+      usuario: {
+        id: Number(u.id), rol: u.rol, nombre: u.nombre, email: u.email,
+        debeCambiarPin: u.debe_cambiar_pin, duenioId: u.duenio_id, categoria: u.categoria, plan: u.plan,
+        pinHash: u.pin_hash, // para verificar offline después — solo la propia
+      },
+    })
+  }
+
+  // pull + push requieren sesión válida
+  const sesion = authOf(req)
+  if (!sesion) return res.status(401).json({ error: 'no autorizado' })
+
   if (req.method === 'GET') {
     const out = {}
     for (const t of Object.keys(TABLAS)) out[t] = await sql.query(`SELECT * FROM ${t}`)
+    // pin_hash nunca baja al cliente — la verificación es server-side
+    out.usuarios = out.usuarios.map(u => { const { pin_hash, ...rest } = u; return rest })
     return res.json(out)
   }
 
