@@ -845,29 +845,29 @@
   <section id="precio" class="dark">
     <div class="wrap">
       <div>
-        <p class="kicker">Programa de fundadores</p>
-        <h2>Los primeros 20 negocios fijan el precio y el producto</h2>
-        <p class="lead">Buscamos dueños reales para construir con ellos. Tu palabra pesa: el grupo de fundadores decide qué se construye después.</p>
+        <p class="kicker">Programa de emprendedores</p>
+        <h2>Sé uno de los 5 fundadores — precio de por vida</h2>
+        <p class="lead">Los primeros en entrar construyen el producto conmigo: votan las features que siguen, tienen soporte directo y su precio nunca sube.</p>
         <div class="garantias">
-          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><p><b>Seña 100% reembolsable.</b> Si no te sirve en el piloto o si no lanzamos, te devolvemos todo. Sin letra chica.</p></div>
-          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="9" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><p><b>Precio congelado de por vida.</b> Los fundadores pagan $12.900/mes para siempre, aunque el precio suba.</p></div>
-          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round"><path d="M10 2v6L5 18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2L14 8V2"/><path d="M8 2h8"/><path d="M7.5 14h9" opacity="0.5"/></svg></span><p><b>45 días de piloto gratis.</b> Lo probás con tus puestos reales antes de pagar el primer mes.</p></div>
+          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><p><b>Precio fundador de por vida.</b> USD 10/mes congelado para siempre — se cobra en pesos al cambio del día.</p></div>
+          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/><path d="M12 8v4l3 2"/></svg></span><p><b>Todos los beneficios de Premium.</b> Puestos ilimitados, vendedores ilimitados, reportes avanzados — desde el día uno.</p></div>
+          <div class="gar"><span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6L5 18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2L14 8V2"/><path d="M8 2h8"/></svg></span><p><b>15 días de prueba gratis.</b> Sin seña ni tarjeta — pagás directo cuando terminás de probarlo con tus puestos reales.</p></div>
         </div>
       </div>
       <div class="price-card">
         <span class="tag">Precio fundador</span>
-        <p class="price">$12.900<small>/mes</small></p>
-        <p class="sub">Hasta 3 puestos incluidos · puesto extra $3.000/mes</p>
+        <p class="price">USD 10<small>/mes</small></p>
+        <p class="sub">Se cobra en pesos al cambio del día · puesto y vendedor ilimitados</p>
         <hr>
-        <p style="font-weight:700;">Seña de reserva: $13.000</p>
         <ul class="ticks">
-          <li>Se descuenta del primer mes</li>
-          <li>45 días de piloto gratis al lanzar tu cuenta</li>
-          <li>Devolución total si no te sirve o no lanzamos</li>
-          <li>Acceso al grupo de fundadores</li>
+          <li>15 días de prueba gratis</li>
+          <li>Sin seña — pagás directo al finalizar</li>
+          <li>Todos los beneficios de Premium</li>
+          <li>Precio de por vida — nunca sube</li>
+          <li>Acceso al grupo de fundadores + voto en las features</li>
         </ul>
-        <p class="cupo">Quedan <span data-cupos>20</span> lugares.</p>
-        <a class="btn btn-dark" data-mp href="#">Reservar con Mercado Pago</a>
+        <p class="cupo">Quedan <span data-cupos>5</span> lugares de fundador.</p>
+        <a class="btn btn-dark" data-mp href="#">Quiero ser fundador</a>
         <a class="btn btn-wa" data-wa href="#">Prefiero hablar primero</a>
       </div>
     </div>
@@ -1082,5 +1082,11 @@
     }
   </script>
 <script>document.getElementById("demo-nav")&&(document.getElementById("demo-nav").href=DEMO_URL)</script>
+<script>
+  // cupos fundador en tiempo real — lee /api/fundadores
+  fetch('/api/fundadores').then(r => r.json()).then(d => {
+    document.querySelectorAll('[data-cupos]').forEach(el => { el.textContent = d.quedan })
+  }).catch(() => {})
+</script>
 </body>
 </html>
