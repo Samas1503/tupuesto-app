@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AlertDialog, Button, TextField, Label, Input } from '@heroui/react'
 import { db } from '../db'
+import { ISoporte } from './icons'
 import { notificar } from '../lib/notificar'
 
 /** botón "Ayuda" en el header — el dueño/vendedor manda soporte al admin */
@@ -28,8 +29,8 @@ export default function SoporteBtn() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="p-1.5 text-lg" aria-label="Soporte" title="Pedir soporte">
-        ❓
+      <button onClick={() => setOpen(true)} className="p-1.5" aria-label="Soporte" title="Pedir soporte">
+        <ISoporte className="h-5 w-5" />
       </button>
       {enviado && <p className="text-[0.65rem] text-success absolute top-full right-0 whitespace-nowrap">Enviado ✓</p>}
       <AlertDialog isOpen={open} onOpenChange={setOpen}>

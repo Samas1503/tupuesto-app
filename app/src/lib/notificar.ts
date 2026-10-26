@@ -10,7 +10,7 @@ export async function notificar(notif: Omit<Notificacion, 'id' | 'leida' | 'crea
   // push del sistema (celu/compu) — solo si el destino es el usuario de esta sesión
   const sesionId = Number(localStorage.getItem('tp-user-id'))
   if (sesionId === notif.usuarioId && 'Notification' in window && Notification.permission === 'granted') {
-    try { new Notification(notif.titulo, { body: notif.descripcion, icon: '/app/icon-192.png' }) } catch { /* noop */ }
+    try { new Notification(notif.titulo, { body: notif.descripcion, icon: '/app/icon.svg' }) } catch { /* noop */ }
   }
   return id
 }
@@ -25,7 +25,7 @@ export async function avisarNuevasPendientes() {
     .filter(n => n.createdAt > ultimaVista)
     .toArray()
   for (const n of nuevas) {
-    try { new Notification(n.titulo, { body: n.descripcion }) } catch { /* noop */ }
+    try { new Notification(n.titulo, { body: n.descripcion, icon: '/app/icon.svg' }) } catch { /* noop */ }
   }
   if (nuevas.length) localStorage.setItem('tp-notif-visto', String(Date.now()))
 }

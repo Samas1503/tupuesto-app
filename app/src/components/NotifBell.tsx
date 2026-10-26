@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Chip } from '@heroui/react'
+import { INotif, ICheck, ICaja, IPersona, IInfo } from './icons'
 import { db } from '../db'
 import { pushRow } from '../lib/snake'
 import { fmtHora } from '../lib/format'
 
-const ICONOS: Record<string, string> = {
-  solicitud: '🔔', cierre: '✅', stock: '📦', login: '👤', sistema: 'ℹ️',
+const ICONOS: Record<string, React.ReactNode> = {
+  solicitud: <INotif className="h-5 w-5 text-accent" />,
+  cierre: <ICheck className="h-5 w-5 text-success" />,
+  stock: <ICaja className="h-5 w-5 text-warning" />,
+  login: <IPersona className="h-5 w-5 text-accent" />,
+  sistema: <IInfo className="h-5 w-5 text-muted" />,
 }
 
 /** campana del header — panel tipo Instagram con las notificaciones del usuario */
@@ -36,8 +41,8 @@ export default function NotifBell() {
   return (
     <div ref={ref} className="relative">
       <button onClick={() => { setOpen(!open); if (!open && noLeidas.length) void marcarTodas() }}
-        className="relative p-1.5 text-lg" aria-label="Notificaciones">
-        🔔
+        className="relative p-1.5" aria-label="Notificaciones">
+        <INotif className="h-5 w-5" />
         {noLeidas.length > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[0.6rem] font-bold text-white">
             {noLeidas.length}
@@ -50,7 +55,7 @@ export default function NotifBell() {
           {notifs.length === 0 && <p className="p-4 text-xs text-muted">Sin notificaciones todavía.</p>}
           {notifs.slice(0, 30).map(n => (
             <div key={n.id} className={`flex gap-3 px-4 py-3 border-b border-border/50 ${n.leida ? '' : 'bg-accent/5'}`}>
-              <span className="text-lg">{ICONOS[n.tipo] ?? 'ℹ️'}</span>
+              <span className="pt-0.5">{ICONOS[n.tipo] ?? <IInfo className="h-5 w-5 text-muted" />}</span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold leading-tight">{n.titulo}</p>
                 <p className="text-xs text-muted leading-snug">{n.descripcion}</p>
