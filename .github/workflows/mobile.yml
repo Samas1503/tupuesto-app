@@ -1,0 +1,50 @@
+name: Mobile — OTA update + build
+
+on:
+  push:
+    branches: [main-mobile]
+    paths: ['mobile/**']
+  workflow_dispatch:
+    inputs:
+      build:
+        description: 'Forzar build nativo (AAB/IPA + submit)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  ota:
+    # cada push a main-mobile → actualización OTA (JS) sin review de store
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+        working-directory: mobile
+      - run: eas update --branch production --message "${{ github.sha }} — ${{ github.event.head_commit.message }}" --non-interactive
+        working-directory: mobile
+
+  build:
+    # build nativo solo si lo pedís a mano (o si agregás una lib nativa nueva)
+    if: github.event.inputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+        working-directory: mobile
+      - run: eas build --platform all --profile production --auto-submit --non-interactive
+        working-directory: mobile
