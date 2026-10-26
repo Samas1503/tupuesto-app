@@ -42,3 +42,10 @@ con `DATABASE_URL` del `.env` raíz).
 - Sin propagación de deletes remotos (solo upsert)
 - Sin auth de sesión real — PIN + email plano (el JWT/refresh va en una iteración posterior)
 - `duenio_id` en `jornadas` puede ser null en filas viejas (scoping vía vendedor)
+
+## Sync — semántica "remota gana"
+
+- `syncPull` cada 30s: la remota es la fuente de verdad — upsert por id + **borra lo local que no está en Neon** (huérfanos).
+- `pushRow` sube la fila a Neon tras cada escritura local.
+- **Sesión demo** (`@demo.tupuesto`): salta `pushRow` y `syncPull` — la demo vive 100% en IndexedDB y no toca Neon.
+- `seedDemoAccesos()` re-siembra los accesos demo en local si el pull los borró (login con email @demo.tupuesto).

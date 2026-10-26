@@ -11,5 +11,7 @@
 | [backend-neon.md](backend-neon.md) | Neon schema, api/sync, endpoints, env vars |
 | [admin.md](admin.md) | Dashboard del admin: gestión, dinero, puntajes |
 | [contratos.md](contratos.md) | Modelo legal de firma (electrónica simple), audit trail, disclaimers |
+| [contratos-firma.md](contratos-firma.md) | Sistema de contratos admin — firma electrónica, hash-chain, anclaje OTS |
+| [planes.md](planes.md) | Tiers de suscripción — límites por plan, fundador, beneficios |
 
 <sub>Si el doc y el código difieren, el código miente o el doc envejeció — avisar.</sub>

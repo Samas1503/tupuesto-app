@@ -42,3 +42,9 @@ Git connect pendiente en dashboard (auto-deploy on-push).
 Sync mapea tablas 1:1 + auth por rol + `negocioId` por tabla.
 `debeCambiarPin` + `email` ya esperan el envío real con token único —
 `api/send-pin` es el punto de integración.
+
+## Emails (Resend)
+
+- Envío: `notificaciones@samas-server.com` (dominio verificado en Resend)
+- Soporte: `soporte@samas-server.com` → Cloudflare Email Routing → Gmail
+- DNS: `samas-server.com` en Cloudflare (zone `e2c2ce063b1a1667bc69aaf03c0c39f2`)

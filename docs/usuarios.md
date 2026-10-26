@@ -21,7 +21,7 @@ Desde la migración (`app/scripts/migrate-usuarios.mjs`) hay **una sola tabla `u
 
 Un solo form email+PIN detecta el rol por la fila de `usuarios`:
 - compara `SHA-256(pin)` vs `pinHash` (`lib/pin.ts` → `hashPin`)
-- `debeCambiarPin` → flujo "Elegí tu PIN" (4 dígitos) → `pin_hash` + `pushRow('usuarios')`
+- `debeCambiarPin` → flujo "Elegí tu PIN" (4-8 dígitos) → `pin_hash` + `pushRow('usuarios')`
 - sesión en `localStorage`: `tp-rol` + `tp-user-id`
 
 ## Vistas por rol

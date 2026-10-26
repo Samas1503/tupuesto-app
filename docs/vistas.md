@@ -14,3 +14,9 @@ Sesión en `localStorage` (`tp-rol`, `tp-vendedor`) — mecanismo de demo;
 auth real espera backend (post-Gate 0). Los emails salen por Resend;
 si `api/` no corre (dev local sin `vercel dev`), el PIN se muestra como
 fallback una sola vez.
+
+## Extras recientes
+
+- **`PlanBadge`** — chip en el header con plan + precio del dueño (solo `rol === 'duenio'`; el admin no tiene plan).
+- **Reportes** (`views/Reportes.tsx`) — tab premium/admin: proyección 7d, merma del mes, ventas por producto. No-premium ve upsell.
+- **`EmptyState`** — ilustración por sección (`icono`: puesto/equipo/jornada/dinero/puntaje/contrato/producto/despacho), `currentColor` + tinte accent.
