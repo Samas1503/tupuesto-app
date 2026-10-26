@@ -61,7 +61,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && (req.query.cupos === '1' || req.query.cupos === 'true')) {
     const sql = neon(process.env.DATABASE_URL)
     const t = await sql.query("SELECT count(*) c FROM usuarios WHERE plan = 'fundador' AND activo = true AND eliminado = false")
-    const cupos = 5
+    const cupos = 10
     return res.json({ cupos, tomados: Number(t[0].c), quedan: Math.max(0, cupos - Number(t[0].c)) })
   }
 
