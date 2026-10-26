@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "TuPuesto",
+    "slug": "tupuesto",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "tupuesto",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f6f9fc",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f6f9fc"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.tupuesto.mobile"
+    },
+    "android": {
+      "package": "app.tupuesto.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#f6f9fc"
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#635bff"
+        }
+      ]
+    ]
+  }
+}
