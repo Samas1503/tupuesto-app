@@ -7,7 +7,7 @@ import { cargado, despachoValor, horasTurno, perdidaDescarte, repuestas, stockAc
 import { fmtFecha, fmtHora, fmtMoney, hoyISO } from '../lib/format'
 import { pushRow } from '../lib/snake'
 import { notificar } from '../lib/notificar'
-import ProdIcon from '../components/ProdIcon'
+import ProdIcon, { tieneFoto } from '../components/ProdIcon'
 import EmptyState from '../components/EmptyState'
 import type { Cierre, Jornada, Linea, MetodoPago, Producto, Venta } from '../types'
 
@@ -623,21 +623,28 @@ function ProductoVenta({
         isDisabled={!habilitado || agotado}
         className={`!block !h-auto !p-2.5 !text-left !rounded-xl border border-border !bg-surface ${agotado ? 'opacity-40' : ''}`}
       >
-        {p.imagen ? (
-          <img src={p.imagen} alt="" className="w-full h-16 rounded-lg object-cover mb-1.5" />
-        ) : (
-          <div className="w-full h-16 rounded-lg bg-accent/15 flex items-center justify-center mb-1.5">
-            <ProdIcon nombre={p.nombre} />
-          </div>
-        )}
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          {tieneFoto(p.imagen) ? (
+            <img src={p.imagen} alt="" className="h-11 w-11 rounded-lg object-cover shrink-0" />
+          ) : (
+            <div className="h-11 w-11 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
+              <ProdIcon nombre={p.nombre} />
+            </div>
+          )}
+          <span className={`text-[0.6rem] font-bold num rounded-full px-2 py-0.5 leading-relaxed ${stock <= 3 ? 'bg-warning/20 text-warning-foreground' : 'bg-surface-tertiary text-muted'}`}>
+            {stock} disp.
+          </span>
+        </div>
         <p className="text-sm font-bold leading-tight truncate">{p.nombre}</p>
         {p.ingredientes && (
           <p className="text-[0.6rem] text-muted/70 truncate">{p.ingredientes}</p>
         )}
-        <p className="text-[0.65rem] num text-muted mt-0.5">
-          llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''} · quedan {stock}
-        </p>
-        <p className="text-xs num font-bold text-accent">{fmtMoney(p.precio)}</p>
+        <div className="flex items-baseline justify-between gap-2 mt-1">
+          <p className="text-sm num font-bold text-accent">{fmtMoney(p.precio)}</p>
+          <p className="text-[0.6rem] num text-muted truncate">
+            llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''}
+          </p>
+        </div>
       </Button>
       <AlertDialog.Backdrop>
         <AlertDialog.Container>

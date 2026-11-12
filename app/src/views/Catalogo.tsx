@@ -1,5 +1,5 @@
 import EmptyState from '../components/EmptyState'
-import ProdIcon from '../components/ProdIcon'
+import ProdIcon, { tieneFoto } from '../components/ProdIcon'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { AlertDialog, Button, Card, Input, Label, NumberField, Switch, TextField } from '@heroui/react'
 import { db } from '../db'
@@ -74,7 +74,7 @@ export default function Catalogo() {
   }
 
   const foto = (p: { id?: number; nombre: string; imagen?: string }) =>
-    p.imagen ? (
+    tieneFoto(p.imagen) ? (
       <img src={p.imagen} alt="" className="h-14 w-14 rounded object-cover shrink-0" />
     ) : (
       <div className="h-14 w-14 rounded bg-accent/15 flex items-center justify-center shrink-0">

@@ -1,5 +1,9 @@
 // Ilustración del producto según su nombre — SVG stroke currentColor,
 // se tiñe con el accent del tema (categoría del dueño) automáticamente.
+
+/** foto real (jpeg/png/webp subida por el dueño) vs placeholder svg-letra viejo */
+export const tieneFoto = (imagen?: string) => !!imagen && !imagen.startsWith('data:image/svg')
+
 type P = { nombre: string; className?: string }
 const S = ({ c }: { c: React.ReactNode }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"

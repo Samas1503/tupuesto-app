@@ -66,17 +66,13 @@ function rng(seed: number) {
   }
 }
 
-/** placeholder chico (<500B): inicial del producto sobre el accent #635bff */
-const img = (letra: string) =>
-  `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%23635bff'/%3E%3Ctext x='32' y='42' font-size='32' fill='%23fff' text-anchor='middle' font-family='sans-serif'%3E${letra}%3C/text%3E%3C/svg%3E`
-
 const PRODUCTOS_SEED: Omit<Producto, 'id'>[] = [
-  { nombre: 'Chipá (u.)', precio: 550, precioCosto: 380, imagen: img('C'), ingredientes: 'almidón de mandioca, queso, huevo, manteca', activo: true, orden: 1 },
-  { nombre: 'Docena chipá', precio: 6000, precioCosto: 4000, imagen: img('D'), ingredientes: 'almidón de mandioca, queso, huevo, manteca', activo: true, orden: 2 },
-  { nombre: 'Sándwich de miga', precio: 4800, precioCosto: 3200, imagen: img('S'), ingredientes: 'pan de miga, jamón, queso, huevo, mayonesa', activo: true, orden: 3 },
-  { nombre: 'Medialuna', precio: 600, precioCosto: 380, imagen: img('M'), ingredientes: 'harina, manteca, azúcar, huevo, esencia de vainilla', activo: true, orden: 4 },
-  { nombre: 'Gaseosa 500 ml', precio: 2500, precioCosto: 1400, imagen: img('G'), activo: true, orden: 5 },
-  { nombre: 'Alfajor', precio: 1800, precioCosto: 1100, imagen: img('A'), ingredientes: 'dulce de leche, chocolate, tapitas de maizena', activo: true, orden: 6 },
+  { nombre: 'Chipá (u.)', precio: 550, precioCosto: 380, ingredientes: 'almidón de mandioca, queso, huevo, manteca', activo: true, orden: 1 },
+  { nombre: 'Docena chipá', precio: 6000, precioCosto: 4000, ingredientes: 'almidón de mandioca, queso, huevo, manteca', activo: true, orden: 2 },
+  { nombre: 'Sándwich de miga', precio: 4800, precioCosto: 3200, ingredientes: 'pan de miga, jamón, queso, huevo, mayonesa', activo: true, orden: 3 },
+  { nombre: 'Medialuna', precio: 600, precioCosto: 380, ingredientes: 'harina, manteca, azúcar, huevo, esencia de vainilla', activo: true, orden: 4 },
+  { nombre: 'Gaseosa 500 ml', precio: 2500, precioCosto: 1400, activo: true, orden: 5 },
+  { nombre: 'Alfajor', precio: 1800, precioCosto: 1100, ingredientes: 'dulce de leche, chocolate, tapitas de maizena', activo: true, orden: 6 },
 ]
 
 /** DB ya seedeada de una versión vieja: completa precioCosto/imagen sin pisar datos */

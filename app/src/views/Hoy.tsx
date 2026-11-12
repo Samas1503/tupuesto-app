@@ -5,6 +5,7 @@ import { fmtDif, fmtFecha, fmtHora, fmtMoney, hoyISO, isoMenosDias } from '../li
 import { cargado, cobrado, despachoValor, diferencia, esperado, gananciaReal, mermaUnidades, qrEnCero, qrFueraDeCuenta, stockActual, UMBRAL_REPOSICION, vendidos, totalVentas, ventasTotal } from '../lib/arqueo'
 import { useEffect, useState } from 'react'
 import EmptyState from '../components/EmptyState'
+import { tieneFoto } from '../components/ProdIcon'
 import { pushRow } from '../lib/snake'
 import { notificar } from '../lib/notificar'
 import { syncPull } from '../lib/sync'
@@ -475,7 +476,7 @@ export default function Hoy() {
                 const total = sobranteAyer + despachado
                 return (
                   <div key={p.id} className="flex items-center gap-3">
-                    {p.imagen ? (
+                    {tieneFoto(p.imagen) ? (
                       <img src={p.imagen} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
                     ) : (
                       <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center font-bold text-accent shrink-0">{p.nombre.charAt(0)}</div>
