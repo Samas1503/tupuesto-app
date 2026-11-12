@@ -266,7 +266,7 @@ export default function MiDia() {
               </Card.Description>
             </Card.Header>
             <Card.Content className="px-4 py-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-2.5">
                 {jornada.despacho.map(l => {
                   const p = productos.find(x => x.id === l.productoId)
                   if (!p) return null
@@ -542,10 +542,10 @@ function MiHistorial({
       </Card.Header>
       <Card.Content className="px-4 py-3 flex flex-col gap-3">
         <div className="grid grid-cols-4 gap-2 text-center">
-          <div><p className="text-base font-extrabold num">{stats.turnos}</p><p className="text-[0.6rem] text-muted uppercase font-bold">turnos</p></div>
-          <div><p className="text-base font-extrabold num">{stats.horas.toFixed(0)}h</p><p className="text-[0.6rem] text-muted uppercase font-bold">horas</p></div>
-          <div><p className="text-base font-extrabold num">{stats.unidades}</p><p className="text-[0.6rem] text-muted uppercase font-bold">unidades</p></div>
-          <div><p className="text-base font-extrabold num">{fmtMoney(stats.vendido)}</p><p className="text-[0.6rem] text-muted uppercase font-bold">vendido</p></div>
+          <div><p className="text-base font-extrabold num">{stats.turnos}</p><p className="text-[0.7rem] text-muted uppercase font-bold">turnos</p></div>
+          <div><p className="text-base font-extrabold num">{stats.horas.toFixed(0)}h</p><p className="text-[0.7rem] text-muted uppercase font-bold">horas</p></div>
+          <div><p className="text-base font-extrabold num">{stats.unidades}</p><p className="text-[0.7rem] text-muted uppercase font-bold">unidades</p></div>
+          <div><p className="text-base font-extrabold num">{fmtMoney(stats.vendido)}</p><p className="text-[0.7rem] text-muted uppercase font-bold">vendido</p></div>
         </div>
         {fechas.length === 0 && (
           <EmptyState icono="jornada" titulo="Sin historial" descripcion="Todavía no tenés jornadas registradas." hint="Cuando completes un turno aparece acá"/>
@@ -585,7 +585,7 @@ function MiHistorial({
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-[0.65rem] text-muted/60">sin ventas todavía</p>
+                      <p className="text-xs text-muted/60">sin ventas todavía</p>
                     )}
                     <div className="flex justify-end mt-1">
                       <b className="text-xs num text-accent">{fmtMoney(total)}</b>
@@ -621,29 +621,26 @@ function ProductoVenta({
       <Button
         variant="ghost"
         isDisabled={!habilitado || agotado}
-        className={`!block !h-auto !p-2.5 !text-left !rounded-xl border border-border !bg-surface ${agotado ? 'opacity-40' : ''}`}
+        className={`!flex !items-center !gap-3 !h-auto !w-full !p-3 !text-left !rounded-xl border border-border !bg-surface ${agotado ? 'opacity-40' : ''}`}
       >
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          {tieneFoto(p.imagen) ? (
-            <img src={p.imagen} alt="" className="h-11 w-11 rounded-lg object-cover shrink-0" />
-          ) : (
-            <div className="h-11 w-11 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
-              <ProdIcon nombre={p.nombre} />
-            </div>
-          )}
-          <span className={`text-[0.6rem] font-bold num rounded-full px-2 py-0.5 leading-relaxed ${stock <= 3 ? 'bg-warning/20 text-warning-foreground' : 'bg-surface-tertiary text-muted'}`}>
+        {tieneFoto(p.imagen) ? (
+          <img src={p.imagen} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+        ) : (
+          <div className="h-12 w-12 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
+            <ProdIcon nombre={p.nombre} />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-bold leading-tight truncate">{p.nombre}</p>
+          <p className={`text-xs num mt-0.5 ${stock <= 3 ? 'text-warning-foreground font-bold' : 'text-muted'}`}>
+            llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''} · quedan {stock}
+          </p>
+        </div>
+        <div className="shrink-0 text-right flex flex-col items-end gap-1">
+          <p className="text-lg num font-extrabold text-accent leading-none">{fmtMoney(p.precio)}</p>
+          <span className={`text-xs font-bold num rounded-full px-2.5 py-1 ${stock <= 3 ? 'bg-warning/20 text-warning-foreground' : 'bg-surface-tertiary text-muted'}`}>
             {stock} disp.
           </span>
-        </div>
-        <p className="text-sm font-bold leading-tight truncate">{p.nombre}</p>
-        {p.ingredientes && (
-          <p className="text-[0.6rem] text-muted/70 truncate">{p.ingredientes}</p>
-        )}
-        <div className="flex items-baseline justify-between gap-2 mt-1">
-          <p className="text-sm num font-bold text-accent">{fmtMoney(p.precio)}</p>
-          <p className="text-[0.6rem] num text-muted truncate">
-            llevaste {despachado}{repuesto > 0 ? ` +${repuesto}` : ''}
-          </p>
         </div>
       </Button>
       <AlertDialog.Backdrop>
