@@ -177,6 +177,7 @@ export default function MiDia() {
     }
     await db.jornadas.update(jornada.id!, { cierre, estado: 'cerrada' })
     void pushRow('jornadas', jornada.id!)
+    setBoleta([])
     const duenioId = jornada.duenioId ?? usuarios?.find(u => u.id === vendedorId)?.duenioId
     if (duenioId) void notificar({
       usuarioId: duenioId, tipo: 'cierre',
@@ -255,7 +256,7 @@ export default function MiDia() {
         <MiHistorial misJornadas={misJornadas} misVentas={misVentas} stats={stats} productos={productos} puestos={puestos} />
       )}
 
-      {jornada && puesto && jornada.estado !== 'confirmada' && (
+      {jornada && puesto && jornada.estado === 'abierta' && !listo && (
         <>
           {/* ── VENDER: tus productos del día — tocá uno para anotar ── */}
           <Card>
@@ -389,18 +390,22 @@ export default function MiDia() {
             </Card>
           )}
 
-          {(jornada.estado === 'cerrada' || listo) && (
-            <Alert status="warning">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>Enviado</Alert.Title>
-                <Alert.Description>
-                  Cerraste a las {jornada.cierre ? fmtHora(jornada.cierre.cerradaAt) : '—'}. El dueño confirma la rendición.
-                </Alert.Description>
-              </Alert.Content>
-            </Alert>
-          )}
+        </>
+      )}
 
+      {/* turno cerrado, pendiente confirmación — sin productos/ventas: solo estado + historial */}
+      {jornada && (jornada.estado === 'cerrada' || listo) && (
+        <>
+          <Alert status="warning">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Enviado</Alert.Title>
+              <Alert.Description>
+                Cerraste a las {jornada.cierre ? fmtHora(jornada.cierre.cerradaAt) : '—'}. El dueño confirma la rendición.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert>
+          <MiHistorial misJornadas={misJornadas} misVentas={misVentas} stats={stats} productos={productos} puestos={puestos} />
         </>
       )}
       {/* solicitud de cierre anticipado — va al dueño con motivo */}
@@ -434,8 +439,8 @@ export default function MiDia() {
           </AlertDialog.Container>
         </AlertDialog.Backdrop>
       </AlertDialog>
-      {/* boleta flotante — si hay productos cargados */}
-      {boleta.length > 0 && (
+      {/* boleta flotante — solo en turno abierto */}
+      {boleta.length > 0 && jornada?.estado === 'abierta' && !listo && (
         <button
           onClick={() => { setMetodoBoleta(metodoPago); setBoletaAbierta(true) }}
           className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40
