@@ -233,7 +233,7 @@ export default function App() {
 
       {/* navegación inferior flotante — píldora elevada, solo dueño */}
       {sesion!.rol === 'duenio' && (
-        <nav className="fixed bottom-3 inset-x-3 z-50">
+        <nav className="fixed nav-bottom inset-x-3 z-50">
           <div ref={navRef} className="relative max-w-2xl mx-auto bg-surface/90 backdrop-blur-md border border-border/60 rounded-full shadow-xl shadow-navy/10 px-1.5">
             {/* pill deslizante — se mueve al tab activo */}
             <div

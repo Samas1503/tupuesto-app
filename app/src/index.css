@@ -49,6 +49,27 @@
 [data-tema='juguetes']    { --accent: #f59e0b; --accent-foreground: #fff; --link: #f59e0b; }
 [data-tema='otro']        { --accent: #635bff; --accent-foreground: #fff; --link: #635bff; }
 
+/* ── Baseline mobile-native ────────────────────────────── */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+html, body { overscroll-behavior: none; }
+
+button, a, [role="button"], [role="tab"] {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+button, [role="button"], [role="tab"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* iOS no zooomea al enfocar inputs si el font-size es >= 16px */
+@media (pointer: coarse) {
+  input, textarea, select { font-size: 16px; }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -84,8 +105,10 @@ main .flex.flex-col > * {
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
-main .flex.flex-col > *:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  main .flex.flex-col > *:hover {
+    transform: translateY(-2px);
+  }
 }
 main .flex.flex-col > *:active {
   transform: translateY(0) scale(0.995);
@@ -127,6 +150,8 @@ main [style*="width"] { transform-origin: left; }
 }
 
 /* ── Nav inferior flotante — animaciones ────────────────── */
+/* despega del home-indicator en iOS (viewport-fit=cover) */
+.nav-bottom { bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
 nav [data-selected] svg,
 nav [data-selected] .text-xl {
   animation: iconPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -137,8 +162,10 @@ nav [role="tab"] {
 nav [role="tab"]:active {
   transform: scale(0.92);
 }
-nav [role="tab"]:hover:not([data-selected]) {
-  color: var(--navy);
+@media (hover: hover) and (pointer: fine) {
+  nav [role="tab"]:hover:not([data-selected]) {
+    color: var(--navy);
+  }
 }
 
 @keyframes iconPop {

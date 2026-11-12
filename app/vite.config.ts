@@ -18,7 +18,7 @@ export default defineConfig({
         short_name: 'TuPuesto',
         description: 'Rendición diaria de puestos: el vendedor cuenta al cerrar, vos ves si falta o sobra.',
         lang: 'es-AR',
-        theme_color: '#0a2540',
+        theme_color: '#ffffff',
         background_color: '#f6f9fc',
         display: 'standalone',
         icons: [
